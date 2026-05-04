@@ -17,13 +17,15 @@ Path alias: `@/*` → raíz del repo.
 
 ## Comandos
 
+Gestor de paquetes: **pnpm** (`pnpm-lock.yaml` es el único lockfile del repo).
+
 ```bash
-npm run dev          # Next dev en :3000
-npm run build        # Next build
-npm run lint         # next lint
-npm run db:generate  # Drizzle Kit: generar migración nueva
-npm run db:push      # Drizzle Kit: aplicar schema directo a la DB (modo usado en este proyecto)
-npm run db:seed      # tsx scripts/seed.ts → carga los 72 partidos + crea admin si no existe
+pnpm dev          # Next dev en :3000
+pnpm build        # Next build
+pnpm lint         # next lint
+pnpm db:generate  # Drizzle Kit: generar migración nueva
+pnpm db:push      # Drizzle Kit: aplicar schema directo a la DB (modo usado en este proyecto)
+pnpm db:seed      # tsx scripts/seed.ts → carga los 72 partidos + crea admin si no existe
 ```
 
 > El proyecto usa `db:push` (no `migrate`). Las migraciones de `drizzle/` están generadas pero el flujo real es `push`. Ojo si cambias el schema en producción.
@@ -122,11 +124,10 @@ Paleta y componentes en `tailwind.config.ts` y utilidades CSS en `app/globals.cs
 
 ## Despliegue
 
-Vercel + Neon. Las 3 env vars se ponen en el dashboard de Vercel. Tras el primer deploy, ejecutar `npm run db:push && npm run db:seed` desde local **apuntando a la DB de Neon** (mismo `DATABASE_URL`) para crear tablas y poblar partidos + admin.
+Vercel + Neon. Las 3 env vars se ponen en el dashboard de Vercel. Tras el primer deploy, ejecutar `pnpm db:push && pnpm db:seed` desde local **apuntando a la DB de Neon** (mismo `DATABASE_URL`) para crear tablas y poblar partidos + admin.
 
 ## Gotchas
 
-- `package.json` declara npm pero hay `pnpm-lock.yaml` también — usa el que prefieras pero **no commitees ambos lockfiles** modificados a la vez.
 - `next-env.d.ts` está en `.gitignore` — Next lo regenera.
 - Si reseteas `ADMIN_PASSWORD` después del seed: `db:seed` **NO** actualiza el admin existente. Borrar la fila a mano en Neon o cambiar el `pinHash` directo.
 - El `dynamic = "force-dynamic"` solo está en `/leaderboard`. Las demás páginas son dinámicas de facto porque leen cookies (`getSession`).

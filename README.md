@@ -54,10 +54,10 @@ cp .env.example .env
 # Edita .env con tus valores reales
 
 # Crea las tablas:
-npm run db:push
+pnpm db:push
 
 # Carga los 72 partidos del Mundial y crea el usuario admin:
-npm run db:seed
+pnpm db:seed
 ```
 
 > El admin se crea con nombre `admin` y la contraseña que pusiste en `ADMIN_PASSWORD`.
@@ -85,11 +85,11 @@ Las predicciones se cierran automáticamente al pitido inicial de cada partido.
 ## 🛠 Desarrollo local
 
 ```bash
-npm install
+pnpm install
 cp .env.example .env  # rellena los valores
-npm run db:push       # crea tablas
-npm run db:seed       # carga partidos + admin
-npm run dev           # http://localhost:3000
+pnpm db:push          # crea tablas
+pnpm db:seed          # carga partidos + admin
+pnpm dev              # http://localhost:3000
 ```
 
 ---
@@ -125,5 +125,5 @@ scripts/seed.ts             → poblar DB
 ## 🔧 Si algo va mal
 
 - **Build falla en Vercel:** comprueba que las 3 env vars están definidas.
-- **Login no funciona:** si cambiaste `ADMIN_PASSWORD` después del seed, vuelve a ejecutar `npm run db:seed` (es idempotente, pero solo crea el admin si no existe; bórralo manualmente desde Neon si necesitas resetear).
+- **Login no funciona:** si cambiaste `ADMIN_PASSWORD` después del seed, vuelve a ejecutar `pnpm db:seed` (es idempotente, pero solo crea el admin si no existe; bórralo manualmente desde Neon si necesitas resetear).
 - **No aparecen los partidos:** ejecutaste `db:seed`? Comprueba `Tablas → matches` en el dashboard de Neon.
