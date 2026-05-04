@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+:root {
+  --font-display: "Bebas Neue", sans-serif;
+  --font-body: "Manrope", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+html,
+body {
+  background: #0a0f0a;
+  color: #f0efe8;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Textura sutil tipo "césped" como fondo */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at top, rgba(46, 139, 46, 0.08), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(255, 122, 31, 0.05), transparent 50%),
+    repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 80px,
+      rgba(255, 255, 255, 0.01) 80px,
+      rgba(255, 255, 255, 0.01) 81px
+    );
+  pointer-events: none;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Scrollbar minimal */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0f1a14;
+}
+::-webkit-scrollbar-thumb {
+  background: #2e8b2e;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4eaf4e;
+}
+
+/* Inputs */
+.input-base {
+  @apply bg-pitch-800 border border-pitch-700 text-chalk-50 px-4 py-3 rounded-lg
+    focus:outline-none focus:border-flame-500 focus:ring-1 focus:ring-flame-500
+    transition-colors placeholder:text-chalk-400;
+}
+
+.btn-primary {
+  @apply bg-flame-500 hover:bg-flame-400 text-pitch-950 font-bold px-6 py-3 rounded-lg
+    transition-all uppercase tracking-wide text-sm
+    disabled:opacity-50 disabled:cursor-not-allowed
+    active:scale-[0.98];
+}
+
+.btn-secondary {
+  @apply bg-pitch-800 hover:bg-pitch-700 text-chalk-50 font-semibold px-6 py-3 rounded-lg
+    border border-pitch-700 transition-all uppercase tracking-wide text-sm
+    disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.score-input {
+  @apply w-14 h-14 text-center text-2xl font-bold font-mono
+    bg-pitch-800 border-2 border-pitch-700 text-chalk-50 rounded-lg
+    focus:outline-none focus:border-flame-500 focus:ring-2 focus:ring-flame-500/30
+    transition-all
+    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
+}
+
+.score-input:disabled {
+  @apply opacity-60 cursor-not-allowed bg-pitch-900;
+}
+
+/* Group tag colors (approximate from poster) */
+.group-A { background: #4ade80; color: #052e0e; }
+.group-B { background: #fbbf24; color: #2a1d00; }
+.group-C { background: #f97316; color: #2a0e00; }
+.group-D { background: #f87171; color: #2a0606; }
+.group-E { background: #c084fc; color: #220838; }
+.group-F { background: #84cc16; color: #1c2a00; }
+.group-G { background: #06b6d4; color: #002a2e; }
+.group-H { background: #ec4899; color: #2e0011; }
+.group-I { background: #6366f1; color: #08092e; }
+.group-J { background: #14b8a6; color: #002923; }
+.group-K { background: #ef4444; color: #2e0000; }
+.group-L { background: #a855f7; color: #1e0a36; }
