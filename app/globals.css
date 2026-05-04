@@ -2,99 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap");
 
 :root {
-  --font-display: "Bebas Neue", sans-serif;
+  --font-display: "Archivo Black", sans-serif;
+  --font-sport: "Bebas Neue", sans-serif;
   --font-body: "Manrope", sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-mono: "Space Mono", monospace;
 }
 
 html,
 body {
-  background: #0a0f0a;
-  color: #f0efe8;
+  background: #0a0e0c;
+  color: #fbf6e7;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Textura sutil tipo "césped" como fondo */
+/* Fondo: glow cálido + halftone discreto */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(ellipse at top, rgba(46, 139, 46, 0.08), transparent 50%),
-    radial-gradient(ellipse at bottom right, rgba(255, 122, 31, 0.05), transparent 50%),
-    repeating-linear-gradient(
-      45deg,
-      transparent 0,
-      transparent 80px,
-      rgba(255, 255, 255, 0.01) 80px,
-      rgba(255, 255, 255, 0.01) 81px
-    );
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(245, 180, 0, 0.10), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(200, 74, 38, 0.08), transparent 60%),
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.025) 1px, transparent 0);
+  background-size: auto, auto, 16px 16px;
   pointer-events: none;
 }
 
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
-
+.font-sport {
+  font-family: var(--font-sport);
+  letter-spacing: 0.04em;
+}
 .font-mono {
   font-family: var(--font-mono);
 }
 
-/* Scrollbar minimal */
+/* Scrollbar minimal mostaza */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f1a14;
+  background: #111814;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2e8b2e;
-  border-radius: 4px;
+  background: #f5b400;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4eaf4e;
+  background: #ffc83d;
 }
 
-/* Inputs */
-.input-base {
-  @apply bg-pitch-800 border border-pitch-700 text-chalk-50 px-4 py-3 rounded-lg
-    focus:outline-none focus:border-flame-500 focus:ring-1 focus:ring-flame-500
-    transition-colors placeholder:text-chalk-400;
+/* === Cromo: solo el "marco". El bg/color lo pone el componente === */
+.cromo {
+  @apply border-2 border-pitch-950 rounded-lg shadow-brutal;
+}
+.cromo-sm {
+  @apply border-2 border-pitch-950 rounded shadow-brutal-sm;
 }
 
+/* === Botones brutalist === */
 .btn-primary {
-  @apply bg-flame-500 hover:bg-flame-400 text-pitch-950 font-bold px-6 py-3 rounded-lg
-    transition-all uppercase tracking-wide text-sm
-    disabled:opacity-50 disabled:cursor-not-allowed
-    active:scale-[0.98];
-}
-
-.btn-secondary {
-  @apply bg-pitch-800 hover:bg-pitch-700 text-chalk-50 font-semibold px-6 py-3 rounded-lg
-    border border-pitch-700 transition-all uppercase tracking-wide text-sm
+  @apply bg-flame-500 hover:bg-flame-400 text-pitch-950 font-display
+    px-7 py-4 rounded-lg uppercase tracking-wide text-sm
+    border-2 border-pitch-950 shadow-brutal
+    transition-all
+    hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg
+    active:translate-x-0.5 active:translate-y-0.5 active:shadow-none
     disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
+.btn-secondary {
+  @apply bg-paper-50 hover:bg-paper-100 text-pitch-950 font-display
+    px-7 py-4 rounded-lg uppercase tracking-wide text-sm
+    border-2 border-pitch-950 shadow-brutal
+    transition-all
+    hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg
+    active:translate-x-0.5 active:translate-y-0.5 active:shadow-none
+    disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.input-base {
+  @apply bg-paper-50 border-2 border-pitch-950 text-pitch-950 px-4 py-3 rounded-lg
+    shadow-brutal-sm
+    focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5
+    transition-all placeholder:text-pitch-700/40;
+}
+
 .score-input {
-  @apply w-14 h-14 text-center text-2xl font-bold font-mono
-    bg-pitch-800 border-2 border-pitch-700 text-chalk-50 rounded-lg
-    focus:outline-none focus:border-flame-500 focus:ring-2 focus:ring-flame-500/30
+  @apply w-14 h-14 text-center text-2xl font-display
+    bg-paper-50 border-2 border-pitch-950 text-pitch-950 rounded-lg
+    shadow-brutal-sm
+    focus:outline-none focus:bg-flame-300 focus:shadow-brutal
+    focus:-translate-x-0.5 focus:-translate-y-0.5
     transition-all
     [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
 }
-
 .score-input:disabled {
-  @apply opacity-60 cursor-not-allowed bg-pitch-900;
+  @apply opacity-60 cursor-not-allowed bg-pitch-800 text-chalk-400 border-pitch-700 shadow-none;
 }
 
-/* Group tag colors (approximate from poster) */
+/* === Group color stickers — color base + acabado brutalist === */
+.group-A,
+.group-B,
+.group-C,
+.group-D,
+.group-E,
+.group-F,
+.group-G,
+.group-H,
+.group-I,
+.group-J,
+.group-K,
+.group-L {
+  border: 2px solid #0a0e0c;
+  box-shadow: 2px 2px 0 0 rgba(0, 0, 0, 0.95);
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+}
 .group-A { background: #4ade80; color: #052e0e; }
 .group-B { background: #fbbf24; color: #2a1d00; }
 .group-C { background: #f97316; color: #2a0e00; }
@@ -107,3 +139,14 @@ body::before {
 .group-J { background: #14b8a6; color: #002923; }
 .group-K { background: #ef4444; color: #2e0000; }
 .group-L { background: #a855f7; color: #1e0a36; }
+
+/* Banda diagonal decorativa */
+.band {
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  height: 6rem;
+  transform: rotate(-3deg);
+  z-index: -1;
+  opacity: 0.12;
+}
