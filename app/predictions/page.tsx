@@ -31,11 +31,11 @@ export default async function PredictionsPage() {
 
   return (
     <div className="pt-8">
-      <div className="mb-8">
-        <h1 className="font-display text-5xl text-chalk-50 mb-1">
-          Mis Pronósticos
+      <div className="mb-10">
+        <h1 className="font-display text-6xl sm:text-7xl text-chalk-50 leading-none">
+          MIS <span className="text-flame-500">PRONÓSTICOS</span>
         </h1>
-        <p className="text-chalk-400 font-mono text-xs uppercase tracking-widest">
+        <p className="mt-4 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
           Hola, {session.name}
         </p>
       </div>

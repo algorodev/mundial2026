@@ -37,20 +37,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="pt-16 max-w-md mx-auto">
-      <h1 className="font-display text-5xl text-chalk-50 text-center mb-2">
-        Entrar
-      </h1>
-      <p className="text-center text-chalk-400 text-sm mb-10 font-mono uppercase tracking-widest">
-        Pide tu nombre y PIN al organizador
-      </p>
+    <div className="pt-12 sm:pt-20 max-w-md mx-auto">
+      <div className="text-center mb-10">
+        <h1 className="font-display text-6xl sm:text-7xl text-chalk-50 leading-none">
+          ENTRAR
+        </h1>
+        <p className="mt-5 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
+          Pide tu nombre y PIN al organizador
+        </p>
+      </div>
 
       <form
         onSubmit={submit}
-        className="bg-pitch-900/60 border border-pitch-800 rounded-2xl p-6 sm:p-8 space-y-5"
+        className="cromo bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
         <div>
-          <label className="block text-xs font-mono uppercase tracking-widest text-chalk-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
             Nombre
           </label>
           <input
@@ -66,14 +68,14 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label className="block text-xs font-mono uppercase tracking-widest text-chalk-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
             PIN
           </label>
           <input
             type="password"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
-            className="input-base w-full font-mono tracking-[0.3em]"
+            className="input-base w-full font-mono tracking-[0.5em] text-center text-2xl"
             placeholder="••••"
             required
             autoComplete="current-password"
@@ -81,13 +83,13 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="bg-red-900/40 border border-red-800 text-red-200 text-sm rounded-lg px-4 py-3">
-            {error}
+          <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 font-semibold text-sm">
+            ⚠️ {error}
           </div>
         )}
 
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Entrando..." : "Entrar"}
+          {loading ? "Entrando..." : "Entrar →"}
         </button>
       </form>
     </div>

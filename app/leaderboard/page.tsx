@@ -10,15 +10,13 @@ export default async function LeaderboardPage() {
 
   return (
     <div className="pt-8">
-      <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display text-5xl text-chalk-50 mb-1">
-            Clasificación
-          </h1>
-          <p className="text-chalk-400 font-mono text-xs uppercase tracking-widest">
-            Ranking en directo
-          </p>
-        </div>
+      <div className="mb-10">
+        <h1 className="font-display text-6xl sm:text-7xl text-chalk-50 leading-none">
+          CLASIFI<span className="text-flame-500">CACIÓN</span>
+        </h1>
+        <p className="mt-4 inline-block bg-grass-500 text-paper-50 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest rotate-1">
+          ● En directo
+        </p>
       </div>
 
       <LeaderboardClient currentName={session.name} />

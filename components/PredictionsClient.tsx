@@ -140,22 +140,22 @@ export default function PredictionsClient({
   return (
     <div>
       {/* Stats + filtros */}
-      <div className="bg-pitch-900/60 border border-pitch-800 rounded-2xl p-4 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex gap-6">
+      <div className="cromo bg-pitch-900 p-5 sm:p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div className="flex gap-8">
           <div>
-            <div className="font-display text-4xl text-chalk-50 leading-none">
+            <div className="font-display text-5xl text-flame-500 leading-none">
               {stats.filled}
-              <span className="text-chalk-400">/{stats.total}</span>
+              <span className="text-chalk-400 text-3xl">/{stats.total}</span>
             </div>
-            <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-1">
+            <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-2">
               Pronosticados
             </div>
           </div>
           <div>
-            <div className="font-display text-4xl text-flame-500 leading-none">
+            <div className="font-display text-5xl text-brick-400 leading-none">
               {stats.locked}
             </div>
-            <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-1">
+            <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-2">
               Bloqueados
             </div>
           </div>
@@ -184,26 +184,28 @@ export default function PredictionsClient({
       </div>
 
       {errorMsg && (
-        <div className="bg-red-900/40 border border-red-800 text-red-200 text-sm rounded-lg px-4 py-3 mb-4 sticky top-20 z-20">
+        <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 mb-4 sticky top-20 z-20 font-semibold">
           ⚠️ {errorMsg}
         </div>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-12">
         {grouped.length === 0 && (
-          <div className="text-center py-16 text-chalk-400">
+          <div className="text-center py-16 text-chalk-400 font-mono uppercase tracking-widest text-sm">
             No hay partidos en esta vista.
           </div>
         )}
         {grouped.map(([date, matchesOfDay]) => (
           <section key={date}>
-            <h2 className="font-display text-2xl text-flame-400 mb-3 flex items-center gap-3">
-              <span className="h-px flex-1 bg-pitch-800" />
-              <span>{date.toUpperCase()}</span>
-              <span className="h-px flex-1 bg-pitch-800" />
+            <h2 className="mb-5 flex items-center gap-3">
+              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="bg-flame-500 text-pitch-950 font-display text-xl px-4 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block">
+                {date}
+              </span>
+              <span className="h-1 flex-1 bg-pitch-800" />
             </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              {matchesOfDay.map((m) => (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 px-1 py-2">
+              {matchesOfDay.map((m, idx) => (
                 <MatchCard
                   key={m.id}
                   match={m}
@@ -212,6 +214,7 @@ export default function PredictionsClient({
                   saving={savingMatchId === m.id}
                   saved={savedFlash === m.id}
                   now={now}
+                  tilt={idx % 2 === 0 ? "even" : "odd"}
                 />
               ))}
             </div>
@@ -234,10 +237,10 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 rounded-lg uppercase tracking-wider font-mono font-semibold transition-all ${
+      className={`px-4 py-2 rounded uppercase tracking-wider font-display text-xs border-2 border-pitch-950 transition-all ${
         active
-          ? "bg-flame-500 text-pitch-950"
-          : "bg-pitch-800 text-chalk-200 hover:bg-pitch-700"
+          ? "bg-flame-500 text-pitch-950 shadow-brutal-sm -translate-x-0.5 -translate-y-0.5"
+          : "bg-paper-50 text-pitch-950 hover:bg-paper-100"
       }`}
     >
       {children}
@@ -252,6 +255,7 @@ function MatchCard({
   saving,
   saved,
   now,
+  tilt,
 }: {
   match: MatchRow;
   pred: { homeScore: number; awayScore: number } | undefined;
@@ -259,21 +263,23 @@ function MatchCard({
   saving: boolean;
   saved: boolean;
   now: number;
+  tilt: "even" | "odd";
 }) {
   const kickoff = new Date(match.kickoffAt).getTime();
   const locked = kickoff <= now;
   const hasResult = match.homeScore != null && match.awayScore != null;
 
-  let resultClass = "";
-  let pointsBadge = null;
+  // Tinte del cromo según resultado
+  let cromoBg = "bg-paper-50";
+  let pointsBadge: React.ReactNode = null;
   if (hasResult && pred && pred.homeScore >= 0 && pred.awayScore >= 0) {
     if (
       pred.homeScore === match.homeScore &&
       pred.awayScore === match.awayScore
     ) {
-      resultClass = "border-grass-500/60 bg-grass-500/5";
+      cromoBg = "bg-grass-300";
       pointsBadge = (
-        <span className="font-mono text-xs bg-grass-500 text-pitch-950 px-2 py-0.5 rounded font-bold">
+        <span className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
           +3 EXACTO
         </span>
       );
@@ -281,16 +287,16 @@ function MatchCard({
       const ps = Math.sign(pred.homeScore - pred.awayScore);
       const rs = Math.sign(match.homeScore! - match.awayScore!);
       if (ps === rs) {
-        resultClass = "border-flame-500/40 bg-flame-500/5";
+        cromoBg = "bg-flame-300";
         pointsBadge = (
-          <span className="font-mono text-xs bg-flame-500 text-pitch-950 px-2 py-0.5 rounded font-bold">
+          <span className="font-display text-[10px] bg-flame-500 text-pitch-950 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
             +1 SIGNO
           </span>
         );
       } else {
-        resultClass = "border-pitch-700 opacity-70";
+        cromoBg = "bg-paper-200";
         pointsBadge = (
-          <span className="font-mono text-xs bg-pitch-800 text-chalk-400 px-2 py-0.5 rounded">
+          <span className="font-display text-[10px] bg-pitch-950 text-chalk-400 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
             +0
           </span>
         );
@@ -298,48 +304,53 @@ function MatchCard({
     }
   }
 
+  const tiltClass =
+    tilt === "even" ? "rotate-[-0.4deg]" : "rotate-[0.4deg]";
+
   return (
     <article
-      className={`bg-pitch-900/60 border-2 border-pitch-800 rounded-xl p-4 transition-all ${resultClass}`}
+      className={`cromo ${cromoBg} text-pitch-950 ${tiltClass} p-4 sm:p-5 hover:rotate-0 hover:-translate-y-1 hover:shadow-brutal-lg transition-all`}
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+      {/* Header: grupo + hora · estado a la derecha */}
+      <div className="flex items-center justify-between mb-4 gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span
-            className={`group-${match.groupName} text-[10px] font-bold px-2 py-0.5 rounded font-mono`}
+            className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
           >
             GRUPO {match.groupName}
           </span>
-          <span className="font-mono text-xs text-chalk-400">
+          <span className="font-mono text-xs text-pitch-700 font-bold">
             {match.matchTime}
           </span>
-          <span className="font-mono text-xs text-chalk-400 hidden sm:inline">
+          <span className="font-mono text-[10px] text-pitch-700/60 hidden sm:inline">
             · {match.stadium}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {saving && (
-            <span className="font-mono text-[10px] text-chalk-400 animate-pulse">
-              guardando...
+            <span className="font-mono text-[10px] text-pitch-700 animate-pulse uppercase tracking-wider">
+              guardando…
             </span>
           )}
           {saved && (
-            <span className="font-mono text-[10px] text-grass-400">
+            <span className="font-mono text-[10px] text-grass-600 font-bold uppercase tracking-wider">
               ✓ guardado
             </span>
           )}
           {pointsBadge}
           {locked && !hasResult && (
-            <span className="font-mono text-[10px] text-flame-400 uppercase">
-              🔒 bloqueado
+            <span className="font-display text-[10px] bg-pitch-950 text-flame-400 px-2 py-1 border-2 border-pitch-950 tracking-wider">
+              🔒 BLOQUEADO
             </span>
           )}
         </div>
       </div>
 
+      {/* Selecciones + score */}
       <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
         <div className="text-right">
-          <div className="text-2xl mb-0.5">{match.homeFlag}</div>
-          <div className="font-bold text-chalk-50 text-sm sm:text-base leading-tight">
+          <div className="text-3xl sm:text-4xl mb-1">{match.homeFlag}</div>
+          <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
             {match.homeTeam}
           </div>
         </div>
@@ -356,7 +367,7 @@ function MatchCard({
             className="score-input"
             aria-label={`Goles ${match.homeTeam}`}
           />
-          <span className="text-chalk-400 font-display text-2xl">·</span>
+          <span className="text-pitch-950 font-display text-3xl">·</span>
           <input
             type="number"
             inputMode="numeric"
@@ -371,20 +382,22 @@ function MatchCard({
         </div>
 
         <div className="text-left">
-          <div className="text-2xl mb-0.5">{match.awayFlag}</div>
-          <div className="font-bold text-chalk-50 text-sm sm:text-base leading-tight">
+          <div className="text-3xl sm:text-4xl mb-1">{match.awayFlag}</div>
+          <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
             {match.awayTeam}
           </div>
         </div>
       </div>
 
+      {/* Resultado real */}
       {hasResult && (
-        <div className="mt-3 pt-3 border-t border-pitch-800 text-center">
-          <span className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
+        <div className="mt-4 pt-3 border-t-2 border-dashed border-pitch-950/30 text-center">
+          <span className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
             Resultado real
           </span>
-          <div className="font-display text-2xl text-chalk-50 mt-0.5">
-            {match.homeScore} – {match.awayScore}
+          <div className="font-display text-3xl text-pitch-950 mt-1">
+            {match.homeScore} <span className="text-brick-500">·</span>{" "}
+            {match.awayScore}
           </div>
         </div>
       )}

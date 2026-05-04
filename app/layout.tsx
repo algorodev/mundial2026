@@ -19,7 +19,7 @@ export default async function RootLayout({
       <body className="min-h-screen">
         <NavBar session={session} />
         <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">{children}</main>
-        <footer className="text-center text-chalk-400 text-xs py-8 font-mono">
+        <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest">
           ⚽ La Porra · Mundial 2026 · Hecho con ☕ en Pedralba
         </footer>
       </body>

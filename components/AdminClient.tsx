@@ -35,13 +35,13 @@ export default function AdminClient({
 
   return (
     <div>
-      <div className="flex gap-2 mb-6 border-b border-pitch-800">
+      <div className="flex gap-3 mb-8 flex-wrap">
         <TabButton active={tab === "results"} onClick={() => setTab("results")}>
-          Resultados ({matches.filter((m) => m.homeScore != null).length}/
+          ⚽ Resultados ({matches.filter((m) => m.homeScore != null).length}/
           {matches.length})
         </TabButton>
         <TabButton active={tab === "users"} onClick={() => setTab("users")}>
-          Participantes ({participants.length})
+          👥 Participantes ({participants.length})
         </TabButton>
       </div>
 
@@ -63,10 +63,10 @@ function TabButton({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-3 font-mono text-xs uppercase tracking-widest font-semibold transition-colors border-b-2 -mb-px ${
+      className={`px-5 py-3 font-display text-xs sm:text-sm uppercase tracking-widest border-2 border-pitch-950 rounded transition-all ${
         active
-          ? "text-flame-500 border-flame-500"
-          : "text-chalk-400 border-transparent hover:text-chalk-100"
+          ? "bg-flame-500 text-pitch-950 shadow-brutal -translate-x-0.5 -translate-y-0.5"
+          : "bg-paper-50 text-pitch-950 shadow-brutal-sm hover:-translate-y-0.5"
       }`}
     >
       {children}
@@ -111,9 +111,7 @@ function ResultsTab({ initial }: { initial: MatchRow[] }) {
       });
       if (r.ok) {
         setMatches((prev) =>
-          prev.map((m) =>
-            m.id === id ? { ...m, homeScore, awayScore } : m
-          )
+          prev.map((m) => (m.id === id ? { ...m, homeScore, awayScore } : m))
         );
         setSavedId(id);
         setTimeout(() => setSavedId(null), 1200);
@@ -143,13 +141,17 @@ function ResultsTab({ initial }: { initial: MatchRow[] }) {
         </FilterChip>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {grouped.map(([date, list]) => (
           <section key={date}>
-            <h3 className="font-display text-xl text-flame-400 mb-2">
-              {date.toUpperCase()}
+            <h3 className="mb-4 flex items-center gap-3">
+              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="bg-flame-500 text-pitch-950 font-display text-lg px-4 py-1 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block">
+                {date}
+              </span>
+              <span className="h-1 flex-1 bg-pitch-800" />
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-2 px-1">
               {list.map((m) => (
                 <ResultRow
                   key={m.id}
@@ -179,10 +181,10 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-2 rounded text-xs uppercase tracking-wider font-mono font-semibold transition-all ${
+      className={`px-3 py-2 rounded text-xs uppercase tracking-wider font-display border-2 border-pitch-950 transition-all ${
         active
-          ? "bg-flame-500 text-pitch-950"
-          : "bg-pitch-800 text-chalk-200 hover:bg-pitch-700"
+          ? "bg-flame-500 text-pitch-950 shadow-brutal-sm -translate-y-0.5"
+          : "bg-paper-50 text-pitch-950 hover:bg-paper-100"
       }`}
     >
       {children}
@@ -220,18 +222,24 @@ function ResultRow({
     }
   }
 
+  const filled = match.homeScore != null;
+
   return (
-    <div className="bg-pitch-900/60 border border-pitch-800 rounded-lg p-3 flex items-center gap-3">
+    <div
+      className={`cromo ${
+        filled ? "bg-grass-300" : "bg-paper-50"
+      } text-pitch-950 p-3 sm:p-4 flex items-center gap-3`}
+    >
       <span
-        className={`group-${match.groupName} text-[10px] font-bold px-2 py-0.5 rounded font-mono`}
+        className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
       >
         {match.groupName}
       </span>
-      <span className="font-mono text-[10px] text-chalk-400 w-12">
+      <span className="font-mono text-[10px] sm:text-xs text-pitch-700 w-10 sm:w-12 font-bold">
         {match.matchTime}
       </span>
-      <div className="flex-1 grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-        <div className="text-right text-sm font-bold text-chalk-50 truncate">
+      <div className="flex-1 grid grid-cols-[1fr_auto_1fr] gap-2 items-center min-w-0">
+        <div className="text-right text-xs sm:text-sm font-display uppercase truncate">
           {match.homeFlag} {match.homeTeam}
         </div>
         <div className="flex items-center gap-1">
@@ -242,9 +250,9 @@ function ResultRow({
             value={home}
             onChange={(e) => setHome(e.target.value)}
             onBlur={commit}
-            className="score-input !w-12 !h-10 !text-lg"
+            className="score-input !w-12 !h-11 !text-xl"
           />
-          <span className="text-chalk-400">·</span>
+          <span className="font-display text-xl text-pitch-950">·</span>
           <input
             type="number"
             min={0}
@@ -252,30 +260,32 @@ function ResultRow({
             value={away}
             onChange={(e) => setAway(e.target.value)}
             onBlur={commit}
-            className="score-input !w-12 !h-10 !text-lg"
+            className="score-input !w-12 !h-11 !text-xl"
           />
         </div>
-        <div className="text-left text-sm font-bold text-chalk-50 truncate">
+        <div className="text-left text-xs sm:text-sm font-display uppercase truncate">
           {match.awayTeam} {match.awayFlag}
         </div>
       </div>
-      <div className="w-20 text-right">
+      <div className="w-16 text-right">
         {saving && (
-          <span className="font-mono text-[10px] text-chalk-400 animate-pulse">
-            ...
+          <span className="font-mono text-[10px] text-pitch-700 animate-pulse uppercase tracking-wider">
+            …
           </span>
         )}
         {saved && (
-          <span className="font-mono text-[10px] text-grass-400">✓</span>
+          <span className="font-mono text-[10px] text-grass-700 font-bold uppercase tracking-wider">
+            ✓
+          </span>
         )}
-        {!saving && !saved && match.homeScore != null && (
+        {!saving && !saved && filled && (
           <button
             onClick={() => {
               setHome("");
               setAway("");
               onSave(match.id, null, null);
             }}
-            className="font-mono text-[10px] text-chalk-400 hover:text-red-400"
+            className="font-mono text-[10px] text-pitch-700 hover:text-brick-500 uppercase tracking-widest font-bold"
           >
             borrar
           </button>
@@ -315,7 +325,6 @@ function UsersTab({ initial }: { initial: Participant[] }) {
       setCreated({ name: d.name, pin: d.pin });
       setName("");
       setPin("");
-      // Refresh list
       const list = await fetch("/api/admin/users").then((r) => r.json());
       setParticipants(list.users || []);
     } finally {
@@ -331,17 +340,15 @@ function UsersTab({ initial }: { initial: Participant[] }) {
   }
 
   return (
-    <div className="grid lg:grid-cols-[1fr_1fr] gap-6">
+    <div className="grid lg:grid-cols-[1fr_1fr] gap-8">
+      {/* Crear */}
       <div>
-        <h3 className="font-display text-2xl text-chalk-50 mb-3">
-          Añadir participante
+        <h3 className="font-display text-2xl sm:text-3xl text-chalk-50 mb-4 uppercase">
+          ➕ Añadir
         </h3>
-        <form
-          onSubmit={create}
-          className="bg-pitch-900/60 border border-pitch-800 rounded-2xl p-5 space-y-4"
-        >
+        <form onSubmit={create} className="cromo bg-pitch-900 p-6 space-y-5">
           <div>
-            <label className="block text-xs font-mono uppercase tracking-widest text-chalk-400 mb-2">
+            <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
               Nombre
             </label>
             <input
@@ -353,34 +360,34 @@ function UsersTab({ initial }: { initial: Participant[] }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-mono uppercase tracking-widest text-chalk-400 mb-2">
-              PIN (opcional, mín. 4 dígitos · si lo dejas vacío se genera uno)
+            <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+              PIN (opcional, mín. 4 dígitos)
             </label>
             <input
               value={pin}
               onChange={(e) => setPin(e.target.value)}
-              className="input-base w-full font-mono"
-              placeholder="auto"
+              className="input-base w-full font-mono tracking-widest"
+              placeholder="auto si lo dejas vacío"
               minLength={4}
             />
           </div>
           {error && (
-            <div className="bg-red-900/40 border border-red-800 text-red-200 text-sm rounded px-3 py-2">
-              {error}
+            <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 text-sm font-semibold">
+              ⚠️ {error}
             </div>
           )}
           {created && (
-            <div className="bg-grass-500/10 border border-grass-500/40 rounded-lg px-4 py-3">
-              <div className="text-xs font-mono uppercase tracking-widest text-grass-400 mb-1">
-                ✅ Creado · Comparte estos datos UNA vez
+            <div className="cromo bg-grass-300 text-pitch-950 p-4">
+              <div className="text-xs font-display uppercase tracking-widest mb-2">
+                ✅ CREADO · Comparte UNA vez
               </div>
-              <div className="font-mono text-chalk-50">
+              <div className="font-mono text-sm">
                 <div>
-                  Nombre: <span className="font-bold">{created.name}</span>
+                  Nombre: <strong>{created.name}</strong>
                 </div>
-                <div>
+                <div className="mt-2 flex items-baseline gap-2">
                   PIN:{" "}
-                  <span className="font-bold text-2xl text-flame-400 tracking-widest">
+                  <span className="font-display text-3xl sm:text-4xl text-brick-500 tracking-widest">
                     {created.pin}
                   </span>
                 </div>
@@ -392,27 +399,33 @@ function UsersTab({ initial }: { initial: Participant[] }) {
             disabled={creating}
             className="btn-primary w-full"
           >
-            {creating ? "Creando..." : "Crear participante"}
+            {creating ? "Creando..." : "Crear participante →"}
           </button>
         </form>
       </div>
 
+      {/* Lista */}
       <div>
-        <h3 className="font-display text-2xl text-chalk-50 mb-3">
-          Lista ({participants.length})
+        <h3 className="font-display text-2xl sm:text-3xl text-chalk-50 mb-4 uppercase">
+          👥 Lista ({participants.length})
         </h3>
-        <div className="bg-pitch-900/60 border border-pitch-800 rounded-2xl divide-y divide-pitch-800">
+        <div className="space-y-2">
           {participants.length === 0 && (
-            <div className="p-6 text-chalk-400 text-sm">
-              Aún no hay participantes.
+            <div className="cromo bg-paper-50 text-pitch-700 p-6 text-sm text-center font-mono uppercase tracking-widest">
+              Aún no hay participantes
             </div>
           )}
           {participants.map((p) => (
-            <div key={p.id} className="px-4 py-3 flex items-center justify-between">
-              <span className="font-bold text-chalk-50">{p.name}</span>
+            <div
+              key={p.id}
+              className="cromo bg-paper-50 text-pitch-950 px-4 py-3 flex items-center justify-between"
+            >
+              <span className="font-display text-lg uppercase tracking-tight">
+                {p.name}
+              </span>
               <button
                 onClick={() => remove(p.id, p.name)}
-                className="text-xs font-mono uppercase tracking-widest text-chalk-400 hover:text-red-400"
+                className="font-mono text-[10px] text-pitch-700 hover:text-brick-500 uppercase tracking-widest font-bold"
               >
                 Borrar
               </button>
