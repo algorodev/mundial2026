@@ -20,14 +20,18 @@ type MatchRow = {
 
 type PredMap = Record<number, { homeScore: number; awayScore: number }>;
 
-type Filter = "all" | "pending" | "locked";
+type Filter = "all" | "pending";
 
 export default function PredictionsClient({
   matches,
   initialPreds,
+  tournamentStartIso,
+  tournamentStartLabel,
 }: {
   matches: MatchRow[];
   initialPreds: PredMap;
+  tournamentStartIso: string;
+  tournamentStartLabel: string;
 }) {
   const [preds, setPreds] = useState<PredMap>(initialPreds);
   const [filter, setFilter] = useState<Filter>("all");
@@ -37,12 +41,12 @@ export default function PredictionsClient({
   const debouncers = useRef<Record<number, NodeJS.Timeout>>({});
 
   const now = Date.now();
+  // Cierre global: con el pitido del primer partido todas las predicciones quedan bloqueadas.
+  const tournamentLocked = now >= new Date(tournamentStartIso).getTime();
 
   const grouped = useMemo(() => {
     const visible = matches.filter((m) => {
-      const locked = new Date(m.kickoffAt).getTime() <= now;
-      if (filter === "pending") return !locked && preds[m.id] === undefined;
-      if (filter === "locked") return locked;
+      if (filter === "pending") return !tournamentLocked && preds[m.id] === undefined;
       return true;
     });
 
@@ -53,19 +57,16 @@ export default function PredictionsClient({
       map.get(key)!.push(m);
     }
     return Array.from(map.entries());
-  }, [matches, filter, preds, now]);
+  }, [matches, filter, preds, tournamentLocked]);
 
   const stats = useMemo(() => {
     const filledCount = matches.filter((m) => preds[m.id] !== undefined).length;
-    const lockedCount = matches.filter(
-      (m) => new Date(m.kickoffAt).getTime() <= now
-    ).length;
     return {
       filled: filledCount,
       total: matches.length,
-      locked: lockedCount,
+      missing: matches.length - filledCount,
     };
-  }, [matches, preds, now]);
+  }, [matches, preds]);
 
   function updateLocal(matchId: number, side: "home" | "away", value: string) {
     const num = value === "" ? null : parseInt(value, 10);
@@ -139,6 +140,17 @@ export default function PredictionsClient({
 
   return (
     <div>
+      {/* Banner de cierre global */}
+      {tournamentLocked ? (
+        <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
+          🔒 El Mundial ha empezado · Las predicciones están cerradas
+        </div>
+      ) : (
+        <div className="cromo bg-pitch-900 text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
+          ⏱ Cierre con el pitido del primer partido · {tournamentStartLabel}
+        </div>
+      )}
+
       {/* Stats + filtros */}
       <div className="cromo bg-pitch-900 p-5 sm:p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex gap-8">
@@ -153,34 +165,30 @@ export default function PredictionsClient({
           </div>
           <div>
             <div className="font-display text-5xl text-brick-400 leading-none">
-              {stats.locked}
+              {stats.missing}
             </div>
             <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-2">
-              Bloqueados
+              Sin rellenar
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2 text-xs flex-wrap">
-          <FilterChip
-            active={filter === "all"}
-            onClick={() => setFilter("all")}
-          >
-            Todos
-          </FilterChip>
-          <FilterChip
-            active={filter === "pending"}
-            onClick={() => setFilter("pending")}
-          >
-            Pendientes
-          </FilterChip>
-          <FilterChip
-            active={filter === "locked"}
-            onClick={() => setFilter("locked")}
-          >
-            Bloqueados
-          </FilterChip>
-        </div>
+        {!tournamentLocked && (
+          <div className="flex gap-2 text-xs flex-wrap">
+            <FilterChip
+              active={filter === "all"}
+              onClick={() => setFilter("all")}
+            >
+              Todos
+            </FilterChip>
+            <FilterChip
+              active={filter === "pending"}
+              onClick={() => setFilter("pending")}
+            >
+              Pendientes
+            </FilterChip>
+          </div>
+        )}
       </div>
 
       {errorMsg && (
@@ -213,7 +221,7 @@ export default function PredictionsClient({
                   onUpdate={updateLocal}
                   saving={savingMatchId === m.id}
                   saved={savedFlash === m.id}
-                  now={now}
+                  locked={tournamentLocked}
                   tilt={idx % 2 === 0 ? "even" : "odd"}
                 />
               ))}
@@ -254,7 +262,7 @@ function MatchCard({
   onUpdate,
   saving,
   saved,
-  now,
+  locked,
   tilt,
 }: {
   match: MatchRow;
@@ -262,11 +270,9 @@ function MatchCard({
   onUpdate: (id: number, side: "home" | "away", value: string) => void;
   saving: boolean;
   saved: boolean;
-  now: number;
+  locked: boolean;
   tilt: "even" | "odd";
 }) {
-  const kickoff = new Date(match.kickoffAt).getTime();
-  const locked = kickoff <= now;
   const hasResult = match.homeScore != null && match.awayScore != null;
 
   // Tinte del cromo según resultado

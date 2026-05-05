@@ -24,12 +24,13 @@ export async function GET() {
   // Calcular puntos por usuario
   const stats = new Map<
     number,
-    { name: string; total: number; exact: number; outcome: number; miss: number; played: number }
+    { userId: number; name: string; total: number; exact: number; outcome: number; miss: number; played: number }
   >();
 
   for (const u of allUsers) {
     if (u.isAdmin === 1) continue; // admin no participa
     stats.set(u.id, {
+      userId: u.id,
       name: u.name,
       total: 0,
       exact: 0,

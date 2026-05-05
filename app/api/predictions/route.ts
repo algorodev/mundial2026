@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq, lte } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { predictions, matches } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
+import { getTournamentStartIso } from "@/lib/matches-data";
 
 // GET: predicciones del usuario logado
 export async function GET() {
@@ -46,7 +47,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validar que el partido existe y aún no ha empezado
+    // Cierre global: con el pitido del primer partido se bloquean todas las predicciones.
+    if (new Date() >= new Date(getTournamentStartIso())) {
+      return NextResponse.json(
+        { error: "El Mundial ya ha comenzado, las predicciones están cerradas" },
+        { status: 403 }
+      );
+    }
+
+    // Validar que el partido existe
     const m = await db
       .select()
       .from(matches)
@@ -57,13 +66,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Partido no encontrado" },
         { status: 404 }
-      );
-    }
-
-    if (new Date() >= m[0].kickoffAt) {
-      return NextResponse.json(
-        { error: "Este partido ya ha comenzado, no se puede modificar" },
-        { status: 403 }
       );
     }
 

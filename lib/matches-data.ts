@@ -36,6 +36,19 @@ function iso(dateStr: string, timeStr: string): string {
   return utc.toISOString();
 }
 
+// Inicio del Mundial = kickoff del primer partido. Antes de este instante
+// las predicciones siguen siendo privadas; a partir de aquí, todas quedan
+// bloqueadas y se pueden consultar las del resto de participantes.
+export function getTournamentStartIso(): string {
+  return MATCHES.reduce((min, m) => (m.iso < min ? m.iso : min), MATCHES[0].iso);
+}
+
+export function getTournamentStartLabel(): string {
+  const iso = getTournamentStartIso();
+  const first = MATCHES.find((m) => m.iso === iso)!;
+  return `${first.date} · ${first.time}`;
+}
+
 export const MATCHES: MatchData[] = [
   // 11 jun
   { num: 1, date: "Jue 11 Jun", time: "21:00", iso: iso("2026-06-11", "21:00"), group: "A", home: "México", away: "Sudáfrica", homeFlag: F.MEX, awayFlag: F.RSA, stadium: "Ciudad de México" },

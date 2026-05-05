@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type Row = {
   position: number;
+  userId: number;
   name: string;
   total: number;
   exact: number;
@@ -14,8 +16,12 @@ type Row = {
 
 export default function LeaderboardClient({
   currentName,
+  tournamentStartIso,
+  tournamentStartLabel,
 }: {
   currentName: string;
+  tournamentStartIso: string;
+  tournamentStartLabel: string;
 }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -39,6 +45,9 @@ export default function LeaderboardClient({
     const interval = setInterval(load, 30_000);
     return () => clearInterval(interval);
   }, []);
+
+  const tournamentStarted =
+    Date.now() >= new Date(tournamentStartIso).getTime();
 
   if (rows === null) {
     return (
@@ -67,73 +76,55 @@ export default function LeaderboardClient({
         </div>
       )}
 
+      {/* Aviso sobre visibilidad de pronósticos ajenos */}
+      <div
+        className={`cromo px-4 py-3 mb-8 font-mono text-[11px] uppercase tracking-widest ${
+          tournamentStarted
+            ? "bg-grass-500 text-paper-50"
+            : "bg-pitch-900 text-chalk-300"
+        }`}
+      >
+        {tournamentStarted ? (
+          <>👆 Pulsa en cualquier participante para ver sus pronósticos</>
+        ) : (
+          <>
+            🔒 Las predicciones del resto se podrán consultar cuando empiece el
+            Mundial · {tournamentStartLabel}
+          </>
+        )}
+      </div>
+
       {/* Podio */}
       {rows.length >= 3 && rows[0].played > 0 && (
         <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-12 sm:mb-16 items-end px-2">
-          <PodiumCard row={rows[1]} place={2} />
-          <PodiumCard row={rows[0]} place={1} />
-          <PodiumCard row={rows[2]} place={3} />
+          <PodiumCard
+            row={rows[1]}
+            place={2}
+            clickable={tournamentStarted}
+          />
+          <PodiumCard
+            row={rows[0]}
+            place={1}
+            clickable={tournamentStarted}
+          />
+          <PodiumCard
+            row={rows[2]}
+            place={3}
+            clickable={tournamentStarted}
+          />
         </div>
       )}
 
       {/* Lista — cromos apilados */}
       <div className="space-y-3 sm:space-y-4">
-        {rows.map((row) => {
-          const isMe = row.name === currentName;
-          const tone = isMe
-            ? "bg-flame-500 text-pitch-950"
-            : "bg-pitch-900 text-chalk-50";
-          const accentTotal = isMe ? "text-pitch-950" : "text-flame-500";
-          const accentPos = isMe ? "text-pitch-950" : "text-flame-500";
-          return (
-            <div
-              key={row.name}
-              className={`cromo ${tone} flex items-center gap-3 sm:gap-5 p-4 sm:p-5`}
-            >
-              <div
-                className={`font-display text-4xl sm:text-6xl w-12 sm:w-20 leading-none text-center ${accentPos}`}
-              >
-                {row.position}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-display text-xl sm:text-2xl tracking-tight truncate uppercase">
-                  {row.name}
-                  {isMe && (
-                    <span className="ml-3 text-[10px] font-mono uppercase tracking-widest opacity-80">
-                      ← TÚ
-                    </span>
-                  )}
-                </div>
-                <div className="flex gap-3 sm:gap-4 mt-1 text-[10px] font-mono uppercase tracking-widest opacity-80">
-                  <span>
-                    <strong className={isMe ? "text-pitch-950" : "text-grass-400"}>
-                      {row.exact}
-                    </strong>{" "}
-                    ex
-                  </span>
-                  <span>
-                    <strong className={isMe ? "text-pitch-950" : "text-flame-400"}>
-                      {row.outcome}
-                    </strong>{" "}
-                    sg
-                  </span>
-                  <span>
-                    <strong>{row.miss}</strong> fa
-                  </span>
-                  <span className="hidden sm:inline">· {row.played} jug.</span>
-                </div>
-              </div>
-              <div
-                className={`font-display text-4xl sm:text-5xl ${accentTotal} flex items-baseline gap-1`}
-              >
-                {row.total}
-                <span className="font-mono text-[10px] uppercase tracking-widest opacity-70">
-                  pts
-                </span>
-              </div>
-            </div>
-          );
-        })}
+        {rows.map((row) => (
+          <LeaderboardRow
+            key={row.userId}
+            row={row}
+            isMe={row.name === currentName}
+            clickable={tournamentStarted}
+          />
+        ))}
       </div>
 
       {updatedAt && (
@@ -145,7 +136,102 @@ export default function LeaderboardClient({
   );
 }
 
-function PodiumCard({ row, place }: { row: Row; place: 1 | 2 | 3 }) {
+function LeaderboardRow({
+  row,
+  isMe,
+  clickable,
+}: {
+  row: Row;
+  isMe: boolean;
+  clickable: boolean;
+}) {
+  const tone = isMe
+    ? "bg-flame-500 text-pitch-950"
+    : "bg-pitch-900 text-chalk-50";
+  const accentTotal = isMe ? "text-pitch-950" : "text-flame-500";
+  const accentPos = isMe ? "text-pitch-950" : "text-flame-500";
+
+  const interactive = clickable
+    ? "hover:-translate-y-0.5 hover:shadow-brutal-lg transition-all cursor-pointer"
+    : "";
+
+  const content = (
+    <>
+      <div
+        className={`font-display text-4xl sm:text-6xl w-12 sm:w-20 leading-none text-center ${accentPos}`}
+      >
+        {row.position}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-display text-xl sm:text-2xl tracking-tight truncate uppercase">
+          {row.name}
+          {isMe && (
+            <span className="ml-3 text-[10px] font-mono uppercase tracking-widest opacity-80">
+              ← TÚ
+            </span>
+          )}
+        </div>
+        <div className="flex gap-3 sm:gap-4 mt-1 text-[10px] font-mono uppercase tracking-widest opacity-80">
+          <span>
+            <strong className={isMe ? "text-pitch-950" : "text-grass-400"}>
+              {row.exact}
+            </strong>{" "}
+            ex
+          </span>
+          <span>
+            <strong className={isMe ? "text-pitch-950" : "text-flame-400"}>
+              {row.outcome}
+            </strong>{" "}
+            sg
+          </span>
+          <span>
+            <strong>{row.miss}</strong> fa
+          </span>
+          <span className="hidden sm:inline">· {row.played} jug.</span>
+        </div>
+      </div>
+      <div
+        className={`font-display text-4xl sm:text-5xl ${accentTotal} flex items-baseline gap-1`}
+      >
+        {row.total}
+        <span className="font-mono text-[10px] uppercase tracking-widest opacity-70">
+          pts
+        </span>
+      </div>
+      {clickable && (
+        <span
+          className={`hidden sm:block font-display text-2xl ${
+            isMe ? "text-pitch-950/60" : "text-chalk-400"
+          }`}
+          aria-hidden
+        >
+          ›
+        </span>
+      )}
+    </>
+  );
+
+  const className = `cromo ${tone} flex items-center gap-3 sm:gap-5 p-4 sm:p-5 ${interactive}`;
+
+  if (clickable) {
+    return (
+      <Link href={`/leaderboard/${row.userId}`} className={className}>
+        {content}
+      </Link>
+    );
+  }
+  return <div className={className}>{content}</div>;
+}
+
+function PodiumCard({
+  row,
+  place,
+  clickable,
+}: {
+  row: Row;
+  place: 1 | 2 | 3;
+  clickable: boolean;
+}) {
   const styles = {
     1: {
       h: "h-56 sm:h-72",
@@ -170,8 +256,10 @@ function PodiumCard({ row, place }: { row: Row; place: 1 | 2 | 3 }) {
     },
   } as const;
   const s = styles[place];
-  return (
-    <div className={`flex flex-col items-stretch ${s.rotate} hover:rotate-0 transition-transform`}>
+  const inner = (
+    <div
+      className={`flex flex-col items-stretch ${s.rotate} hover:rotate-0 transition-transform`}
+    >
       <div className="text-center text-3xl sm:text-5xl mb-2">{s.medal}</div>
       <div
         className={`cromo ${s.h} ${s.bg} ${s.text} flex flex-col items-center justify-end p-3 sm:p-4`}
@@ -188,4 +276,12 @@ function PodiumCard({ row, place }: { row: Row; place: 1 | 2 | 3 }) {
       </div>
     </div>
   );
+  if (clickable) {
+    return (
+      <Link href={`/leaderboard/${row.userId}`} className="block">
+        {inner}
+      </Link>
+    );
+  }
+  return inner;
 }

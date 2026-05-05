@@ -4,6 +4,10 @@ import { db } from "@/lib/db";
 import { matches, predictions } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import PredictionsClient from "@/components/PredictionsClient";
+import {
+  getTournamentStartIso,
+  getTournamentStartLabel,
+} from "@/lib/matches-data";
 
 export default async function PredictionsPage() {
   const session = await getSession();
@@ -43,6 +47,8 @@ export default async function PredictionsPage() {
       <PredictionsClient
         matches={matchesSerialized}
         initialPreds={predsMap}
+        tournamentStartIso={getTournamentStartIso()}
+        tournamentStartLabel={getTournamentStartLabel()}
       />
     </div>
   );
