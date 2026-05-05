@@ -9,7 +9,9 @@
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "sim": "tsx scripts/simulate.ts start",
+    "sim:reset": "tsx scripts/simulate.ts reset"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
