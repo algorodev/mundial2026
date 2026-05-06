@@ -84,7 +84,7 @@ scripts/seed.ts         → idempotente: insert MATCHES onConflictDoNothing + ad
 - **0 pts** → fallo
 - **pending** → si falta cualquier score (predicción o real)
 
-El leaderboard ordena por: total desc → exactos desc → nombre asc. Asigna posiciones compartidas en empate. **El admin no aparece en el leaderboard** (`u.isAdmin === 1` se filtra).
+El leaderboard ordena por: total desc → exactos desc → nombre asc. Los exactos son **desempate** entre jugadores con el mismo total: sólo comparten posición si coinciden total **y** exactos. **El admin no aparece en el leaderboard** (`u.isAdmin === 1` se filtra).
 
 ## Auth
 

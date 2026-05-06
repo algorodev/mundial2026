@@ -66,13 +66,19 @@ export async function GET() {
     return a.name.localeCompare(b.name);
   });
 
-  // Asignar posiciones (con empates compartidos)
+  // Asignar posiciones. Sólo se comparte puesto si coinciden total Y exactos:
+  // los exactos rompen el empate de puntos para sacar al verdadero ganador.
   let prevTotal: number | null = null;
+  let prevExact: number | null = null;
   let prevPos = 0;
   const ranked = leaderboard.map((row, idx) => {
-    const pos =
-      prevTotal !== null && row.total === prevTotal ? prevPos : idx + 1;
+    const tied =
+      prevTotal !== null &&
+      row.total === prevTotal &&
+      row.exact === prevExact;
+    const pos = tied ? prevPos : idx + 1;
     prevTotal = row.total;
+    prevExact = row.exact;
     prevPos = pos;
     return { ...row, position: pos };
   });
