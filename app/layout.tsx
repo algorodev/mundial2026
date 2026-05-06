@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import NavBar from "@/components/NavBar";
+import LiveScoreboard from "@/components/LiveScoreboard";
 
 export const metadata: Metadata = {
   title: "La Porra · Mundial 2026",
@@ -22,6 +23,7 @@ export default async function RootLayout({
         <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest">
           ⚽ La Porra · Mundial 2026 · Hecho con ☕ en Pedralba
         </footer>
+        {session && <LiveScoreboard />}
       </body>
     </html>
   );
