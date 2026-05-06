@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { predictions, matches } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { getTournamentStartIso } from "@/lib/matches-data";
+import { getTournamentStart } from "@/lib/tournament";
 
 // GET: predicciones del usuario logado
 export async function GET() {
@@ -48,7 +48,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Cierre global: con el pitido del primer partido se bloquean todas las predicciones.
-    if (new Date() >= new Date(getTournamentStartIso())) {
+    const tournamentStart = await getTournamentStart();
+    if (new Date() >= new Date(tournamentStart.iso)) {
       return NextResponse.json(
         { error: "El Mundial ya ha comenzado, las predicciones están cerradas" },
         { status: 403 }

@@ -1,16 +1,15 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import LeaderboardClient from "@/components/LeaderboardClient";
-import {
-  getTournamentStartIso,
-  getTournamentStartLabel,
-} from "@/lib/matches-data";
+import { getTournamentStart } from "@/lib/tournament";
 
 export const dynamic = "force-dynamic";
 
 export default async function LeaderboardPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+
+  const tournamentStart = await getTournamentStart();
 
   return (
     <div className="pt-8">
@@ -25,8 +24,8 @@ export default async function LeaderboardPage() {
 
       <LeaderboardClient
         currentName={session.name}
-        tournamentStartIso={getTournamentStartIso()}
-        tournamentStartLabel={getTournamentStartLabel()}
+        tournamentStartIso={tournamentStart.iso}
+        tournamentStartLabel={tournamentStart.label}
       />
     </div>
   );

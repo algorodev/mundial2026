@@ -4,22 +4,20 @@ import { db } from "@/lib/db";
 import { matches, predictions } from "@/lib/db/schema";
 import { eq, asc } from "drizzle-orm";
 import PredictionsClient from "@/components/PredictionsClient";
-import {
-  getTournamentStartIso,
-  getTournamentStartLabel,
-} from "@/lib/matches-data";
+import { getTournamentStart } from "@/lib/tournament";
 
 export default async function PredictionsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.isAdmin) redirect("/admin");
 
-  const [allMatches, myPreds] = await Promise.all([
+  const [allMatches, myPreds, tournamentStart] = await Promise.all([
     db.select().from(matches).orderBy(asc(matches.matchNumber)),
     db
       .select()
       .from(predictions)
       .where(eq(predictions.userId, session.userId)),
+    getTournamentStart(),
   ]);
 
   // Serializar fechas a string para evitar issues de hydration
@@ -47,8 +45,8 @@ export default async function PredictionsPage() {
       <PredictionsClient
         matches={matchesSerialized}
         initialPreds={predsMap}
-        tournamentStartIso={getTournamentStartIso()}
-        tournamentStartLabel={getTournamentStartLabel()}
+        tournamentStartIso={tournamentStart.iso}
+        tournamentStartLabel={tournamentStart.label}
       />
     </div>
   );

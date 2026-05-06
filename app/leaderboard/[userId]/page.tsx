@@ -4,7 +4,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, predictions, users } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { getTournamentStartIso, getTournamentStartLabel } from "@/lib/matches-data";
+import { getTournamentStart } from "@/lib/tournament";
 import { calcPoints, type ScoreResult } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
@@ -19,8 +19,8 @@ export default async function UserPredictionsPage({
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const tournamentStartIso = getTournamentStartIso();
-  if (Date.now() < new Date(tournamentStartIso).getTime()) {
+  const tournamentStart = await getTournamentStart();
+  if (Date.now() < new Date(tournamentStart.iso).getTime()) {
     // Aún no ha empezado el Mundial: las predicciones ajenas son privadas.
     redirect("/leaderboard");
   }
@@ -103,7 +103,7 @@ export default async function UserPredictionsPage({
           )}
         </h1>
         <p className="mt-3 font-mono text-[10px] uppercase tracking-widest text-chalk-400">
-          🔒 Bloqueadas desde el inicio del Mundial · {getTournamentStartLabel()}
+          🔒 Bloqueadas desde el inicio del Mundial · {tournamentStart.label}
         </p>
       </div>
 
