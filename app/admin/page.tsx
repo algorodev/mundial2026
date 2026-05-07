@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { tournaments, matches, groups } from "@/lib/db/schema";
 import { asc, sql } from "drizzle-orm";
+import TournamentBadge from "@/components/TournamentBadge";
 
 export default async function AdminPage() {
   const session = await getSession();
@@ -50,17 +51,23 @@ export default async function AdminPage() {
             <Link
               key={t.id}
               href={`/admin/t/${t.slug}`}
-              className="cromo bg-paper-50 text-pitch-950 p-5 flex items-center justify-between hover:-translate-y-0.5 transition-transform"
+              className="cromo bg-paper-50 text-pitch-950 p-5 flex items-center gap-4 hover:-translate-y-0.5 transition-transform"
             >
-              <div>
-                <div className="font-display text-2xl uppercase tracking-tight">
+              <TournamentBadge
+                slug={t.slug}
+                name={t.name}
+                size="lg"
+                className="shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-display text-2xl uppercase tracking-tight truncate">
                   {t.name}
                 </div>
-                <div className="mt-1 font-mono text-xs text-pitch-700 uppercase tracking-widest">
+                <div className="mt-1 font-mono text-xs text-pitch-700 uppercase tracking-widest truncate">
                   {t.sport} · {t.status} · {Number(t.groupCount)} grupos
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <div className="font-display text-xl text-flame-500">
                   {done}/{total}
                 </div>

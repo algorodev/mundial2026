@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import TournamentBadge from "@/components/TournamentBadge";
 
 type Tournament = {
   slug: string;
@@ -44,7 +45,7 @@ export default function NewGroupClient({
   }
 
   return (
-    <form onSubmit={submit} className="cromo bg-pitch-900 p-6 sm:p-8 space-y-5">
+    <form onSubmit={submit} className="cromo bg-pitch-900 p-6 sm:p-8 space-y-6">
       <div>
         <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
           Nombre del grupo
@@ -60,23 +61,51 @@ export default function NewGroupClient({
           autoFocus
         />
       </div>
+
       <div>
         <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
           Torneo
         </label>
-        <select
-          value={tournamentSlug}
-          onChange={(e) => setTournamentSlug(e.target.value)}
-          className="input-base w-full"
-        >
-          {tournaments.map((t) => (
-            <option key={t.slug} value={t.slug}>
-              {t.name}
-              {t.status !== "upcoming" ? ` · ${t.status}` : ""}
-            </option>
-          ))}
-        </select>
-        <p className="mt-2 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {tournaments.map((t) => {
+            const active = tournamentSlug === t.slug;
+            return (
+              <button
+                key={t.slug}
+                type="button"
+                onClick={() => setTournamentSlug(t.slug)}
+                className={`cromo flex items-center gap-4 p-4 text-left transition-all ${
+                  active
+                    ? "bg-flame-500 text-pitch-950 -translate-x-0.5 -translate-y-0.5"
+                    : "bg-paper-50 text-pitch-950 hover:-translate-y-0.5"
+                }`}
+              >
+                <TournamentBadge
+                  slug={t.slug}
+                  name={t.name}
+                  size="lg"
+                  className="shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="font-display text-base sm:text-lg uppercase tracking-tight leading-tight">
+                    {t.name}
+                  </div>
+                  <div
+                    className={`mt-1 font-mono text-[10px] uppercase tracking-widest ${
+                      active ? "text-pitch-950/70" : "text-pitch-700"
+                    }`}
+                  >
+                    {t.status}
+                  </div>
+                </div>
+                {active && (
+                  <span className="shrink-0 font-display text-2xl">✓</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-3 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
           Un grupo = un torneo. Si quieres dos porras, crea dos grupos.
         </p>
       </div>

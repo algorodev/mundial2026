@@ -4,6 +4,7 @@ import { eq, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { groups, groupMembers, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
+import TournamentBadge from "@/components/TournamentBadge";
 
 export default async function GroupsPage() {
   const session = await getSession();
@@ -14,6 +15,7 @@ export default async function GroupsPage() {
       slug: groups.slug,
       name: groups.name,
       tournamentName: tournaments.name,
+      tournamentSlug: tournaments.slug,
       role: groupMembers.role,
       ownerId: groups.ownerId,
     })
@@ -52,18 +54,24 @@ export default async function GroupsPage() {
           <Link
             key={g.slug}
             href={`/g/${g.slug}`}
-            className="cromo bg-paper-50 text-pitch-950 p-5 flex items-center justify-between hover:-translate-y-0.5 transition-transform"
+            className="cromo bg-paper-50 text-pitch-950 p-5 flex items-center gap-4 hover:-translate-y-0.5 transition-transform"
           >
-            <div>
-              <div className="font-display text-2xl uppercase tracking-tight">
+            <TournamentBadge
+              slug={g.tournamentSlug}
+              name={g.tournamentName}
+              size="lg"
+              className="shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="font-display text-2xl uppercase tracking-tight truncate">
                 {g.name}
               </div>
-              <div className="mt-1 font-mono text-xs text-pitch-700 uppercase tracking-widest">
+              <div className="mt-1 font-mono text-xs text-pitch-700 uppercase tracking-widest truncate">
                 {g.tournamentName}
               </div>
             </div>
             {g.ownerId === session.userId && (
-              <span className="bg-flame-500 text-pitch-950 font-display text-[10px] px-2 py-1 border-2 border-pitch-950 uppercase tracking-widest">
+              <span className="shrink-0 bg-flame-500 text-pitch-950 font-display text-[10px] px-2 py-1 border-2 border-pitch-950 uppercase tracking-widest">
                 Owner
               </span>
             )}

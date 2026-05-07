@@ -12,6 +12,7 @@ import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
 import GroupTabs from "@/components/GroupTabs";
 import ManageGroupClient from "@/components/ManageGroupClient";
+import TournamentBadge from "@/components/TournamentBadge";
 
 export default async function ManageGroupPage({
   params,
@@ -33,6 +34,7 @@ export default async function ManageGroupPage({
       .select({
         inviteCode: groups.inviteCode,
         tournamentName: tournaments.name,
+        tournamentSlug: tournaments.slug,
       })
       .from(groups)
       .innerJoin(tournaments, eq(groups.tournamentId, tournaments.id))
@@ -61,13 +63,21 @@ export default async function ManageGroupPage({
       >
         ← Mis porras
       </Link>
-      <div className="mb-6">
-        <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
-          {ctx.name}
-        </h1>
-        <p className="mt-3 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          {details.tournamentName}
-        </p>
+      <div className="mb-6 flex items-start gap-4">
+        <TournamentBadge
+          slug={details.tournamentSlug}
+          name={details.tournamentName}
+          size="xl"
+          className="shrink-0 mt-1"
+        />
+        <div className="min-w-0">
+          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+            {ctx.name}
+          </h1>
+          <p className="mt-3 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
+            {details.tournamentName}
+          </p>
+        </div>
       </div>
       <GroupTabs slug={ctx.slug} active="manage" isOwner />
       <ManageGroupClient

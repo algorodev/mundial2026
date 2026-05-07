@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { tournaments, matches } from "@/lib/db/schema";
 import { asc, eq } from "drizzle-orm";
 import AdminResultsClient from "@/components/AdminResultsClient";
+import TournamentBadge from "@/components/TournamentBadge";
 
 export default async function AdminTournamentPage({
   params,
@@ -42,13 +43,21 @@ export default async function AdminTournamentPage({
       >
         ← Torneos
       </Link>
-      <div className="mb-10">
-        <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
-          {tournament.name}
-        </h1>
-        <p className="mt-3 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          Resultados
-        </p>
+      <div className="mb-10 flex items-start gap-4">
+        <TournamentBadge
+          slug={tournament.slug}
+          name={tournament.name}
+          size="xl"
+          className="shrink-0 mt-1"
+        />
+        <div className="min-w-0">
+          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+            {tournament.name}
+          </h1>
+          <p className="mt-3 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
+            Resultados
+          </p>
+        </div>
       </div>
       <AdminResultsClient
         tournamentSlug={tournament.slug}

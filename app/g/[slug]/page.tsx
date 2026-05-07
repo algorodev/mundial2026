@@ -9,6 +9,7 @@ import { getGroupForMember } from "@/lib/group-access";
 import PredictionsClient from "@/components/PredictionsClient";
 import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
+import TournamentBadge from "@/components/TournamentBadge";
 
 export default async function GroupPredictionsPage({
   params,
@@ -63,13 +64,23 @@ export default async function GroupPredictionsPage({
       >
         ← Mis porras
       </Link>
-      <div className="mb-6">
-        <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
-          {ctx.name}
-        </h1>
-        <p className="mt-3 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          {tournament?.name}
-        </p>
+      <div className="mb-6 flex items-start gap-4">
+        {tournament && (
+          <TournamentBadge
+            slug={tournament.slug}
+            name={tournament.name}
+            size="xl"
+            className="shrink-0 mt-1"
+          />
+        )}
+        <div className="min-w-0">
+          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+            {ctx.name}
+          </h1>
+          <p className="mt-3 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
+            {tournament?.name}
+          </p>
+        </div>
       </div>
       <GroupTabs
         slug={ctx.slug}
