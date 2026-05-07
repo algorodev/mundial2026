@@ -24,7 +24,7 @@ export default async function NewGroupPage() {
     .orderBy(asc(tournaments.createdAt));
 
   return (
-    <div className="pt-8 max-w-xl mx-auto">
+    <div className="pt-8">
       <Link
         href="/groups"
         className="inline-block font-mono text-xs text-chalk-300 hover:text-flame-400 uppercase tracking-widest mb-4"
