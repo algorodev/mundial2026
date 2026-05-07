@@ -23,7 +23,10 @@ export default async function JoinPage({
     .select({
       slug: groups.slug,
       name: groups.name,
+      description: groups.description,
       tournamentName: tournaments.name,
+      joinPolicy: groups.joinPolicy,
+      joinDeadline: groups.joinDeadline,
     })
     .from(groups)
     .innerJoin(tournaments, eq(groups.tournamentId, tournaments.id))
@@ -44,13 +47,22 @@ export default async function JoinPage({
     );
   }
 
+  const deadlineExpired =
+    group.joinDeadline && Date.now() > group.joinDeadline.getTime();
+  const closed = group.joinPolicy === "closed" || deadlineExpired;
+  const requiresApproval = group.joinPolicy === "approval";
+
   return (
     <div className="pt-12 max-w-md mx-auto">
       <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none mb-3 text-center">
         UNIRTE
       </h1>
       <p className="text-center text-chalk-300 mb-8">
-        Vas a unirte al grupo:
+        {closed
+          ? "Este grupo ya no acepta inscripciones."
+          : requiresApproval
+            ? "Vas a solicitar entrar al grupo:"
+            : "Vas a unirte al grupo:"}
       </p>
       <div className="cromo bg-paper-50 text-pitch-950 p-5 mb-8 text-center">
         <div className="font-display text-3xl uppercase tracking-tight">
@@ -59,8 +71,33 @@ export default async function JoinPage({
         <div className="font-mono text-xs text-pitch-700 mt-1 uppercase tracking-widest">
           {group.tournamentName}
         </div>
+        {group.description && (
+          <p className="mt-3 text-sm text-pitch-700 whitespace-pre-line">
+            {group.description}
+          </p>
+        )}
       </div>
-      <JoinClient code={code} />
+      {closed ? (
+        <Link href="/groups" className="btn-secondary w-full block text-center">
+          Volver a mis porras
+        </Link>
+      ) : (
+        <JoinClient
+          code={code}
+          requiresApproval={requiresApproval}
+          deadlineLabel={
+            group.joinDeadline
+              ? new Intl.DateTimeFormat("es-ES", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "Europe/Madrid",
+                }).format(group.joinDeadline)
+              : null
+          }
+        />
+      )}
     </div>
   );
 }

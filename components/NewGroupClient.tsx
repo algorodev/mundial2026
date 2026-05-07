@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import TournamentBadge from "@/components/TournamentBadge";
+import GroupSettingsFields, {
+  DEFAULT_SETTINGS,
+  settingsToPayload,
+  type GroupSettingsValue,
+} from "@/components/GroupSettingsFields";
 
 type Tournament = {
   slug: string;
@@ -26,6 +31,8 @@ export default function NewGroupClient({
   const router = useRouter();
   const [name, setName] = useState("");
   const [tournamentSlug, setTournamentSlug] = useState(tournaments[0].slug);
+  const [settings, setSettings] = useState<GroupSettingsValue>(DEFAULT_SETTINGS);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +44,11 @@ export default function NewGroupClient({
       const r = await fetch("/api/groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), tournamentSlug }),
+        body: JSON.stringify({
+          name: name.trim(),
+          tournamentSlug,
+          ...settingsToPayload(settings),
+        }),
       });
       const data = await r.json();
       if (!r.ok) {
@@ -115,6 +126,23 @@ export default function NewGroupClient({
         <p className="mt-3 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
           Un grupo = un torneo. Si quieres dos porras, crea dos grupos.
         </p>
+      </div>
+
+      {/* Configuración avanzada — colapsable para no abrumar */}
+      <div className="border-t-2 border-pitch-800 pt-5">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((s) => !s)}
+          className="w-full flex items-center justify-between text-left font-display text-sm uppercase tracking-widest text-flame-400 hover:text-flame-300"
+        >
+          <span>⚙ Configuración avanzada</span>
+          <span className="font-mono text-xs">{showAdvanced ? "▲" : "▼"}</span>
+        </button>
+        {showAdvanced && (
+          <div className="mt-5">
+            <GroupSettingsFields value={settings} onChange={setSettings} />
+          </div>
+        )}
       </div>
 
       {error && (

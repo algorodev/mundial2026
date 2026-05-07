@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import {
   groups,
   groupMembers,
+  groupJoinRequests,
   tournaments,
   users,
 } from "@/lib/db/schema";
@@ -29,12 +30,19 @@ export default async function ManageGroupPage({
     redirect(`/g/${params.slug}`);
   }
 
-  const [details, memberRows] = await Promise.all([
+  const [details, memberRows, requestRows] = await Promise.all([
     db
       .select({
         inviteCode: groups.inviteCode,
         tournamentName: tournaments.name,
         tournamentSlug: tournaments.slug,
+        description: groups.description,
+        predictionLockMode: groups.predictionLockMode,
+        lockMinutesBefore: groups.lockMinutesBefore,
+        joinPolicy: groups.joinPolicy,
+        joinDeadline: groups.joinDeadline,
+        allowLateJoin: groups.allowLateJoin,
+        predictionsVisibility: groups.predictionsVisibility,
       })
       .from(groups)
       .innerJoin(tournaments, eq(groups.tournamentId, tournaments.id))
@@ -53,6 +61,17 @@ export default async function ManageGroupPage({
       .innerJoin(users, eq(groupMembers.userId, users.id))
       .where(eq(groupMembers.groupId, ctx.groupId))
       .orderBy(asc(groupMembers.joinedAt)),
+    db
+      .select({
+        userId: users.id,
+        name: users.name,
+        email: users.email,
+        requestedAt: groupJoinRequests.requestedAt,
+      })
+      .from(groupJoinRequests)
+      .innerJoin(users, eq(groupJoinRequests.userId, users.id))
+      .where(eq(groupJoinRequests.groupId, ctx.groupId))
+      .orderBy(asc(groupJoinRequests.requestedAt)),
   ]);
 
   return (
@@ -86,9 +105,34 @@ export default async function ManageGroupPage({
         ownerId={ctx.ownerId}
         myUserId={session.userId}
         inviteCode={details.inviteCode}
+        groupName={ctx.name}
+        initialSettings={{
+          description: details.description ?? "",
+          predictionLockMode:
+            details.predictionLockMode === "tournament-start"
+              ? "tournament-start"
+              : "per-match",
+          lockMinutesBefore: details.lockMinutesBefore,
+          joinPolicy:
+            details.joinPolicy === "approval"
+              ? "approval"
+              : details.joinPolicy === "closed"
+                ? "closed"
+                : "open",
+          joinDeadlineIso: details.joinDeadline?.toISOString() ?? null,
+          allowLateJoin: details.allowLateJoin === 1,
+          predictionsVisibility:
+            details.predictionsVisibility === "open"
+              ? "open"
+              : "hidden-until-lock",
+        }}
         members={memberRows.map((m) => ({
           ...m,
           joinedAt: m.joinedAt.toISOString(),
+        }))}
+        initialRequests={requestRows.map((r) => ({
+          ...r,
+          requestedAt: r.requestedAt.toISOString(),
         }))}
       />
     </div>

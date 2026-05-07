@@ -74,6 +74,9 @@ export default async function GroupLeaderboardPage({
         currentName={session.name}
         tournamentStartIso={start?.iso ?? new Date(0).toISOString()}
         tournamentStartLabel={start?.label ?? ""}
+        predictionsVisibility={
+          ctx.predictionsVisibility === "open" ? "open" : "hidden-until-lock"
+        }
       />
       <LiveScoreboard groupSlug={ctx.slug} />
     </div>

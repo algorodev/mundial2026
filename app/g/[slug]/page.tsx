@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { eq, and, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, predictions, tournaments } from "@/lib/db/schema";
+import { matches, predictions, tournaments, groups } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
 import { getGroupForMember } from "@/lib/group-access";
@@ -22,11 +22,17 @@ export default async function GroupPredictionsPage({
   const ctx = await getGroupForMember(params.slug, session.userId);
   if (!ctx) notFound();
 
-  const [tournament, allMatches, myPreds, start] = await Promise.all([
+  const [tournament, group, allMatches, myPreds, start] = await Promise.all([
     db
       .select()
       .from(tournaments)
       .where(eq(tournaments.id, ctx.tournamentId))
+      .limit(1)
+      .then((r) => r[0]),
+    db
+      .select({ description: groups.description })
+      .from(groups)
+      .where(eq(groups.id, ctx.groupId))
       .limit(1)
       .then((r) => r[0]),
     db
@@ -81,6 +87,11 @@ export default async function GroupPredictionsPage({
           <p className="mt-3 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
             {tournament?.name}
           </p>
+          {group?.description && (
+            <p className="mt-3 text-sm text-chalk-300 whitespace-pre-line max-w-2xl">
+              {group.description}
+            </p>
+          )}
         </div>
       </div>
       <GroupTabs

@@ -19,11 +19,15 @@ export default function LeaderboardClient({
   currentName,
   tournamentStartIso,
   tournamentStartLabel,
+  predictionsVisibility,
 }: {
   groupSlug: string;
   currentName: string;
   tournamentStartIso: string;
   tournamentStartLabel: string;
+  // 'open' → siempre se pueden ver los pronósticos ajenos (rows clickables)
+  // 'hidden-until-lock' → solo cuando arranca el torneo (default)
+  predictionsVisibility: "open" | "hidden-until-lock";
 }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -53,6 +57,9 @@ export default function LeaderboardClient({
 
   const tournamentStarted =
     Date.now() >= new Date(tournamentStartIso).getTime();
+  // Los rows son clickables (pronósticos ajenos visibles) si el grupo lo
+  // permite explícitamente o si el torneo ya ha empezado.
+  const peersVisible = predictionsVisibility === "open" || tournamentStarted;
 
   if (rows === null) {
     return (
@@ -84,12 +91,12 @@ export default function LeaderboardClient({
       {/* Aviso sobre visibilidad de pronósticos ajenos */}
       <div
         className={`cromo px-4 py-3 mb-8 font-mono text-[11px] uppercase tracking-widest ${
-          tournamentStarted
+          peersVisible
             ? "bg-grass-500 text-paper-50"
             : "bg-pitch-900 text-chalk-300"
         }`}
       >
-        {tournamentStarted ? (
+        {peersVisible ? (
           <>👆 Pulsa en cualquier participante para ver sus pronósticos</>
         ) : (
           <>
@@ -105,19 +112,19 @@ export default function LeaderboardClient({
           <PodiumCard
             row={rows[1]}
             place={2}
-            clickable={tournamentStarted}
+            clickable={peersVisible}
             groupSlug={groupSlug}
           />
           <PodiumCard
             row={rows[0]}
             place={1}
-            clickable={tournamentStarted}
+            clickable={peersVisible}
             groupSlug={groupSlug}
           />
           <PodiumCard
             row={rows[2]}
             place={3}
-            clickable={tournamentStarted}
+            clickable={peersVisible}
             groupSlug={groupSlug}
           />
         </div>
@@ -130,7 +137,7 @@ export default function LeaderboardClient({
             key={row.userId}
             row={row}
             isMe={row.name === currentName}
-            clickable={tournamentStarted}
+            clickable={peersVisible}
             groupSlug={groupSlug}
           />
         ))}
