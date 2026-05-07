@@ -46,6 +46,12 @@ export default function NavBar({
               >
                 Mis porras
               </Link>
+              <Link
+                href="/profile"
+                className="text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display"
+              >
+                {session.name}
+              </Link>
               {session.isGlobalAdmin && (
                 <Link
                   href="/admin"
