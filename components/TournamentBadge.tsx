@@ -2,18 +2,17 @@ import Image from "next/image";
 
 type Size = "sm" | "md" | "lg" | "xl";
 
-const SIZE_PX: Record<Size, number> = {
-  sm: 28,
-  md: 40,
-  lg: 56,
-  xl: 96,
+// Altura fija por tamaño. El ancho se ajusta según el aspect ratio del logo,
+// así Mundial (ancho), Champions (cuadrado) y LaLiga (vertical) acaban con el
+// mismo alto visual aunque sus proporciones difieran. maxWidth evita que un
+// logo extremadamente apaisado rompa el layout.
+const SIZE: Record<Size, { h: number; maxW: number }> = {
+  sm: { h: 24, maxW: 64 },
+  md: { h: 36, maxW: 96 },
+  lg: { h: 52, maxW: 128 },
+  xl: { h: 88, maxW: 200 },
 };
 
-/**
- * Logo oficial del torneo desde /public/tournaments/{slug}.png. Si no
- * encontramos el archivo, Next devuelve un 404 y la imagen no se pinta;
- * en ese caso el padre puede mostrar un fallback (un emoji 🏆 al lado).
- */
 export default function TournamentBadge({
   slug,
   name,
@@ -25,14 +24,17 @@ export default function TournamentBadge({
   size?: Size;
   className?: string;
 }) {
-  const px = SIZE_PX[size];
+  const { h, maxW } = SIZE[size];
   return (
     <Image
       src={`/tournaments/${slug}.png`}
       alt={name}
-      width={px}
-      height={px}
-      className={`inline-block object-contain ${className}`}
+      // width/height nominales para que Next sepa el aspect; el render real lo
+      // controla style: alto fijo, ancho automático.
+      width={200}
+      height={200}
+      style={{ height: `${h}px`, width: "auto", maxWidth: `${maxW}px` }}
+      className={`object-contain ${className}`}
       unoptimized
     />
   );
