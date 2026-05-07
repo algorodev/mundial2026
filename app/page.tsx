@@ -4,9 +4,24 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { tournaments } from "@/lib/db/schema";
-import { sql } from "drizzle-orm";
+import { asc } from "drizzle-orm";
+import TournamentBadge from "@/components/TournamentBadge";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
+
+const STATUS_LABEL: Record<string, string> = {
+  draft: "En construcción",
+  upcoming: "Próximamente",
+  live: "En curso",
+  finished: "Terminado",
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  draft: "bg-pitch-950 text-chalk-300",
+  upcoming: "bg-flame-500 text-pitch-950",
+  live: "bg-grass-500 text-paper-50",
+  finished: "bg-paper-200 text-pitch-700",
+};
 
 // Schema.org structured data — ayuda a Google a entender qué es la app.
 const STRUCTURED_DATA = {
@@ -47,10 +62,14 @@ export default async function HomePage() {
     redirect("/groups");
   }
 
-  const [counts] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(tournaments);
-  const totalTournaments = Number(counts?.count ?? 0);
+  const tournamentList = await db
+    .select({
+      slug: tournaments.slug,
+      name: tournaments.name,
+      status: tournaments.status,
+    })
+    .from(tournaments)
+    .orderBy(asc(tournaments.createdAt));
 
   return (
     <div className="pt-10 sm:pt-16 overflow-x-hidden">
@@ -91,6 +110,55 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Torneos disponibles */}
+      {tournamentList.length > 0 && (
+        <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal rotate-1">
+              🏆 TORNEOS
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {tournamentList.map((t, idx) => {
+              const tilt =
+                idx % 3 === 0
+                  ? "-rotate-1"
+                  : idx % 3 === 1
+                    ? "rotate-1"
+                    : "-rotate-[0.5deg]";
+              return (
+                <article
+                  key={t.slug}
+                  className={`cromo bg-paper-50 text-pitch-950 ${tilt} p-5 sm:p-6 hover:rotate-0 hover:-translate-y-1 transition-all flex flex-col items-center text-center`}
+                >
+                  <TournamentBadge
+                    slug={t.slug}
+                    name={t.name}
+                    size="xl"
+                    className="mb-4"
+                  />
+                  <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight leading-tight">
+                    {t.name}
+                  </h3>
+                  <span
+                    className={`mt-3 inline-block font-mono text-[10px] uppercase tracking-widest px-2.5 py-1 border-2 border-pitch-950 ${
+                      STATUS_STYLES[t.status] ?? "bg-paper-200 text-pitch-700"
+                    }`}
+                  >
+                    {STATUS_LABEL[t.status] ?? t.status}
+                  </span>
+                </article>
+              );
+            })}
+          </div>
+
+          <p className="mt-10 text-center font-mono text-[11px] text-chalk-400 uppercase tracking-widest">
+            Crea una porra para cualquiera de los torneos abiertos a inscripción
+          </p>
+        </section>
+      )}
+
       <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
         <div className="text-center mb-10">
           <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal -rotate-1">
@@ -126,13 +194,6 @@ export default async function HomePage() {
           ⏰ Pronósticos cerrados al pitido del primer partido
         </p>
       </section>
-
-      {totalTournaments > 0 && (
-        <p className="mt-16 text-center font-mono text-[11px] text-chalk-500 uppercase tracking-widest">
-          {totalTournaments} torneo{totalTournaments === 1 ? "" : "s"} disponible
-          {totalTournaments === 1 ? "" : "s"}
-        </p>
-      )}
     </div>
   );
 }
