@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, and, asc } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   groups,
@@ -8,6 +8,7 @@ import {
 } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { randomInviteCode, slugify, uniqueSlugCandidate } from "@/lib/slug";
+import { parseSettings } from "@/lib/group-settings";
 
 // GET — mis grupos
 export async function GET() {
@@ -87,6 +88,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Parsea + valida los settings opcionales del grupo (descripción, lock
+    // mode, join policy, etc.). Si no se envían, se queda con los defaults.
+    const parsed = parseSettings(body);
+    if ("error" in parsed) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    const settings = parsed.settings;
+
     // Genera slug único — reintenta hasta 5 veces.
     const baseSlug = slugify(name);
     let slug = "";
@@ -128,9 +137,16 @@ export async function POST(req: NextRequest) {
       .values({
         slug,
         name,
+        description: settings.description,
         tournamentId: tournament.id,
         ownerId: session.userId,
         inviteCode,
+        predictionLockMode: settings.predictionLockMode,
+        lockMinutesBefore: settings.lockMinutesBefore,
+        joinPolicy: settings.joinPolicy,
+        joinDeadline: settings.joinDeadline,
+        allowLateJoin: settings.allowLateJoin ? 1 : 0,
+        predictionsVisibility: settings.predictionsVisibility,
       })
       .returning();
 

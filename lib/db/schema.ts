@@ -73,12 +73,29 @@ export const matches = pgTable(
 );
 
 // Grupos — un grupo = una porra dentro de un torneo concreto.
+//
+// Modos de cierre de predicciones (predictionLockMode):
+//   "per-match"        → cada predicción se bloquea cuando empieza ese partido
+//                        (opcionalmente, lockMinutesBefore minutos antes)
+//   "tournament-start" → todas las predicciones se bloquean cuando empieza el
+//                        primer partido del torneo (clásico Mundial / quiniela)
+//
+// Política de inscripción (joinPolicy):
+//   "open"     → cualquiera con el invite link entra directo
+//   "approval" → el owner debe aprobar cada solicitud
+//   "closed"   → no se admiten más miembros aunque tengan el link
+//
+// Visibilidad de pronósticos ajenos (predictionsVisibility):
+//   "hidden-until-lock" → solo se ven cuando se bloquean (default; el clásico
+//                          "no quiero que vean lo que pongo hasta el cierre")
+//   "open"              → siempre visibles para los miembros del grupo
 export const groups = pgTable(
   "groups",
   {
     id: serial("id").primaryKey(),
     slug: varchar("slug", { length: 80 }).notNull(),
     name: varchar("name", { length: 80 }).notNull(),
+    description: text("description"),
     tournamentId: integer("tournament_id")
       .references(() => tournaments.id, { onDelete: "restrict" })
       .notNull(),
@@ -86,6 +103,20 @@ export const groups = pgTable(
       .references(() => users.id, { onDelete: "restrict" })
       .notNull(),
     inviteCode: varchar("invite_code", { length: 16 }).notNull(),
+    predictionLockMode: varchar("prediction_lock_mode", { length: 24 })
+      .default("per-match")
+      .notNull(),
+    lockMinutesBefore: integer("lock_minutes_before").default(0).notNull(),
+    joinPolicy: varchar("join_policy", { length: 16 })
+      .default("open")
+      .notNull(),
+    joinDeadline: timestamp("join_deadline"),
+    // Si es 0 (default): una vez arranca el torneo, no se admiten más
+    // miembros (el owner puede activarlo para permitir entradas tardías).
+    allowLateJoin: integer("allow_late_join").default(0).notNull(),
+    predictionsVisibility: varchar("predictions_visibility", { length: 24 })
+      .default("hidden-until-lock")
+      .notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({
@@ -146,6 +177,30 @@ export const predictions = pgTable(
   })
 );
 
+// Solicitudes pendientes de unirse a un grupo cuyo joinPolicy = 'approval'.
+// Al aprobar, el row se elimina y se inserta en groupMembers. Si se rechaza,
+// se elimina sin más.
+export const groupJoinRequests = pgTable(
+  "group_join_requests",
+  {
+    id: serial("id").primaryKey(),
+    groupId: integer("group_id")
+      .references(() => groups.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    groupUserIdx: uniqueIndex("group_join_requests_group_user_idx").on(
+      t.groupId,
+      t.userId
+    ),
+    groupIdx: index("group_join_requests_group_idx").on(t.groupId),
+  })
+);
+
 // Magic links para login por email. Token de un solo uso, expira en 15 min.
 export const magicLinks = pgTable(
   "magic_links",
@@ -169,5 +224,6 @@ export type Tournament = typeof tournaments.$inferSelect;
 export type Match = typeof matches.$inferSelect;
 export type Group = typeof groups.$inferSelect;
 export type GroupMember = typeof groupMembers.$inferSelect;
+export type GroupJoinRequest = typeof groupJoinRequests.$inferSelect;
 export type Prediction = typeof predictions.$inferSelect;
 export type MagicLink = typeof magicLinks.$inferSelect;

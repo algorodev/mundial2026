@@ -9,6 +9,13 @@ export type GroupContext = {
   tournamentId: number;
   ownerId: number;
   myRole: "owner" | "member";
+  // Settings configurables (defaults aplicados a nivel DB)
+  predictionLockMode: string;
+  lockMinutesBefore: number;
+  joinPolicy: string;
+  joinDeadline: Date | null;
+  allowLateJoin: boolean;
+  predictionsVisibility: string;
 };
 
 /**
@@ -26,6 +33,12 @@ export async function getGroupForMember(
       tournamentId: groups.tournamentId,
       ownerId: groups.ownerId,
       role: groupMembers.role,
+      predictionLockMode: groups.predictionLockMode,
+      lockMinutesBefore: groups.lockMinutesBefore,
+      joinPolicy: groups.joinPolicy,
+      joinDeadline: groups.joinDeadline,
+      allowLateJoin: groups.allowLateJoin,
+      predictionsVisibility: groups.predictionsVisibility,
     })
     .from(groups)
     .innerJoin(
@@ -47,5 +60,11 @@ export async function getGroupForMember(
     tournamentId: row.tournamentId,
     ownerId: row.ownerId,
     myRole: row.role === "owner" ? "owner" : "member",
+    predictionLockMode: row.predictionLockMode,
+    lockMinutesBefore: row.lockMinutesBefore,
+    joinPolicy: row.joinPolicy,
+    joinDeadline: row.joinDeadline,
+    allowLateJoin: row.allowLateJoin === 1,
+    predictionsVisibility: row.predictionsVisibility,
   };
 }

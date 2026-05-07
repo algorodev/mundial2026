@@ -35,8 +35,14 @@ export default async function MemberPredictionsPage({
   if (!ctx) notFound();
 
   const start = await getTournamentStart(ctx.tournamentId);
-  if (!start || Date.now() < new Date(start.iso).getTime()) {
-    // Aún no ha empezado: las predicciones ajenas son privadas.
+  const startMs = start ? new Date(start.iso).getTime() : null;
+  // El grupo puede configurarse en visibility='open': los pronósticos del
+  // resto siempre son visibles. Si está en 'hidden-until-lock' (default),
+  // sólo se ven cuando arranca el torneo.
+  const peerVisible =
+    ctx.predictionsVisibility === "open" ||
+    (startMs != null && Date.now() >= startMs);
+  if (!peerVisible) {
     redirect(`/g/${params.slug}/leaderboard`);
   }
 
@@ -136,7 +142,9 @@ export default async function MemberPredictionsPage({
           )}
         </h1>
         <p className="mt-3 font-mono text-[10px] uppercase tracking-widest text-chalk-400">
-          🔒 Bloqueadas desde el inicio del torneo · {start.label}
+          {ctx.predictionsVisibility === "open"
+            ? "🔓 Pronósticos visibles desde la creación del grupo"
+            : `🔒 Bloqueadas desde el inicio del torneo · ${start?.label ?? ""}`}
         </p>
       </div>
 

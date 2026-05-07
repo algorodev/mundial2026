@@ -5,6 +5,7 @@ import { predictions, matches } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
 import { getGroupForMember } from "@/lib/group-access";
+import { isMatchLocked } from "@/lib/lock";
 
 // GET ?groupSlug=xxx — predicciones del usuario logado en ese grupo
 export async function GET(req: NextRequest) {
@@ -74,15 +75,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    // Cierre por torneo: con el primer partido se bloquean todas las predicciones.
-    const start = await getTournamentStart(ctx.tournamentId);
-    if (start && new Date() >= new Date(start.iso)) {
-      return NextResponse.json(
-        { error: "El torneo ya ha comenzado, las predicciones están cerradas" },
-        { status: 403 }
-      );
-    }
-
     // Validar que el partido pertenece al torneo del grupo
     const [m] = await db
       .select()
@@ -94,6 +86,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Partido no pertenece a este torneo" },
         { status: 404 }
+      );
+    }
+
+    // Cierre depende del modo configurado en el grupo (per-match o
+    // tournament-start). Solo cargamos el primer kickoff del torneo si el
+    // modo lo necesita.
+    const start =
+      ctx.predictionLockMode === "tournament-start"
+        ? await getTournamentStart(ctx.tournamentId)
+        : null;
+    const tournamentStartMs = start ? new Date(start.iso).getTime() : null;
+
+    if (isMatchLocked(m, ctx, tournamentStartMs)) {
+      return NextResponse.json(
+        {
+          error:
+            ctx.predictionLockMode === "tournament-start"
+              ? "El torneo ya ha comenzado, las predicciones están cerradas"
+              : "Este partido ya está cerrado para predicciones",
+        },
+        { status: 403 }
       );
     }
 
