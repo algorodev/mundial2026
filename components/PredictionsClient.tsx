@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef } from "react";
+import TeamBadge from "@/components/TeamBadge";
 
 type MatchRow = {
   id: number;
@@ -11,6 +12,8 @@ type MatchRow = {
   groupName: string | null;
   homeTeam: string;
   awayTeam: string;
+  homeCode: string | null;
+  awayCode: string | null;
   homeFlag: string | null;
   awayFlag: string | null;
   stadium: string | null;
@@ -363,7 +366,14 @@ function MatchCard({
       {/* Selecciones + score */}
       <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
         <div className="text-right">
-          <div className="text-3xl sm:text-4xl mb-1">{match.homeFlag}</div>
+          <div className="flex justify-end mb-1">
+            <TeamBadge
+              code={match.homeCode}
+              flag={match.homeFlag}
+              alt={match.homeTeam}
+              size="md"
+            />
+          </div>
           <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
             {match.homeTeam}
           </div>
@@ -396,7 +406,14 @@ function MatchCard({
         </div>
 
         <div className="text-left">
-          <div className="text-3xl sm:text-4xl mb-1">{match.awayFlag}</div>
+          <div className="flex justify-start mb-1">
+            <TeamBadge
+              code={match.awayCode}
+              flag={match.awayFlag}
+              alt={match.awayTeam}
+              size="md"
+            />
+          </div>
           <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
             {match.awayTeam}
           </div>

@@ -6,12 +6,12 @@ export type MatchData = {
   date: string; // "Jue 11 Jun"
   time: string; // "21:00"
   iso: string;  // ISO datetime in UTC
-  group: string;
+  group: string | null;
   home: string;
   away: string;
-  homeFlag: string;
-  awayFlag: string;
-  stadium: string;
+  homeFlag: string | null;
+  awayFlag: string | null;
+  stadium: string | null;
 };
 
 const F = {
@@ -24,6 +24,18 @@ const F = {
   ARG: "🇦🇷", ALG: "🇩🇿", AUT: "🇦🇹", JOR: "🇯🇴", POR: "🇵🇹", COD: "🇨🇩",
   ENG: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", CRO: "🇭🇷", GHA: "🇬🇭", PAN: "🇵🇦", UZB: "🇺🇿", COL: "🇨🇴",
 };
+
+// Reverse map para sacar el código FIFA desde el emoji guardado en match.homeFlag.
+// Lo usa el seed para rellenar homeCode/awayCode sin tener que duplicar la info en
+// cada línea de la tabla MATCHES.
+const FLAG_TO_CODE: Record<string, string> = Object.fromEntries(
+  Object.entries(F).map(([code, flag]) => [flag, code])
+);
+
+export function flagToCode(flag: string | null | undefined): string | null {
+  if (!flag) return null;
+  return FLAG_TO_CODE[flag] ?? null;
+}
 
 // Helper: Spain time (UTC+2 in summer = CEST). The PDF shows times in CEST.
 // We'll store as ISO UTC = local - 2h.

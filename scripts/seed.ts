@@ -2,7 +2,7 @@ import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db";
 import { matches, tournaments, users } from "../lib/db/schema";
-import { MATCHES } from "../lib/matches-data";
+import { MATCHES, flagToCode } from "../lib/matches-data";
 
 const MUNDIAL_SLUG = "mundial-2026";
 
@@ -31,9 +31,13 @@ async function main() {
     console.log(`ℹ️  Torneo ya existe: ${tournament.name}`);
   }
 
-  // 2. Partidos del torneo (idempotente por (tournamentId, matchNumber))
-  console.log(`📅 Insertando ${MATCHES.length} partidos...`);
+  // 2. Partidos del torneo (upsert por (tournamentId, matchNumber)).
+  // Hacemos update para que los códigos de equipo se rellenen también en
+  // partidos cargados antes de añadir esa columna.
+  console.log(`📅 Cargando ${MATCHES.length} partidos...`);
   for (const m of MATCHES) {
+    const homeCode = flagToCode(m.homeFlag);
+    const awayCode = flagToCode(m.awayFlag);
     await db
       .insert(matches)
       .values({
@@ -45,12 +49,28 @@ async function main() {
         groupName: m.group,
         homeTeam: m.home,
         awayTeam: m.away,
+        homeCode,
+        awayCode,
         homeFlag: m.homeFlag,
         awayFlag: m.awayFlag,
         stadium: m.stadium,
       })
-      .onConflictDoNothing({
+      .onConflictDoUpdate({
         target: [matches.tournamentId, matches.matchNumber],
+        set: {
+          matchDate: m.date,
+          matchTime: m.time,
+          groupName: m.group,
+          homeTeam: m.home,
+          awayTeam: m.away,
+          homeCode,
+          awayCode,
+          homeFlag: m.homeFlag,
+          awayFlag: m.awayFlag,
+          stadium: m.stadium,
+          // OJO: deliberadamente no tocamos kickoffAt/homeScore/awayScore
+          // para no pisar resultados ya metidos ni el simulador.
+        },
       });
   }
   console.log("✅ Partidos cargados");

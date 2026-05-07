@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import TeamBadge from "@/components/TeamBadge";
 
 type MatchRow = {
   id: number;
@@ -12,6 +13,8 @@ type MatchRow = {
   groupName: string | null;
   homeTeam: string;
   awayTeam: string;
+  homeCode: string | null;
+  awayCode: string | null;
   homeFlag: string | null;
   awayFlag: string | null;
   stadium: string | null;
@@ -193,8 +196,14 @@ function ResultRow({
         {match.matchTime ?? ""}
       </span>
       <div className="flex-1 grid grid-cols-[1fr_auto_1fr] gap-2 items-center min-w-0">
-        <div className="text-right text-xs sm:text-sm font-display uppercase truncate">
-          {match.homeFlag} {match.homeTeam}
+        <div className="text-right text-xs sm:text-sm font-display uppercase truncate flex items-center gap-2 justify-end">
+          <span className="truncate">{match.homeTeam}</span>
+          <TeamBadge
+            code={match.homeCode}
+            flag={match.homeFlag}
+            alt={match.homeTeam}
+            size="sm"
+          />
         </div>
         <div className="flex items-center gap-1">
           <input
@@ -217,8 +226,14 @@ function ResultRow({
             className="score-input !w-12 !h-11 !text-xl"
           />
         </div>
-        <div className="text-left text-xs sm:text-sm font-display uppercase truncate">
-          {match.awayTeam} {match.awayFlag}
+        <div className="text-left text-xs sm:text-sm font-display uppercase truncate flex items-center gap-2 justify-start">
+          <TeamBadge
+            code={match.awayCode}
+            flag={match.awayFlag}
+            alt={match.awayTeam}
+            size="sm"
+          />
+          <span className="truncate">{match.awayTeam}</span>
         </div>
       </div>
       <div className="w-16 text-right">

@@ -55,6 +55,8 @@ export const matches = pgTable(
     groupName: varchar("group_name", { length: 10 }),
     homeTeam: varchar("home_team", { length: 60 }).notNull(),
     awayTeam: varchar("away_team", { length: 60 }).notNull(),
+    homeCode: varchar("home_code", { length: 5 }),
+    awayCode: varchar("away_code", { length: 5 }),
     homeFlag: varchar("home_flag", { length: 10 }),
     awayFlag: varchar("away_flag", { length: 10 }),
     stadium: varchar("stadium", { length: 120 }),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import TeamBadge from "@/components/TeamBadge";
 
 type LiveMatch = {
   id: number;
@@ -8,6 +9,8 @@ type LiveMatch = {
   groupName: string | null;
   homeTeam: string;
   awayTeam: string;
+  homeCode: string | null;
+  awayCode: string | null;
   homeFlag: string | null;
   awayFlag: string | null;
   homeScore: number;
@@ -22,6 +25,8 @@ type NextMatch = {
   groupName: string | null;
   homeTeam: string;
   awayTeam: string;
+  homeCode: string | null;
+  awayCode: string | null;
   homeFlag: string | null;
   awayFlag: string | null;
   kickoffAt: string;
@@ -170,7 +175,14 @@ function LiveRow({ match }: { match: LiveMatch }) {
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
         <div className="text-right min-w-0">
-          <div className="text-xl leading-none">{match.homeFlag}</div>
+          <div className="flex justify-end leading-none">
+            <TeamBadge
+              code={match.homeCode}
+              flag={match.homeFlag}
+              alt={match.homeTeam}
+              size="sm"
+            />
+          </div>
           <div className="font-display uppercase text-xs leading-tight tracking-tight truncate mt-0.5">
             {match.homeTeam}
           </div>
@@ -181,7 +193,14 @@ function LiveRow({ match }: { match: LiveMatch }) {
           {match.awayScore}
         </div>
         <div className="text-left min-w-0">
-          <div className="text-xl leading-none">{match.awayFlag}</div>
+          <div className="flex justify-start leading-none">
+            <TeamBadge
+              code={match.awayCode}
+              flag={match.awayFlag}
+              alt={match.awayTeam}
+              size="sm"
+            />
+          </div>
           <div className="font-display uppercase text-xs leading-tight tracking-tight truncate mt-0.5">
             {match.awayTeam}
           </div>
@@ -206,14 +225,24 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
       </p>
       <div className="flex items-center justify-center gap-3 mb-3">
         <div className="flex flex-col items-center min-w-0">
-          <span className="text-2xl">{next.homeFlag}</span>
+          <TeamBadge
+            code={next.homeCode}
+            flag={next.homeFlag}
+            alt={next.homeTeam}
+            size="sm"
+          />
           <span className="font-display uppercase text-[11px] tracking-tight mt-0.5 truncate max-w-[7rem]">
             {next.homeTeam}
           </span>
         </div>
         <span className="font-display text-pitch-700 text-lg">vs</span>
         <div className="flex flex-col items-center min-w-0">
-          <span className="text-2xl">{next.awayFlag}</span>
+          <TeamBadge
+            code={next.awayCode}
+            flag={next.awayFlag}
+            alt={next.awayTeam}
+            size="sm"
+          />
           <span className="font-display uppercase text-[11px] tracking-tight mt-0.5 truncate max-w-[7rem]">
             {next.awayTeam}
           </span>

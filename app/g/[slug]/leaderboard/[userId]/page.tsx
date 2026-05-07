@@ -12,6 +12,7 @@ import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
 import { getGroupForMember } from "@/lib/group-access";
 import { calcPoints, type ScoreResult } from "@/lib/scoring";
+import TeamBadge from "@/components/TeamBadge";
 
 export const dynamic = "force-dynamic";
 
@@ -282,7 +283,14 @@ function ReadOnlyMatchCard({
 
       <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
         <div className="text-right">
-          <div className="text-3xl sm:text-4xl mb-1">{match.homeFlag}</div>
+          <div className="flex justify-end mb-1">
+            <TeamBadge
+              code={match.homeCode}
+              flag={match.homeFlag}
+              alt={match.homeTeam}
+              size="md"
+            />
+          </div>
           <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
             {match.homeTeam}
           </div>
@@ -295,7 +303,14 @@ function ReadOnlyMatchCard({
         </div>
 
         <div className="text-left">
-          <div className="text-3xl sm:text-4xl mb-1">{match.awayFlag}</div>
+          <div className="flex justify-start mb-1">
+            <TeamBadge
+              code={match.awayCode}
+              flag={match.awayFlag}
+              alt={match.awayTeam}
+              size="md"
+            />
+          </div>
           <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
             {match.awayTeam}
           </div>
