@@ -12,7 +12,7 @@ UI, copy, comentarios y errores van en **español**.
 - **Postgres** en **Neon** (driver `@neondatabase/serverless`, HTTP, sin pool)
 - **Drizzle ORM** 0.36 — schema único en `lib/db/schema.ts`
 - **Tailwind CSS** 3 con paleta custom (`pitch`, `grass`, `flame`, `chalk`)
-- **jose** para JWT en cookie httpOnly · **nodemailer** para enviar magic links
+- **jose** para JWT en cookie httpOnly · **Resend** para enviar magic links
 - Despliegue: **Vercel** (free tier)
 
 Path alias: `@/*` → raíz del repo.
@@ -40,8 +40,8 @@ Todas son **obligatorias** (la app revienta en arranque sin ellas):
 - `DATABASE_URL` — connection string de Neon
 - `JWT_SECRET` — mínimo 32 caracteres (validado en `lib/session.ts`)
 - `APP_URL` — URL pública (e.g. `https://porrabros.com`); se usa para construir los enlaces del email
-- `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` — credenciales del servidor SMTP
-- `EMAIL_FROM` — remitente. Tipo `"PorraBros <noreply@porrabros.com>"`. Debe ser un dominio verificado en el proveedor SMTP
+- `RESEND_API_KEY` — API key de Resend (https://resend.com/api-keys)
+- `EMAIL_FROM` — remitente. Tipo `"PorraBros <noreply@porrabros.com>"`. El dominio debe estar verificado en Resend
 
 Solo en seed (opcional):
 - `ADMIN_EMAIL` — promociona a global admin al ejecutarlo
@@ -82,7 +82,7 @@ lib/
   db/schema.ts                      → users, tournaments, matches, groups,
                                        group_members, predictions, magic_links
   auth.ts                           → createMagicLink / consumeMagicLink
-  email.ts                          → nodemailer + plantilla del magic link
+  email.ts                          → Resend SDK + plantilla del magic link
   group-access.ts                   → getGroupForMember (auth + tournamentId)
   matches-data.ts                   → 72 partidos del Mundial 2026 (sólo para seed)
   scoring.ts                        → calcPoints
@@ -162,7 +162,7 @@ Paleta y componentes en `tailwind.config.ts` y utilidades CSS en `app/globals.cs
 
 ## Despliegue
 
-Vercel + Neon + proveedor SMTP. Tras el primer deploy, ejecutar `pnpm db:push && pnpm db:seed` desde local apuntando a la DB de Neon (mismo `DATABASE_URL`) para crear tablas y poblar el torneo Mundial + admin.
+Vercel + Neon + Resend. Tras el primer deploy, ejecutar `pnpm db:push && pnpm db:seed` desde local apuntando a la DB de Neon (mismo `DATABASE_URL`) para crear tablas y poblar el torneo Mundial + admin.
 
 ## Gotchas
 

@@ -2,7 +2,7 @@
 
 Plataforma para hacer porras de deportes entre amigos. Un grupo = una porra de un torneo (Mundial 26, Champions, lo que cargues). Los miembros pronostican, el admin global mete los resultados, la clasificación se actualiza sola.
 
-**Stack:** Next.js 14 · Postgres (Neon) · Drizzle ORM · Tailwind · Magic-link por email (SMTP) · Vercel
+**Stack:** Next.js 14 · Postgres (Neon) · Drizzle ORM · Tailwind · Magic-link por email (Resend) · Vercel
 
 ---
 
@@ -13,16 +13,13 @@ Plataforma para hacer porras de deportes entre amigos. Un grupo = una porra de u
 1. Crea un proyecto en **[console.neon.tech](https://console.neon.tech)** (free tier sobra para amigos).
 2. Copia el connection string (`postgresql://...?sslmode=require`).
 
-### 2. SMTP para los magic links
+### 2. Resend para los magic links
 
-Cualquier proveedor SMTP vale (SendGrid, Postmark, Mailgun, Gmail con app password, etc.).
+1. Cuenta gratis en **[resend.com](https://resend.com)**.
+2. Verifica tu dominio en **Domains** (añade los DNS records que te pida).
+3. Crea una API key en **API Keys** y guárdala como `RESEND_API_KEY`.
 
-Para SendGrid:
-- `SMTP_HOST=smtp.sendgrid.net`
-- `SMTP_PORT=587`
-- `SMTP_USER=apikey`
-- `SMTP_PASS=<tu API key>`
-- `EMAIL_FROM="PorraBros <noreply@tu-dominio.com>"`
+Mientras pruebas puedes usar `EMAIL_FROM="PorraBros <onboarding@resend.dev>"` sin verificar dominio, pero solo recibirás emails en tu cuenta de Resend.
 
 ### 3. Variables de entorno
 
@@ -31,8 +28,8 @@ Para SendGrid:
 | `DATABASE_URL` | Neon |
 | `JWT_SECRET` | Cookie de sesión. Mín 32 chars (`openssl rand -base64 48`) |
 | `APP_URL` | URL pública (`https://porrabros.com`). Se usa para construir los enlaces del email |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | Envío de emails |
-| `EMAIL_FROM` | Remitente (debe ser dominio verificado en tu proveedor SMTP) |
+| `RESEND_API_KEY` | API key de Resend |
+| `EMAIL_FROM` | Remitente (dominio verificado en Resend) |
 | `ADMIN_EMAIL` *(opcional, solo en seed)* | Email que se promociona a global admin al ejecutar `pnpm db:seed` |
 
 ### 4. Inicializar DB
@@ -105,7 +102,7 @@ lib/
   db/schema.ts              → tablas: users, tournaments, matches, groups,
                               group_members, predictions, magic_links
   auth.ts                   → magic link create/consume
-  email.ts                  → nodemailer + plantilla
+  email.ts                  → Resend SDK + plantilla
   group-access.ts           → check de membresía
   scoring.ts                → cálculo de puntos
   session.ts                → JWT en cookie httpOnly
@@ -126,7 +123,7 @@ scripts/
 
 ## 🔧 Si algo va mal
 
-- **Build falla en Vercel:** comprueba que están todas las env vars de SMTP + `JWT_SECRET` + `DATABASE_URL` + `APP_URL`.
-- **No llega el email:** revisa que `EMAIL_FROM` use un dominio verificado en tu proveedor SMTP. Casi todos rechazan dominios no verificados.
+- **Build falla en Vercel:** comprueba que están `RESEND_API_KEY` + `EMAIL_FROM` + `JWT_SECRET` + `DATABASE_URL` + `APP_URL`.
+- **No llega el email:** revisa que el dominio de `EMAIL_FROM` esté verificado en Resend (sección Domains). Si la API key es de un entorno con sandbox, solo enviará a tu propio email.
 - **No me reconoce como admin:** ejecutaste `db:seed` con `ADMIN_EMAIL` puesto? También puedes promocionarte a mano: `UPDATE users SET is_global_admin = 1 WHERE email = 'tu@email.com';`
 - **Cambiar `ADMIN_EMAIL` después del primer seed:** `db:seed` es idempotente — vuelve a ejecutarlo con el nuevo valor y promocionará al nuevo email (no degrada al anterior; baja `is_global_admin` a mano si quieres).

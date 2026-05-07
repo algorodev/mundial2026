@@ -1,43 +1,32 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 type Env = {
-  host: string;
-  port: number;
-  user: string;
-  pass: string;
+  apiKey: string;
   from: string;
   appUrl: string;
 };
 
 function readEnv(): Env {
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   const appUrl = process.env.APP_URL;
 
-  if (!host || !port || !user || !pass || !from || !appUrl) {
+  if (!apiKey || !from || !appUrl) {
     throw new Error(
-      "Faltan variables de entorno SMTP (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM, APP_URL)"
+      "Faltan variables de entorno (RESEND_API_KEY, EMAIL_FROM, APP_URL)"
     );
   }
 
-  return { host, port: Number(port), user, pass, from, appUrl };
+  return { apiKey, from, appUrl };
 }
 
-let cachedTransporter: nodemailer.Transporter | null = null;
+let cachedClient: Resend | null = null;
 
-function getTransporter() {
-  if (cachedTransporter) return cachedTransporter;
-  const { host, port, user, pass } = readEnv();
-  cachedTransporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-  return cachedTransporter;
+function getClient() {
+  if (cachedClient) return cachedClient;
+  const { apiKey } = readEnv();
+  cachedClient = new Resend(apiKey);
+  return cachedClient;
 }
 
 const YELLOW = "#FFD23F";
@@ -139,9 +128,9 @@ export async function sendMagicLink(email: string, token: string) {
   // llegue a pulsar.
   const url = `${appUrl}/auth/verify?token=${encodeURIComponent(token)}`;
   const logoUrl = `${appUrl}/brand/porrabros-logo-horizontal-1200.png`;
-  const transporter = getTransporter();
+  const resend = getClient();
 
-  await transporter.sendMail({
+  const { error } = await resend.emails.send({
     from,
     to: email,
     subject: "Tu acceso a PorraBros",
@@ -154,4 +143,8 @@ ${url}
 Si no has pedido entrar, puedes ignorar este correo.`,
     html: renderHtml(url, logoUrl),
   });
+
+  if (error) {
+    throw new Error(`Resend: ${error.name} — ${error.message}`);
+  }
 }
