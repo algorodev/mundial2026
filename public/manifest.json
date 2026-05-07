@@ -1,0 +1,21 @@
+{
+  "name": "PorraBros",
+  "short_name": "PorraBros",
+  "description": "Porras de deportes entre amigos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1A1A1A",
+  "theme_color": "#FFD23F",
+  "icons": [
+    {
+      "src": "/porrabros-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/porrabros-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,12 +1,36 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { getSession } from "@/lib/session";
 import NavBar from "@/components/NavBar";
 
+const APP_URL = process.env.APP_URL || "https://porrabros.com";
+
 export const metadata: Metadata = {
-  title: "PorraBros · Porras de deportes entre amigos",
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: "PorraBros · Porras de deportes entre amigos",
+    template: "%s · PorraBros",
+  },
   description:
     "Crea una porra con tu pandilla, invita por enlace y compite con tus pronósticos.",
+  manifest: "/manifest.json",
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    siteName: "PorraBros",
+    title: "PorraBros · Porras de deportes entre amigos",
+    description:
+      "Crea una porra con tu pandilla, invita por enlace y compite con tus pronósticos.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PorraBros",
+    description: "Porras de deportes entre amigos",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FFD23F",
 };
 
 export default async function RootLayout({

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
@@ -27,13 +28,15 @@ export default async function HomePage() {
         />
 
         <div className="text-center max-w-4xl mx-auto relative">
-          <span className="inline-block bg-flame-500 text-pitch-950 font-display text-xs tracking-widest px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm mb-6 -rotate-2">
-            ⚽ PORRAS ENTRE AMIGOS
-          </span>
-
-          <h1 className="font-display text-7xl sm:text-9xl text-chalk-50 leading-[0.85]">
-            PORRA<span className="text-flame-500">BROS</span>
-          </h1>
+          <Image
+            src="/brand/porrabros-logo-principal.svg"
+            alt="PorraBros"
+            width={1200}
+            height={1200}
+            priority
+            unoptimized
+            className="mx-auto w-[260px] sm:w-[420px] h-auto drop-shadow-2xl"
+          />
 
           <p className="mt-10 text-chalk-200 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
             Crea una porra con tu pandilla, compañeros de oficina o familia.

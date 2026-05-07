@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { SessionPayload } from "@/lib/session";
@@ -20,18 +21,20 @@ export default function NavBar({
   return (
     <nav className="border-b-2 border-pitch-950 bg-pitch-950/85 backdrop-blur-sm sticky top-0 z-30">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
-        <Link href={session ? "/groups" : "/"} className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-flame-500 flex items-center justify-center text-pitch-950 text-xl border-2 border-pitch-950 shadow-brutal-sm group-hover:rotate-12 group-hover:-translate-y-0.5 transition-transform rounded">
-            ⚽
-          </div>
-          <div className="flex flex-col leading-none">
-            <span className="font-display text-2xl text-chalk-50 tracking-tight">
-              PORRABROS
-            </span>
-            <span className="font-mono text-[10px] text-flame-400 uppercase tracking-widest">
-              Porras entre amigos
-            </span>
-          </div>
+        <Link
+          href={session ? "/groups" : "/"}
+          className="group inline-flex items-center"
+          aria-label="PorraBros"
+        >
+          <Image
+            src="/brand/porrabros-logo-horizontal.svg"
+            alt="PorraBros"
+            width={200}
+            height={48}
+            priority
+            unoptimized
+            className="h-10 sm:h-12 w-auto group-hover:-translate-y-0.5 transition-transform"
+          />
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-4">
