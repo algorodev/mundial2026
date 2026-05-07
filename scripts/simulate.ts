@@ -1,10 +1,9 @@
 import "dotenv/config";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "../lib/db";
-import { matches } from "../lib/db/schema";
+import { matches, tournaments } from "../lib/db/schema";
 import { MATCHES } from "../lib/matches-data";
 
-// Ventana real de simulación
 const SIM_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
 const STARTUP_BUFFER_MS =
   (Number(process.env.SIM_BUFFER_SECONDS) || 60) * 1000;
@@ -12,14 +11,35 @@ const TICK_MS = 15_000;
 const MATCH_DURATION_MIN = 90;
 const GOALS_PER_TEAM_AVG = 1.35;
 
+// El simulador opera sobre el torneo "mundial-2026" salvo que pases otro slug.
+// Uso: pnpm sim                 → mundial-2026
+//      pnpm sim:reset            → mundial-2026
+//      tsx scripts/simulate.ts start otro-slug
 const cmd = (process.argv[2] || "start").replace(/^--/, "");
+const slugArg = process.argv[3] || "mundial-2026";
 
 function fmt(ms: number) {
   return new Date(ms).toLocaleTimeString("es-ES");
 }
 
+async function getTournament() {
+  const [t] = await db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.slug, slugArg))
+    .limit(1);
+  if (!t) {
+    console.error(
+      `❌ Torneo "${slugArg}" no existe. Ejecuta primero: pnpm db:seed`
+    );
+    process.exit(1);
+  }
+  return t;
+}
+
 async function reset() {
-  console.log("🧹 Restaurando calendario real y limpiando resultados...");
+  const t = await getTournament();
+  console.log(`🧹 Restaurando calendario real de "${t.name}"...`);
   for (const m of MATCHES) {
     await db
       .update(matches)
@@ -28,12 +48,16 @@ async function reset() {
         homeScore: null,
         awayScore: null,
       })
-      .where(eq(matches.matchNumber, m.num));
+      .where(
+        and(eq(matches.tournamentId, t.id), eq(matches.matchNumber, m.num))
+      );
   }
   console.log(`✅ ${MATCHES.length} partidos restaurados`);
 }
 
 async function start() {
+  const t = await getTournament();
+
   const realFirst = new Date(MATCHES[0].iso).getTime();
   const realLast = MATCHES.reduce(
     (max, m) => Math.max(max, new Date(m.iso).getTime()),
@@ -51,7 +75,7 @@ async function start() {
   const goalProb = GOALS_PER_TEAM_AVG / ticksPerMatch;
 
   console.log("");
-  console.log("⚽ SIMULADOR DEL MUNDIAL — ventana 24h");
+  console.log(`⚽ SIMULADOR — ${t.name} — ventana 24h`);
   console.log("─────────────────────────────────────");
   console.log(
     `Compresión: ${(1 / ratio).toFixed(1)}× (${(
@@ -66,7 +90,7 @@ async function start() {
       STARTUP_BUFFER_MS / 1000
     }s)`
   );
-  console.log(`🔒 Cierre global se activa con el primer partido`);
+  console.log(`🔒 Cierre se activa con el primer partido`);
   console.log(`Tick cada ${TICK_MS / 1000}s · Ctrl+C para parar`);
   console.log("─────────────────────────────────────");
   console.log("");
@@ -86,7 +110,9 @@ async function start() {
         homeScore: null,
         awayScore: null,
       })
-      .where(eq(matches.matchNumber, p.num));
+      .where(
+        and(eq(matches.tournamentId, t.id), eq(matches.matchNumber, p.num))
+      );
   }
   console.log(`✅ ${plan.length} partidos preparados`);
   console.log("");
@@ -105,7 +131,6 @@ async function start() {
       if (s.status === "final") continue;
       if (now < p.simKo) continue;
 
-      // Fin de partido
       if (now >= p.simEnd) {
         if (s.status === "live") {
           s.status = "final";
@@ -116,19 +141,19 @@ async function start() {
         continue;
       }
 
-      // Saque inicial: marcar 0-0
       if (s.status === "pending") {
         s.status = "live";
         await db
           .update(matches)
           .set({ homeScore: 0, awayScore: 0 })
-          .where(eq(matches.matchNumber, p.num));
+          .where(
+            and(eq(matches.tournamentId, t.id), eq(matches.matchNumber, p.num))
+          );
         console.log(
           `🟢 [${p.num.toString().padStart(2, "0")}] KO  ${p.home} 0-0 ${p.away}`
         );
       }
 
-      // ¿Gol? — máximo uno por tick para que se vean separados
       const r = Math.random();
       if (r < goalProb) {
         s.home += 1;
@@ -140,13 +165,14 @@ async function start() {
       await db
         .update(matches)
         .set({ homeScore: s.home, awayScore: s.away })
-        .where(eq(matches.matchNumber, p.num));
+        .where(
+          and(eq(matches.tournamentId, t.id), eq(matches.matchNumber, p.num))
+        );
       console.log(
         `⚽ [${p.num.toString().padStart(2, "0")}]     ${p.home} ${s.home}-${s.away} ${p.away}`
       );
     }
 
-    // Resumen cada minuto
     if (now - lastSummary > 60_000) {
       const live = plan.filter((p) => state.get(p.num)!.status === "live").length;
       const finals = plan.filter((p) => state.get(p.num)!.status === "final").length;
@@ -172,7 +198,6 @@ async function start() {
     process.exit(0);
   });
 
-  // Tick inmediato + intervalo
   await tick();
   setInterval(() => {
     tick().catch((e) => console.error("tick error:", e));

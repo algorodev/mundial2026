@@ -1,6 +1,6 @@
 {
-  "name": "porra-mundial-2026",
-  "version": "1.0.0",
+  "name": "porrabros",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -15,16 +15,16 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
-    "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.36.4",
     "jose": "^5.9.6",
     "next": "14.2.18",
+    "nodemailer": "^8.0.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.9.0",
+    "@types/nodemailer": "^8.0.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",

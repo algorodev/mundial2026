@@ -15,8 +15,9 @@ function getSecret(): Uint8Array {
 
 export type SessionPayload = {
   userId: number;
+  email: string;
   name: string;
-  isAdmin: boolean;
+  isGlobalAdmin: boolean;
 };
 
 export async function createSession(payload: SessionPayload): Promise<string> {
@@ -34,8 +35,9 @@ export async function verifySession(
     const { payload } = await jwtVerify(token, getSecret());
     return {
       userId: payload.userId as number,
+      email: payload.email as string,
       name: payload.name as string,
-      isAdmin: payload.isAdmin as boolean,
+      isGlobalAdmin: payload.isGlobalAdmin as boolean,
     };
   } catch {
     return null;

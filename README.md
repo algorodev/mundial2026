@@ -1,74 +1,60 @@
-# ⚽ La Porra · Mundial 2026
+# ⚽ PorraBros
 
-App web para hacer una porra del Mundial 2026 con tus amigos. Pronósticos por partido, clasificación en directo, panel de administración para introducir resultados.
+Plataforma para hacer porras de deportes entre amigos. Un grupo = una porra de un torneo (Mundial 26, Champions, lo que cargues). Los miembros pronostican, el admin global mete los resultados, la clasificación se actualiza sola.
 
-**Stack:** Next.js 14 · Postgres (Neon) · Drizzle ORM · Tailwind CSS · Vercel
+**Stack:** Next.js 14 · Postgres (Neon) · Drizzle ORM · Tailwind · Magic-link por email (SMTP) · Vercel
 
 ---
 
-## 🚀 Despliegue paso a paso (todo gratis)
+## 🚀 Despliegue
 
-### 1. Crear la base de datos en Neon
+### 1. Base de datos en Neon
 
-1. Ve a **[console.neon.tech](https://console.neon.tech)** y crea una cuenta gratis.
-2. Crea un proyecto nuevo. Elige la región más cercana (`Frankfurt` o `Dublin` para España).
-3. Copia el **connection string** que te dan (algo como `postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require`).
-4. Guárdalo, lo necesitarás en breve.
+1. Crea un proyecto en **[console.neon.tech](https://console.neon.tech)** (free tier sobra para amigos).
+2. Copia el connection string (`postgresql://...?sslmode=require`).
 
-> Free tier de Neon: 0.5 GB de almacenamiento. Para 30 personas × 72 partidos sobra MUCHO.
+### 2. SMTP para los magic links
 
-### 2. Subir el código a GitHub
+Cualquier proveedor SMTP vale (SendGrid, Postmark, Mailgun, Gmail con app password, etc.).
 
-```bash
-cd porra-mundial
-git init
-git add .
-git commit -m "Porra Mundial 2026"
-# Crea un repo nuevo en github.com (puede ser privado) y luego:
-git remote add origin https://github.com/TU_USUARIO/porra-mundial.git
-git branch -M main
-git push -u origin main
-```
+Para SendGrid:
+- `SMTP_HOST=smtp.sendgrid.net`
+- `SMTP_PORT=587`
+- `SMTP_USER=apikey`
+- `SMTP_PASS=<tu API key>`
+- `EMAIL_FROM="PorraBros <noreply@tu-dominio.com>"`
 
-### 3. Desplegar en Vercel
+### 3. Variables de entorno
 
-1. Ve a **[vercel.com](https://vercel.com)** y entra con tu cuenta de GitHub.
-2. Click en **Add New → Project**, selecciona el repo `porra-mundial`.
-3. En **Environment Variables** añade tres:
-
-| Variable | Valor |
+| Variable | Para qué |
 |---|---|
-| `DATABASE_URL` | El connection string de Neon (paso 1) |
-| `JWT_SECRET` | Una cadena aleatoria larga (genera con `openssl rand -base64 48`) |
-| `ADMIN_PASSWORD` | La contraseña que tú usarás como organizador |
+| `DATABASE_URL` | Neon |
+| `JWT_SECRET` | Cookie de sesión. Mín 32 chars (`openssl rand -base64 48`) |
+| `APP_URL` | URL pública (`https://porrabros.com`). Se usa para construir los enlaces del email |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | Envío de emails |
+| `EMAIL_FROM` | Remitente (debe ser dominio verificado en tu proveedor SMTP) |
+| `ADMIN_EMAIL` *(opcional, solo en seed)* | Email que se promociona a global admin al ejecutar `pnpm db:seed` |
 
-4. Click en **Deploy**. Espera ~2 minutos.
+### 4. Inicializar DB
 
-### 4. Inicializar la base de datos
-
-Una vez desplegado, hay que crear las tablas y cargar los partidos. Lo más fácil es hacerlo desde tu ordenador apuntando a la DB de Neon:
+Desde local con un `.env` que apunte a la DB de Neon:
 
 ```bash
-# Crea un .env local con las mismas variables que en Vercel:
-cp .env.example .env
-# Edita .env con tus valores reales
-
-# Crea las tablas:
-pnpm db:push
-
-# Carga los 72 partidos del Mundial y crea el usuario admin:
-pnpm db:seed
+pnpm install
+pnpm db:push     # crea las tablas
+pnpm db:seed     # crea torneo "Mundial 2026" con sus 72 partidos
+                 # y promociona ADMIN_EMAIL a global admin (si está)
 ```
-
-> El admin se crea con nombre `admin` y la contraseña que pusiste en `ADMIN_PASSWORD`.
 
 ### 5. Listo
 
-Abre `https://tu-app.vercel.app` (la URL que te ha dado Vercel).
+Abre la URL de Vercel, pulsa **Entrar**, mete tu email, sigue el link del correo. Si tu email coincide con `ADMIN_EMAIL` ya verás el panel **Admin** para gestionar resultados.
 
-- Entra como `admin` con tu contraseña.
-- Ve al panel **Admin → Participantes** y crea uno por uno a tus amigos. La app genera un PIN de 4 dígitos para cada uno.
-- Comparte cada nombre + PIN con su dueño. Ya pueden entrar y empezar a pronosticar.
+Para empezar a porrear:
+1. Pulsa **Crear grupo**, ponle nombre y elige torneo (de momento, Mundial 2026).
+2. Ve a **Gestionar** → copia el enlace de invitación → mándalo a tu pandilla por WhatsApp.
+3. Cada uno entra con su email, pronostica los 72 partidos antes del primer pitido.
+4. Tú (admin global) metes resultados → la clasificación del grupo se actualiza en directo.
 
 ---
 
@@ -78,7 +64,7 @@ Abre `https://tu-app.vercel.app` (la URL que te ha dado Vercel).
 - **1 punto** → aciertas el signo (ganador o empate) pero no el resultado.
 - **0 puntos** → fallo.
 
-Las predicciones se cierran automáticamente al pitido inicial de cada partido.
+Las predicciones se cierran cuando empieza el primer partido del torneo. A partir de ahí puedes ver los pronósticos del resto del grupo.
 
 ---
 
@@ -87,9 +73,18 @@ Las predicciones se cierran automáticamente al pitido inicial de cada partido.
 ```bash
 pnpm install
 cp .env.example .env  # rellena los valores
-pnpm db:push          # crea tablas
-pnpm db:seed          # carga partidos + admin
+pnpm db:push
+pnpm db:seed
 pnpm dev              # http://localhost:3000
+```
+
+### Simulador 24 h
+
+Para probar el leaderboard sin esperar al Mundial real, comprime el calendario en 24 h:
+
+```bash
+pnpm sim          # arranca la simulación sobre el torneo "mundial-2026"
+pnpm sim:reset    # restaura los kickoffs reales y limpia resultados
 ```
 
 ---
@@ -98,32 +93,40 @@ pnpm dev              # http://localhost:3000
 
 ```
 app/
-  page.tsx                  → home
-  login/                    → login
-  predictions/              → pronósticos del usuario
-  leaderboard/              → clasificación con auto-refresh
-  admin/                    → panel admin (resultados + participantes)
+  page.tsx                  → landing pública
+  login/                    → form de email → manda magic link
+  groups/                   → mis porras + crear grupo
+  g/[slug]/                 → página del grupo (predicciones / leaderboard / manage)
+  join/[code]               → aceptar invitación
+  admin/                    → panel del global admin (lista torneos + resultados)
   api/                      → endpoints REST
 components/                 → React components
 lib/
-  db/                       → schema y cliente Drizzle
-  matches-data.ts           → 72 partidos del Mundial 2026
+  db/schema.ts              → tablas: users, tournaments, matches, groups,
+                              group_members, predictions, magic_links
+  auth.ts                   → magic link create/consume
+  email.ts                  → nodemailer + plantilla
+  group-access.ts           → check de membresía
   scoring.ts                → cálculo de puntos
   session.ts                → JWT en cookie httpOnly
-scripts/seed.ts             → poblar DB
+  matches-data.ts           → 72 partidos del Mundial 2026 (datos para seed)
+scripts/
+  seed.ts                   → torneo Mundial + partidos + admin
+  simulate.ts               → simulador 24 h
 ```
 
 ---
 
 ## ⚠️ Notas
 
-- Las horas de los partidos están en **hora peninsular española** (CEST). Si juegas desde otra zona horaria, ajusta `lib/matches-data.ts`.
-- La app usa **JWT en cookie httpOnly** para sesiones. Sin librerías de auth pesadas.
-- La clasificación se actualiza sola cada **30 segundos** mientras la tienes abierta.
-- El bloqueo de predicciones es por hora del servidor: si Neon o Vercel tienen drift, podría haber un margen de pocos segundos.
+- Auth por **magic link**: el user mete su email, recibe un correo con un enlace válido 15 min. Sin contraseñas.
+- Las horas de los partidos del Mundial están en **CEST** (España, junio 2026). Si añades torneos con otras zonas, ajusta el `iso()` helper de `matches-data.ts` o crea uno nuevo.
+- Un grupo = un torneo. Si quieres dos porras (una de la Champions y otra del Mundial), crea dos grupos.
+- El admin global no aparece en los leaderboards a menos que también sea miembro del grupo.
 
 ## 🔧 Si algo va mal
 
-- **Build falla en Vercel:** comprueba que las 3 env vars están definidas.
-- **Login no funciona:** si cambiaste `ADMIN_PASSWORD` después del seed, vuelve a ejecutar `pnpm db:seed` (es idempotente, pero solo crea el admin si no existe; bórralo manualmente desde Neon si necesitas resetear).
-- **No aparecen los partidos:** ejecutaste `db:seed`? Comprueba `Tablas → matches` en el dashboard de Neon.
+- **Build falla en Vercel:** comprueba que están todas las env vars de SMTP + `JWT_SECRET` + `DATABASE_URL` + `APP_URL`.
+- **No llega el email:** revisa que `EMAIL_FROM` use un dominio verificado en tu proveedor SMTP. Casi todos rechazan dominios no verificados.
+- **No me reconoce como admin:** ejecutaste `db:seed` con `ADMIN_EMAIL` puesto? También puedes promocionarte a mano: `UPDATE users SET is_global_admin = 1 WHERE email = 'tu@email.com';`
+- **Cambiar `ADMIN_EMAIL` después del primer seed:** `db:seed` es idempotente — vuelve a ejecutarlo con el nuevo valor y promocionará al nuevo email (no degrada al anterior; baja `is_global_admin` a mano si quieres).

@@ -1,29 +1,39 @@
-import { NextResponse } from "next/server";
-import { asc } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
+import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
+import { getGroupForMember } from "@/lib/group-access";
 
 export const dynamic = "force-dynamic";
 
-// Mundial real: ~17 días, 90 min por partido. Usamos esa proporción para
-// estimar la duración de cada partido cuando el simulador comprime el
-// calendario (span < 2 días). Si no hay simulador en juego, usamos una
-// ventana fija de 2.5 h para considerar un partido "en vivo".
+// Mismos cálculos de antes — la única diferencia es que filtramos por
+// el torneo asociado al grupo del que el user es miembro.
 const REAL_SPAN_MS = 17 * 24 * 3600_000;
 const REAL_MATCH_MS = 90 * 60_000;
 const REAL_LIVE_WINDOW_MS = 2.5 * 3600_000;
 const SIM_THRESHOLD_MS = 2 * 24 * 3600_000;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
 
+  const groupSlug = req.nextUrl.searchParams.get("groupSlug");
+  if (!groupSlug) {
+    return NextResponse.json({ error: "Falta groupSlug" }, { status: 400 });
+  }
+
+  const ctx = await getGroupForMember(groupSlug, session.userId);
+  if (!ctx) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
+
   const all = await db
     .select()
     .from(matches)
+    .where(eq(matches.tournamentId, ctx.tournamentId))
     .orderBy(asc(matches.kickoffAt));
 
   const now = Date.now();

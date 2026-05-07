@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches } from "@/lib/db/schema";
+import { matches, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: { slug: string } }
+) {
   const session = await getSession();
-  if (!session || !session.isAdmin) {
+  if (!session || !session.isGlobalAdmin) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
@@ -16,7 +19,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "matchId inválido" }, { status: 400 });
     }
 
-    // Permitir borrar resultado pasando null
     const validHome =
       homeScore === null ||
       (Number.isInteger(homeScore) && homeScore >= 0 && homeScore <= 20);
@@ -31,10 +33,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await db
+    const [tournament] = await db
+      .select({ id: tournaments.id })
+      .from(tournaments)
+      .where(eq(tournaments.slug, params.slug))
+      .limit(1);
+
+    if (!tournament) {
+      return NextResponse.json(
+        { error: "Torneo no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    const result = await db
       .update(matches)
       .set({ homeScore, awayScore })
-      .where(eq(matches.id, matchId));
+      .where(and(eq(matches.id, matchId), eq(matches.tournamentId, tournament.id)))
+      .returning({ id: matches.id });
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: "Partido no encontrado en este torneo" },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 type LiveMatch = {
   id: number;
   matchNumber: number;
-  groupName: string;
+  groupName: string | null;
   homeTeam: string;
   awayTeam: string;
   homeFlag: string | null;
@@ -19,7 +19,7 @@ type LiveMatch = {
 type NextMatch = {
   id: number;
   matchNumber: number;
-  groupName: string;
+  groupName: string | null;
   homeTeam: string;
   awayTeam: string;
   homeFlag: string | null;
@@ -30,7 +30,11 @@ type NextMatch = {
 const STORAGE_KEY = "porra-live-open";
 const POLL_MS = 12_000;
 
-export default function LiveScoreboard() {
+export default function LiveScoreboard({
+  groupSlug,
+}: {
+  groupSlug: string;
+}) {
   const [open, setOpen] = useState(true);
   const [hydrated, setHydrated] = useState(false);
   const [live, setLive] = useState<LiveMatch[]>([]);
@@ -56,7 +60,10 @@ export default function LiveScoreboard() {
     let cancelled = false;
     async function load() {
       try {
-        const r = await fetch("/api/live", { cache: "no-store" });
+        const r = await fetch(
+          `/api/live?groupSlug=${encodeURIComponent(groupSlug)}`,
+          { cache: "no-store" }
+        );
         if (!r.ok || cancelled) return;
         const d = await r.json();
         if (cancelled) return;
@@ -73,7 +80,7 @@ export default function LiveScoreboard() {
       cancelled = true;
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, []);
+  }, [groupSlug]);
 
   // Reloj local para countdown / minutos en vivo
   useEffect(() => {

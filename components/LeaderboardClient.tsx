@@ -15,10 +15,12 @@ type Row = {
 };
 
 export default function LeaderboardClient({
+  groupSlug,
   currentName,
   tournamentStartIso,
   tournamentStartLabel,
 }: {
+  groupSlug: string;
   currentName: string;
   tournamentStartIso: string;
   tournamentStartLabel: string;
@@ -29,7 +31,10 @@ export default function LeaderboardClient({
 
   async function load() {
     try {
-      const r = await fetch("/api/leaderboard", { cache: "no-store" });
+      const r = await fetch(
+        `/api/leaderboard?groupSlug=${encodeURIComponent(groupSlug)}`,
+        { cache: "no-store" }
+      );
       if (!r.ok) throw new Error("err");
       const d = await r.json();
       setRows(d.leaderboard);
@@ -62,7 +67,7 @@ export default function LeaderboardClient({
       <div className="cromo bg-paper-50 text-pitch-950 max-w-xl mx-auto p-8 text-center">
         <p className="font-display text-2xl mb-2">¡SIN PARTICIPANTES!</p>
         <p className="text-pitch-700">
-          Pídele al organizador que añada gente desde el panel admin.
+          Comparte el enlace de invitación para que se una más gente al grupo.
         </p>
       </div>
     );
@@ -89,7 +94,7 @@ export default function LeaderboardClient({
         ) : (
           <>
             🔒 Las predicciones del resto se podrán consultar cuando empiece el
-            Mundial · {tournamentStartLabel}
+            torneo · {tournamentStartLabel}
           </>
         )}
       </div>
@@ -101,16 +106,19 @@ export default function LeaderboardClient({
             row={rows[1]}
             place={2}
             clickable={tournamentStarted}
+            groupSlug={groupSlug}
           />
           <PodiumCard
             row={rows[0]}
             place={1}
             clickable={tournamentStarted}
+            groupSlug={groupSlug}
           />
           <PodiumCard
             row={rows[2]}
             place={3}
             clickable={tournamentStarted}
+            groupSlug={groupSlug}
           />
         </div>
       )}
@@ -123,6 +131,7 @@ export default function LeaderboardClient({
             row={row}
             isMe={row.name === currentName}
             clickable={tournamentStarted}
+            groupSlug={groupSlug}
           />
         ))}
       </div>
@@ -140,10 +149,12 @@ function LeaderboardRow({
   row,
   isMe,
   clickable,
+  groupSlug,
 }: {
   row: Row;
   isMe: boolean;
   clickable: boolean;
+  groupSlug: string;
 }) {
   const tone = isMe
     ? "bg-flame-500 text-pitch-950"
@@ -215,7 +226,7 @@ function LeaderboardRow({
 
   if (clickable) {
     return (
-      <Link href={`/leaderboard/${row.userId}`} className={className}>
+      <Link href={`/g/${groupSlug}/leaderboard/${row.userId}`} className={className}>
         {content}
       </Link>
     );
@@ -227,10 +238,12 @@ function PodiumCard({
   row,
   place,
   clickable,
+  groupSlug,
 }: {
   row: Row;
   place: 1 | 2 | 3;
   clickable: boolean;
+  groupSlug: string;
 }) {
   const styles = {
     1: {
@@ -278,7 +291,7 @@ function PodiumCard({
   );
   if (clickable) {
     return (
-      <Link href={`/leaderboard/${row.userId}`} className="block">
+      <Link href={`/g/${groupSlug}/leaderboard/${row.userId}`} className="block">
         {inner}
       </Link>
     );

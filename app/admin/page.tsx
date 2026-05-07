@@ -1,30 +1,28 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { matches, users } from "@/lib/db/schema";
-import { asc, eq, ne } from "drizzle-orm";
-import AdminClient from "@/components/AdminClient";
+import { tournaments, matches, groups } from "@/lib/db/schema";
+import { asc, sql } from "drizzle-orm";
 
 export default async function AdminPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (!session.isAdmin) redirect("/");
+  if (!session.isGlobalAdmin) redirect("/groups");
 
-  const [allMatches, participants] = await Promise.all([
-    db.select().from(matches).orderBy(asc(matches.matchNumber)),
-    db.select().from(users).where(eq(users.isAdmin, 0)),
-  ]);
-
-  const matchesSerialized = allMatches.map((m) => ({
-    ...m,
-    kickoffAt: m.kickoffAt.toISOString(),
-  }));
-
-  const participantsSerialized = participants.map((u) => ({
-    id: u.id,
-    name: u.name,
-    createdAt: u.createdAt.toISOString(),
-  }));
+  const list = await db
+    .select({
+      id: tournaments.id,
+      slug: tournaments.slug,
+      name: tournaments.name,
+      sport: tournaments.sport,
+      status: tournaments.status,
+      total: sql<number>`(select count(*) from ${matches} where ${matches.tournamentId} = ${tournaments.id})`,
+      done: sql<number>`(select count(*) from ${matches} where ${matches.tournamentId} = ${tournaments.id} and ${matches.homeScore} is not null)`,
+      groupCount: sql<number>`(select count(*) from ${groups} where ${groups.tournamentId} = ${tournaments.id})`,
+    })
+    .from(tournaments)
+    .orderBy(asc(tournaments.createdAt));
 
   return (
     <div className="pt-8">
@@ -33,13 +31,47 @@ export default async function AdminPage() {
           PANEL <span className="text-flame-500">ADMIN</span>
         </h1>
         <p className="mt-4 inline-block bg-brick-500 text-paper-50 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          Gestión de la porra
+          Torneos y resultados
         </p>
       </div>
-      <AdminClient
-        matches={matchesSerialized}
-        participants={participantsSerialized}
-      />
+
+      {list.length === 0 && (
+        <div className="cromo bg-paper-50 text-pitch-700 p-8 text-center font-mono uppercase tracking-widest">
+          No hay torneos. Crea uno desde el seed o por DB.
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {list.map((t) => {
+          const total = Number(t.total);
+          const done = Number(t.done);
+          const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+          return (
+            <Link
+              key={t.id}
+              href={`/admin/t/${t.slug}`}
+              className="cromo bg-paper-50 text-pitch-950 p-5 flex items-center justify-between hover:-translate-y-0.5 transition-transform"
+            >
+              <div>
+                <div className="font-display text-2xl uppercase tracking-tight">
+                  {t.name}
+                </div>
+                <div className="mt-1 font-mono text-xs text-pitch-700 uppercase tracking-widest">
+                  {t.sport} · {t.status} · {Number(t.groupCount)} grupos
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-display text-xl text-flame-500">
+                  {done}/{total}
+                </div>
+                <div className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
+                  {pct}% resultados
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }

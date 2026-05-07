@@ -1,39 +1,72 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const [name, setName] = useState("");
-  const [pin, setPin] = useState("");
+function LoginInner() {
+  const params = useSearchParams();
+  const redirectTo = params.get("next");
+  const errorParam = params.get("error");
+
+  const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    if (errorParam === "invalid") {
+      setError("El enlace ya no es válido. Pide otro y úsalo en 15 minutos.");
+    } else if (errorParam === "missing") {
+      setError("El enlace no es válido. Pide uno nuevo.");
+    }
+  }, [errorParam]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const r = await fetch("/api/auth/login", {
+      const r = await fetch("/api/auth/request-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), pin }),
+        body: JSON.stringify({
+          email: email.trim(),
+          redirectTo: redirectTo || null,
+        }),
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "Error");
+        setError(data.error || "Error enviando el correo");
         return;
       }
-      if (data.user.isAdmin) {
-        router.push("/admin");
-      } else {
-        router.push("/predictions");
-      }
-      router.refresh();
+      setSent(true);
     } finally {
       setLoading(false);
     }
+  }
+
+  if (sent) {
+    return (
+      <div className="pt-12 sm:pt-20 max-w-md mx-auto">
+        <div className="text-center mb-10">
+          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+            REVISA TU CORREO
+          </h1>
+          <p className="mt-5 text-chalk-300">
+            Te hemos enviado un enlace a <strong>{email}</strong>. Caduca en 15 minutos.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setSent(false);
+            setEmail("");
+          }}
+          className="btn-secondary w-full"
+        >
+          Usar otro email
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -43,7 +76,7 @@ export default function LoginPage() {
           ENTRAR
         </h1>
         <p className="mt-5 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          Pide tu nombre y PIN al organizador
+          Te enviamos un enlace mágico a tu correo
         </p>
       </div>
 
@@ -53,32 +86,17 @@ export default function LoginPage() {
       >
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Nombre
+            Email
           </label>
           <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="input-base w-full"
-            placeholder="Tu nombre"
+            placeholder="tu@email.com"
             required
             autoFocus
-            autoComplete="username"
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            PIN
-          </label>
-          <input
-            type="password"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            className="input-base w-full font-mono tracking-[0.5em] text-center text-2xl"
-            placeholder="••••"
-            required
-            autoComplete="current-password"
+            autoComplete="email"
           />
         </div>
 
@@ -89,9 +107,17 @@ export default function LoginPage() {
         )}
 
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Entrando..." : "Entrar →"}
+          {loading ? "Enviando..." : "Enviarme el enlace →"}
         </button>
       </form>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginInner />
+    </Suspense>
   );
 }

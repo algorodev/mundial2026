@@ -5,15 +5,15 @@ import { useState, useMemo, useRef } from "react";
 type MatchRow = {
   id: number;
   matchNumber: number;
-  matchDate: string;
-  matchTime: string;
+  matchDate: string | null;
+  matchTime: string | null;
   kickoffAt: string;
-  groupName: string;
+  groupName: string | null;
   homeTeam: string;
   awayTeam: string;
   homeFlag: string | null;
   awayFlag: string | null;
-  stadium: string;
+  stadium: string | null;
   homeScore: number | null;
   awayScore: number | null;
 };
@@ -23,11 +23,13 @@ type PredMap = Record<number, { homeScore: number; awayScore: number }>;
 type Filter = "all" | "pending";
 
 export default function PredictionsClient({
+  groupSlug,
   matches,
   initialPreds,
   tournamentStartIso,
   tournamentStartLabel,
 }: {
+  groupSlug: string;
   matches: MatchRow[];
   initialPreds: PredMap;
   tournamentStartIso: string;
@@ -52,7 +54,7 @@ export default function PredictionsClient({
 
     const map = new Map<string, MatchRow[]>();
     for (const m of visible) {
-      const key = m.matchDate;
+      const key = m.matchDate ?? "—";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(m);
     }
@@ -122,7 +124,7 @@ export default function PredictionsClient({
       const r = await fetch("/api/predictions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matchId, homeScore, awayScore }),
+        body: JSON.stringify({ groupSlug, matchId, homeScore, awayScore }),
       });
       if (!r.ok) {
         const d = await r.json();
@@ -140,14 +142,14 @@ export default function PredictionsClient({
 
   return (
     <div>
-      {/* Banner de cierre global */}
+      {/* Banner de cierre del torneo */}
       {tournamentLocked ? (
         <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
-          🔒 El Mundial ha empezado · Las predicciones están cerradas
+          🔒 El torneo ha empezado · Las predicciones están cerradas
         </div>
       ) : (
         <div className="cromo bg-pitch-900 text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
-          ⏱ Cierre con el pitido del primer partido · {tournamentStartLabel}
+          ⏱ Cierre con el primer partido · {tournamentStartLabel}
         </div>
       )}
 
@@ -320,17 +322,23 @@ function MatchCard({
       {/* Header: grupo + hora · estado a la derecha */}
       <div className="flex items-center justify-between mb-4 gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
-          >
-            GRUPO {match.groupName}
-          </span>
-          <span className="font-mono text-xs text-pitch-700 font-bold">
-            {match.matchTime}
-          </span>
-          <span className="font-mono text-[10px] text-pitch-700/60 hidden sm:inline">
-            · {match.stadium}
-          </span>
+          {match.groupName && (
+            <span
+              className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
+            >
+              GRUPO {match.groupName}
+            </span>
+          )}
+          {match.matchTime && (
+            <span className="font-mono text-xs text-pitch-700 font-bold">
+              {match.matchTime}
+            </span>
+          )}
+          {match.stadium && (
+            <span className="font-mono text-[10px] text-pitch-700/60 hidden sm:inline">
+              · {match.stadium}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {saving && (

@@ -1,30 +1,21 @@
-import { asc } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "./db";
 import { matches } from "./db/schema";
-import {
-  getTournamentStartIso as getHardcodedStartIso,
-  getTournamentStartLabel as getHardcodedStartLabel,
-} from "./matches-data";
 
-// Inicio efectivo del Mundial = primer kickoff registrado en la DB.
+// Inicio efectivo del torneo = primer kickoff registrado en la DB.
 // Se lee en runtime para que el simulador (que reescribe kickoffAt) active
-// el cierre global cuando empieza la simulación, no el 11 de junio real.
-export async function getTournamentStart(): Promise<{
-  iso: string;
-  label: string;
-}> {
+// el cierre cuando empieza la simulación, no la fecha real.
+export async function getTournamentStart(
+  tournamentId: number
+): Promise<{ iso: string; label: string } | null> {
   const [first] = await db
     .select({ kickoffAt: matches.kickoffAt })
     .from(matches)
+    .where(eq(matches.tournamentId, tournamentId))
     .orderBy(asc(matches.kickoffAt))
     .limit(1);
 
-  if (!first) {
-    return {
-      iso: getHardcodedStartIso(),
-      label: getHardcodedStartLabel(),
-    };
-  }
+  if (!first) return null;
 
   return {
     iso: first.kickoffAt.toISOString(),
@@ -42,7 +33,6 @@ const LABEL_FMT = new Intl.DateTimeFormat("es-ES", {
 });
 
 function formatStartLabel(date: Date): string {
-  // "lun, 11 jun, 21:00" → normalizamos a "Lun 11 Jun · 21:00"
   const parts = LABEL_FMT.formatToParts(date);
   const get = (type: string) =>
     parts.find((p) => p.type === type)?.value ?? "";

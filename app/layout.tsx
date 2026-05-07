@@ -2,11 +2,11 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import NavBar from "@/components/NavBar";
-import LiveScoreboard from "@/components/LiveScoreboard";
 
 export const metadata: Metadata = {
-  title: "La Porra · Mundial 2026",
-  description: "Porra del Mundial 2026 entre amigos",
+  title: "PorraBros · Porras de deportes entre amigos",
+  description:
+    "Crea una porra con tu pandilla, invita por enlace y compite con tus pronósticos.",
 };
 
 export default async function RootLayout({
@@ -21,9 +21,8 @@ export default async function RootLayout({
         <NavBar session={session} />
         <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">{children}</main>
         <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest">
-          ⚽ La Porra · Mundial 2026 · Hecho con ☕ en Pedralba
+          ⚽ PorraBros · Hecho con ☕
         </footer>
-        {session && <LiveScoreboard />}
       </body>
     </html>
   );

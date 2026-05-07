@@ -1,37 +1,69 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, matches, predictions } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { users, matches, predictions, groupMembers } from "@/lib/db/schema";
+import { eq, inArray } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { calcPoints } from "@/lib/scoring";
+import { getGroupForMember } from "@/lib/group-access";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
 
-  // Cargar todo lo que necesitamos
-  const [allUsers, allMatches, allPreds] = await Promise.all([
-    db.select().from(users),
-    db.select().from(matches),
-    db.select().from(predictions),
+  const groupSlug = req.nextUrl.searchParams.get("groupSlug");
+  if (!groupSlug) {
+    return NextResponse.json({ error: "Falta groupSlug" }, { status: 400 });
+  }
+
+  const ctx = await getGroupForMember(groupSlug, session.userId);
+  if (!ctx) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+  }
+
+  // Miembros del grupo + partidos del torneo + predicciones del grupo
+  const memberRows = await db
+    .select({
+      userId: groupMembers.userId,
+      name: users.name,
+    })
+    .from(groupMembers)
+    .innerJoin(users, eq(groupMembers.userId, users.id))
+    .where(eq(groupMembers.groupId, ctx.groupId));
+
+  const memberIds = memberRows.map((m) => m.userId);
+  if (memberIds.length === 0) {
+    return NextResponse.json({ leaderboard: [] });
+  }
+
+  const [allMatches, allPreds] = await Promise.all([
+    db.select().from(matches).where(eq(matches.tournamentId, ctx.tournamentId)),
+    db
+      .select()
+      .from(predictions)
+      .where(eq(predictions.groupId, ctx.groupId)),
   ]);
 
-  // Indexar partidos por id
   const matchById = new Map(allMatches.map((m) => [m.id, m]));
 
-  // Calcular puntos por usuario
   const stats = new Map<
     number,
-    { userId: number; name: string; total: number; exact: number; outcome: number; miss: number; played: number }
+    {
+      userId: number;
+      name: string;
+      total: number;
+      exact: number;
+      outcome: number;
+      miss: number;
+      played: number;
+    }
   >();
 
-  for (const u of allUsers) {
-    if (u.isAdmin === 1) continue; // admin no participa
-    stats.set(u.id, {
-      userId: u.id,
-      name: u.name,
+  for (const m of memberRows) {
+    stats.set(m.userId, {
+      userId: m.userId,
+      name: m.name,
       total: 0,
       exact: 0,
       outcome: 0,
@@ -45,7 +77,7 @@ export async function GET() {
     if (!s) continue;
     const m = matchById.get(p.matchId);
     if (!m) continue;
-    if (m.homeScore == null || m.awayScore == null) continue; // partido sin resultado
+    if (m.homeScore == null || m.awayScore == null) continue;
 
     const { points, result } = calcPoints(
       p.homeScore,
@@ -66,8 +98,6 @@ export async function GET() {
     return a.name.localeCompare(b.name);
   });
 
-  // Asignar posiciones. Sólo se comparte puesto si coinciden total Y exactos:
-  // los exactos rompen el empate de puntos para sacar al verdadero ganador.
   let prevTotal: number | null = null;
   let prevExact: number | null = null;
   let prevPos = 0;

@@ -1,44 +1,77 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, predictions, users } from "@/lib/db/schema";
+import {
+  matches,
+  predictions,
+  users,
+  groupMembers,
+} from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
+import { getGroupForMember } from "@/lib/group-access";
 import { calcPoints, type ScoreResult } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 
 type MatchRow = typeof matches.$inferSelect;
 
-export default async function UserPredictionsPage({
+export default async function MemberPredictionsPage({
   params,
 }: {
-  params: { userId: string };
+  params: { slug: string; userId: string };
 }) {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session)
+    redirect(
+      `/login?next=${encodeURIComponent(
+        `/g/${params.slug}/leaderboard/${params.userId}`
+      )}`
+    );
 
-  const tournamentStart = await getTournamentStart();
-  if (Date.now() < new Date(tournamentStart.iso).getTime()) {
-    // Aún no ha empezado el Mundial: las predicciones ajenas son privadas.
-    redirect("/leaderboard");
+  const ctx = await getGroupForMember(params.slug, session.userId);
+  if (!ctx) notFound();
+
+  const start = await getTournamentStart(ctx.tournamentId);
+  if (!start || Date.now() < new Date(start.iso).getTime()) {
+    // Aún no ha empezado: las predicciones ajenas son privadas.
+    redirect(`/g/${params.slug}/leaderboard`);
   }
 
   const userId = parseInt(params.userId, 10);
   if (!Number.isInteger(userId) || userId <= 0) notFound();
 
-  const [target] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, userId))
+  // El target tiene que ser miembro del mismo grupo
+  const [member] = await db
+    .select({ userId: users.id, name: users.name })
+    .from(groupMembers)
+    .innerJoin(users, eq(groupMembers.userId, users.id))
+    .where(
+      and(
+        eq(groupMembers.groupId, ctx.groupId),
+        eq(groupMembers.userId, userId)
+      )
+    )
     .limit(1);
 
-  if (!target || target.isAdmin === 1) notFound();
+  if (!member) notFound();
 
   const [allMatches, userPreds] = await Promise.all([
-    db.select().from(matches).orderBy(asc(matches.matchNumber)),
-    db.select().from(predictions).where(eq(predictions.userId, userId)),
+    db
+      .select()
+      .from(matches)
+      .where(eq(matches.tournamentId, ctx.tournamentId))
+      .orderBy(asc(matches.matchNumber)),
+    db
+      .select()
+      .from(predictions)
+      .where(
+        and(
+          eq(predictions.userId, userId),
+          eq(predictions.groupId, ctx.groupId)
+        )
+      ),
   ]);
 
   const predMap = new Map<number, { homeScore: number; awayScore: number }>();
@@ -49,7 +82,6 @@ export default async function UserPredictionsPage({
     });
   }
 
-  // Stats
   let total = 0;
   let exact = 0;
   let outcome = 0;
@@ -72,21 +104,21 @@ export default async function UserPredictionsPage({
     else if (result === "miss") miss += 1;
   }
 
-  // Agrupar por fecha respetando el orden de matchNumber
   const groupsByDate = new Map<string, MatchRow[]>();
   for (const m of allMatches) {
-    const arr = groupsByDate.get(m.matchDate) ?? [];
+    const key = m.matchDate ?? "—";
+    const arr = groupsByDate.get(key) ?? [];
     arr.push(m);
-    groupsByDate.set(m.matchDate, arr);
+    groupsByDate.set(key, arr);
   }
 
-  const isSelf = target.name === session.name;
+  const isSelf = member.userId === session.userId;
 
   return (
     <div className="pt-8">
       <div className="mb-8">
         <Link
-          href="/leaderboard"
+          href={`/g/${ctx.slug}/leaderboard`}
           className="inline-block font-mono text-[11px] uppercase tracking-widest text-chalk-400 hover:text-flame-400 transition-colors mb-4"
         >
           ← Volver a la clasificación
@@ -95,7 +127,7 @@ export default async function UserPredictionsPage({
           Pronósticos de
         </p>
         <h1 className="font-display text-5xl sm:text-7xl text-chalk-50 leading-none uppercase break-words">
-          {target.name}
+          {member.name}
           {isSelf && (
             <span className="ml-4 align-middle inline-block bg-flame-500 text-pitch-950 font-display text-xs px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
               ← Tú
@@ -103,11 +135,10 @@ export default async function UserPredictionsPage({
           )}
         </h1>
         <p className="mt-3 font-mono text-[10px] uppercase tracking-widest text-chalk-400">
-          🔒 Bloqueadas desde el inicio del Mundial · {tournamentStart.label}
+          🔒 Bloqueadas desde el inicio del torneo · {start.label}
         </p>
       </div>
 
-      {/* Stats resumen */}
       <div className="cromo bg-pitch-900 p-5 sm:p-6 mb-10 grid grid-cols-2 sm:grid-cols-5 gap-4">
         <Stat label="Puntos" value={total} accent="text-flame-500" />
         <Stat label="Exactos" value={exact} accent="text-grass-400" />
@@ -221,17 +252,23 @@ function ReadOnlyMatchCard({
     >
       <div className="flex items-center justify-between mb-4 gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <span
-            className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
-          >
-            GRUPO {match.groupName}
-          </span>
-          <span className="font-mono text-xs text-pitch-700 font-bold">
-            {match.matchTime}
-          </span>
-          <span className="font-mono text-[10px] text-pitch-700/60 hidden sm:inline">
-            · {match.stadium}
-          </span>
+          {match.groupName && (
+            <span
+              className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
+            >
+              GRUPO {match.groupName}
+            </span>
+          )}
+          {match.matchTime && (
+            <span className="font-mono text-xs text-pitch-700 font-bold">
+              {match.matchTime}
+            </span>
+          )}
+          {match.stadium && (
+            <span className="font-mono text-[10px] text-pitch-700/60 hidden sm:inline">
+              · {match.stadium}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {pointsBadge}

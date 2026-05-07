@@ -1,19 +1,43 @@
 import "dotenv/config";
-import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
 import { db } from "../lib/db";
-import { matches, users } from "../lib/db/schema";
+import { matches, tournaments, users } from "../lib/db/schema";
 import { MATCHES } from "../lib/matches-data";
-import { sql } from "drizzle-orm";
+
+const MUNDIAL_SLUG = "mundial-2026";
 
 async function main() {
   console.log("🌱 Seeding base de datos...");
 
-  // Insertar partidos (idempotente: si ya existe, no duplicar)
+  // 1. Torneo "Mundial 2026"
+  let [tournament] = await db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.slug, MUNDIAL_SLUG))
+    .limit(1);
+
+  if (!tournament) {
+    [tournament] = await db
+      .insert(tournaments)
+      .values({
+        slug: MUNDIAL_SLUG,
+        name: "Mundial 2026",
+        sport: "futbol",
+        status: "upcoming",
+      })
+      .returning();
+    console.log(`✅ Torneo creado: ${tournament.name}`);
+  } else {
+    console.log(`ℹ️  Torneo ya existe: ${tournament.name}`);
+  }
+
+  // 2. Partidos del torneo (idempotente por (tournamentId, matchNumber))
   console.log(`📅 Insertando ${MATCHES.length} partidos...`);
   for (const m of MATCHES) {
     await db
       .insert(matches)
       .values({
+        tournamentId: tournament.id,
         matchNumber: m.num,
         matchDate: m.date,
         matchTime: m.time,
@@ -25,33 +49,48 @@ async function main() {
         awayFlag: m.awayFlag,
         stadium: m.stadium,
       })
-      .onConflictDoNothing({ target: matches.matchNumber });
+      .onConflictDoNothing({
+        target: [matches.tournamentId, matches.matchNumber],
+      });
   }
   console.log("✅ Partidos cargados");
 
-  // Crear admin si no existe
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminPassword) {
-    console.warn("⚠️ ADMIN_PASSWORD no definida. Saltando creación de admin.");
-  } else {
-    const adminName = "admin";
-    const existing = await db
+  // 3. Promocionar email a global admin (opcional vía env var)
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+  if (adminEmail) {
+    const [existing] = await db
       .select()
       .from(users)
-      .where(sql`${users.name} = ${adminName}`)
+      .where(eq(users.email, adminEmail))
       .limit(1);
 
-    if (existing.length === 0) {
-      const hash = await bcrypt.hash(adminPassword, 10);
-      await db.insert(users).values({
-        name: adminName,
-        pinHash: hash,
-        isAdmin: 1,
-      });
-      console.log(`✅ Admin creado (usuario: ${adminName})`);
+    if (existing) {
+      if (existing.isGlobalAdmin !== 1) {
+        await db
+          .update(users)
+          .set({ isGlobalAdmin: 1 })
+          .where(eq(users.id, existing.id));
+        console.log(`✅ ${adminEmail} promocionado a global admin`);
+      } else {
+        console.log(`ℹ️  ${adminEmail} ya es global admin`);
+      }
     } else {
-      console.log("ℹ️ Admin ya existe, no se modifica");
+      await db
+        .insert(users)
+        .values({
+          email: adminEmail,
+          name: adminEmail.split("@")[0],
+          isGlobalAdmin: 1,
+        });
+      console.log(`✅ Admin creado en frío: ${adminEmail}`);
+      console.log(
+        "   (Aún sin sesión — entrará al pedir magic link la primera vez)"
+      );
     }
+  } else {
+    console.log(
+      "ℹ️  ADMIN_EMAIL no definido. Para tener admin global: defínelo y vuelve a ejecutar."
+    );
   }
 
   console.log("🎉 Seed completado");
