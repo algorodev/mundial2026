@@ -48,6 +48,7 @@ export default async function AdminTournamentPage({
           slug={tournament.slug}
           name={tournament.name}
           size="xl"
+          onDark
           className="shrink-0 mt-1"
         />
         <div className="min-w-0">

@@ -68,6 +68,7 @@ export default async function ManageGroupPage({
           slug={details.tournamentSlug}
           name={details.tournamentName}
           size="xl"
+          onDark
           className="shrink-0 mt-1"
         />
         <div className="min-w-0">

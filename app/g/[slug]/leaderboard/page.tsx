@@ -51,6 +51,7 @@ export default async function GroupLeaderboardPage({
             slug={tournament.slug}
             name={tournament.name}
             size="xl"
+            onDark
             className="shrink-0 mt-1"
           />
         )}

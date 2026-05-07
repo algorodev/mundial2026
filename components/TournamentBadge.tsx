@@ -13,29 +13,43 @@ const SIZE: Record<Size, { h: number; maxW: number }> = {
   xl: { h: 88, maxW: 200 },
 };
 
+/**
+ * Logo oficial del torneo desde /public/tournaments/{slug}.png.
+ *
+ * `onDark` envuelve el logo en una caja blanca con borde para que se siga
+ * viendo cuando el padre tiene fondo oscuro (e.g. algunos logos como el de
+ * la Champions son azul marino y se pierden contra bg-pitch-950).
+ */
 export default function TournamentBadge({
   slug,
   name,
   size = "md",
+  onDark = false,
   className = "",
 }: {
   slug: string;
   name: string;
   size?: Size;
+  onDark?: boolean;
   className?: string;
 }) {
   const { h, maxW } = SIZE[size];
+  const wrapperClass = onDark
+    ? "bg-paper-50 border-2 border-pitch-950 rounded shadow-brutal-sm p-2"
+    : "";
   return (
-    <Image
-      src={`/tournaments/${slug}.png`}
-      alt={name}
-      // width/height nominales para que Next sepa el aspect; el render real lo
-      // controla style: alto fijo, ancho automático.
-      width={200}
-      height={200}
-      style={{ height: `${h}px`, width: "auto", maxWidth: `${maxW}px` }}
-      className={`object-contain ${className}`}
-      unoptimized
-    />
+    <span
+      className={`inline-flex items-center justify-center ${wrapperClass} ${className}`}
+    >
+      <Image
+        src={`/tournaments/${slug}.png`}
+        alt={name}
+        width={200}
+        height={200}
+        style={{ height: `${h}px`, width: "auto", maxWidth: `${maxW}px` }}
+        className="object-contain"
+        unoptimized
+      />
+    </span>
   );
 }
