@@ -132,8 +132,12 @@ function renderHtml(url: string, logoUrl: string): string {
 
 export async function sendMagicLink(email: string, token: string) {
   const { from, appUrl } = readEnv();
-  // El endpoint vive en /api/auth/verify (route handler de Next, no una página).
-  const url = `${appUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
+  // El email apunta a la página intermedia /auth/verify (no al endpoint).
+  // Esta página muestra un botón que sí dispara el POST que consume el token.
+  // Los prefetchers de los clientes de correo solo hacen GET, así que con
+  // este indireccionamiento no consumen el token antes de que el usuario
+  // llegue a pulsar.
+  const url = `${appUrl}/auth/verify?token=${encodeURIComponent(token)}`;
   const logoUrl = `${appUrl}/brand/porrabros-logo-horizontal-1200.png`;
   const transporter = getTransporter();
 

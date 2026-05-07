@@ -54,7 +54,7 @@ async function main() {
 
   const token = await createMagicLink(email, null);
   const appUrl = process.env.APP_URL || "http://localhost:3000";
-  const url = `${appUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
+  const url = `${appUrl}/auth/verify?token=${encodeURIComponent(token)}`;
 
   console.log("");
   console.log("🔑 Magic link generado (válido 15 minutos, un solo uso):");
