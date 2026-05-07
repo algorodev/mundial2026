@@ -6,6 +6,40 @@ import { db } from "@/lib/db";
 import { tournaments } from "@/lib/db/schema";
 import { sql } from "drizzle-orm";
 
+const APP_URL = process.env.APP_URL || "https://porrabros.com";
+
+// Schema.org structured data — ayuda a Google a entender qué es la app.
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${APP_URL}/#organization`,
+      name: "PorraBros",
+      url: APP_URL,
+      logo: `${APP_URL}/brand/porrabros-logo-principal-1200.png`,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${APP_URL}/#website`,
+      url: APP_URL,
+      name: "PorraBros",
+      description:
+        "Plataforma de porras de deportes entre amigos. Mundial 2026, Champions League, LaLiga.",
+      inLanguage: "es-ES",
+      publisher: { "@id": `${APP_URL}/#organization` },
+    },
+    {
+      "@type": "WebApplication",
+      name: "PorraBros",
+      url: APP_URL,
+      applicationCategory: "SportsApplication",
+      operatingSystem: "Any",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+    },
+  ],
+};
+
 export default async function HomePage() {
   const session = await getSession();
   if (session) {
@@ -20,6 +54,10 @@ export default async function HomePage() {
 
   return (
     <div className="pt-10 sm:pt-16 overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+      />
       <section className="relative">
         <div className="band bg-brick-500" style={{ top: "30%" }} />
         <div

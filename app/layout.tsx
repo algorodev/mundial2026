@@ -5,32 +5,95 @@ import NavBar from "@/components/NavBar";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
 
+const TITLE = "PorraBros · Porras de deportes entre amigos";
+const DESCRIPTION =
+  "Crea una porra con tu pandilla, compañeros de oficina o familia. Elige torneo (Mundial 2026, Champions, LaLiga…), invita por enlace y compite con tus pronósticos en tiempo real.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "PorraBros · Porras de deportes entre amigos",
+    default: TITLE,
     template: "%s · PorraBros",
   },
-  description:
-    "Crea una porra con tu pandilla, invita por enlace y compite con tus pronósticos.",
+  description: DESCRIPTION,
+  applicationName: "PorraBros",
+  generator: "Next.js",
   manifest: "/manifest.json",
+  referrer: "origin-when-cross-origin",
+  formatDetection: { email: false, telephone: false, address: false },
+  authors: [{ name: "PorraBros" }],
+  creator: "PorraBros",
+  publisher: "PorraBros",
+  category: "sports",
+  keywords: [
+    "porra",
+    "porras",
+    "porra entre amigos",
+    "porra fútbol",
+    "porra Mundial 2026",
+    "porra Champions League",
+    "porra LaLiga",
+    "pronósticos deportivos",
+    "quiniela",
+    "PorraBros",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    nocache: false,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
     type: "website",
     locale: "es_ES",
+    url: "/",
     siteName: "PorraBros",
-    title: "PorraBros · Porras de deportes entre amigos",
-    description:
-      "Crea una porra con tu pandilla, invita por enlace y compite con tus pronósticos.",
+    title: TITLE,
+    description: DESCRIPTION,
+    // Next 14 sirve automáticamente app/opengraph-image.png; lo declaramos
+    // explícitamente para asegurar dimensions/alt en cualquier scraper.
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 1200,
+        alt: "PorraBros — porras de deportes entre amigos",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PorraBros",
-    description: "Porras de deportes entre amigos",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/opengraph-image.png"],
+  },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180" }],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FFD23F",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FFD23F" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A1A1A" },
+  ],
+  colorScheme: "dark",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
