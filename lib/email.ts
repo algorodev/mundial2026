@@ -42,7 +42,8 @@ function getTransporter() {
 
 export async function sendMagicLink(email: string, token: string) {
   const { from, appUrl } = readEnv();
-  const url = `${appUrl}/auth/verify?token=${encodeURIComponent(token)}`;
+  // El endpoint vive en /api/auth/verify (route handler de Next, no una página).
+  const url = `${appUrl}/api/auth/verify?token=${encodeURIComponent(token)}`;
   const transporter = getTransporter();
 
   await transporter.sendMail({
