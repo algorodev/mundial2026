@@ -2,46 +2,79 @@ import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db";
 import { matches, tournaments, users } from "../lib/db/schema";
+import type { MatchData } from "../lib/matches-data";
 import { MATCHES, flagToCode } from "../lib/matches-data";
+import {
+  CHAMPIONS_2026_SLUG,
+  CHAMPIONS_2026_NAME,
+  CHAMPIONS_2026_MATCHES,
+  CHAMPIONS_2026_CODES,
+} from "../lib/champions-2026-data";
 
-const MUNDIAL_SLUG = "mundial-2026";
+type SeedTournament = {
+  slug: string;
+  name: string;
+  sport: string;
+  status: "upcoming" | "live" | "finished";
+  matchData: MatchData[];
+  // Resolver el código de equipo a partir del nombre o emoji del partido.
+  resolveCode: (m: MatchData, side: "home" | "away") => string | null;
+};
 
-async function main() {
-  console.log("🌱 Seeding base de datos...");
+const TOURNAMENTS: SeedTournament[] = [
+  {
+    slug: "mundial-2026",
+    name: "Mundial 2026",
+    sport: "futbol",
+    status: "upcoming",
+    matchData: MATCHES,
+    resolveCode: (m, side) =>
+      flagToCode(side === "home" ? m.homeFlag : m.awayFlag),
+  },
+  {
+    slug: CHAMPIONS_2026_SLUG,
+    name: CHAMPIONS_2026_NAME,
+    sport: "futbol",
+    status: "live",
+    matchData: CHAMPIONS_2026_MATCHES,
+    resolveCode: (m, side) =>
+      CHAMPIONS_2026_CODES[side === "home" ? m.home : m.away] ?? null,
+  },
+];
 
-  // 1. Torneo "Mundial 2026"
-  let [tournament] = await db
+async function ensureTournament(t: SeedTournament) {
+  let [row] = await db
     .select()
     .from(tournaments)
-    .where(eq(tournaments.slug, MUNDIAL_SLUG))
+    .where(eq(tournaments.slug, t.slug))
     .limit(1);
 
-  if (!tournament) {
-    [tournament] = await db
+  if (!row) {
+    [row] = await db
       .insert(tournaments)
       .values({
-        slug: MUNDIAL_SLUG,
-        name: "Mundial 2026",
-        sport: "futbol",
-        status: "upcoming",
+        slug: t.slug,
+        name: t.name,
+        sport: t.sport,
+        status: t.status,
       })
       .returning();
-    console.log(`✅ Torneo creado: ${tournament.name}`);
+    console.log(`✅ Torneo creado: ${row.name}`);
   } else {
-    console.log(`ℹ️  Torneo ya existe: ${tournament.name}`);
+    console.log(`ℹ️  Torneo ya existe: ${row.name}`);
   }
+  return row;
+}
 
-  // 2. Partidos del torneo (upsert por (tournamentId, matchNumber)).
-  // Hacemos update para que los códigos de equipo se rellenen también en
-  // partidos cargados antes de añadir esa columna.
-  console.log(`📅 Cargando ${MATCHES.length} partidos...`);
-  for (const m of MATCHES) {
-    const homeCode = flagToCode(m.homeFlag);
-    const awayCode = flagToCode(m.awayFlag);
+async function upsertMatches(t: SeedTournament, tournamentId: number) {
+  console.log(`📅 Cargando ${t.matchData.length} partidos de ${t.name}...`);
+  for (const m of t.matchData) {
+    const homeCode = t.resolveCode(m, "home");
+    const awayCode = t.resolveCode(m, "away");
     await db
       .insert(matches)
       .values({
-        tournamentId: tournament.id,
+        tournamentId,
         matchNumber: m.num,
         matchDate: m.date,
         matchTime: m.time,
@@ -74,44 +107,55 @@ async function main() {
       });
   }
   console.log("✅ Partidos cargados");
+}
 
-  // 3. Promocionar email a global admin (opcional vía env var)
+async function promoteAdminEmail() {
   const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
-  if (adminEmail) {
-    const [existing] = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, adminEmail))
-      .limit(1);
-
-    if (existing) {
-      if (existing.isGlobalAdmin !== 1) {
-        await db
-          .update(users)
-          .set({ isGlobalAdmin: 1 })
-          .where(eq(users.id, existing.id));
-        console.log(`✅ ${adminEmail} promocionado a global admin`);
-      } else {
-        console.log(`ℹ️  ${adminEmail} ya es global admin`);
-      }
-    } else {
-      await db
-        .insert(users)
-        .values({
-          email: adminEmail,
-          name: adminEmail.split("@")[0],
-          isGlobalAdmin: 1,
-        });
-      console.log(`✅ Admin creado en frío: ${adminEmail}`);
-      console.log(
-        "   (Aún sin sesión — entrará al pedir magic link la primera vez)"
-      );
-    }
-  } else {
+  if (!adminEmail) {
     console.log(
       "ℹ️  ADMIN_EMAIL no definido. Para tener admin global: defínelo y vuelve a ejecutar."
     );
+    return;
   }
+
+  const [existing] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, adminEmail))
+    .limit(1);
+
+  if (existing) {
+    if (existing.isGlobalAdmin !== 1) {
+      await db
+        .update(users)
+        .set({ isGlobalAdmin: 1 })
+        .where(eq(users.id, existing.id));
+      console.log(`✅ ${adminEmail} promocionado a global admin`);
+    } else {
+      console.log(`ℹ️  ${adminEmail} ya es global admin`);
+    }
+  } else {
+    await db.insert(users).values({
+      email: adminEmail,
+      name: adminEmail.split("@")[0],
+      isGlobalAdmin: 1,
+    });
+    console.log(`✅ Admin creado en frío: ${adminEmail}`);
+    console.log(
+      "   (Aún sin sesión — entrará al pedir magic link la primera vez)"
+    );
+  }
+}
+
+async function main() {
+  console.log("🌱 Seeding base de datos...");
+
+  for (const t of TOURNAMENTS) {
+    const row = await ensureTournament(t);
+    await upsertMatches(t, row.id);
+  }
+
+  await promoteAdminEmail();
 
   console.log("🎉 Seed completado");
   process.exit(0);
