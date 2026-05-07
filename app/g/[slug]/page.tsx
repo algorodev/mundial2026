@@ -87,14 +87,29 @@ export default async function GroupPredictionsPage({
         active="predictions"
         isOwner={ctx.myRole === "owner"}
       />
-      <PredictionsClient
-        groupSlug={ctx.slug}
-        matches={matchesSerialized}
-        initialPreds={predsMap}
-        tournamentStartIso={start?.iso ?? new Date(0).toISOString()}
-        tournamentStartLabel={start?.label ?? ""}
-      />
-      <LiveScoreboard groupSlug={ctx.slug} />
+      {matchesSerialized.length === 0 ? (
+        <div className="cromo bg-paper-50 text-pitch-950 p-8 sm:p-10 text-center">
+          <div className="font-display text-3xl sm:text-4xl mb-3">
+            🗓 PRÓXIMAMENTE
+          </div>
+          <p className="font-mono text-xs sm:text-sm text-pitch-700 uppercase tracking-widest">
+            El calendario de {tournament?.name} aún no se ha publicado.
+            <br />
+            Vuelve cuando arranque el torneo para empezar a pronosticar.
+          </p>
+        </div>
+      ) : (
+        <>
+          <PredictionsClient
+            groupSlug={ctx.slug}
+            matches={matchesSerialized}
+            initialPreds={predsMap}
+            tournamentStartIso={start?.iso ?? new Date(0).toISOString()}
+            tournamentStartLabel={start?.label ?? ""}
+          />
+          <LiveScoreboard groupSlug={ctx.slug} />
+        </>
+      )}
     </div>
   );
 }

@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     }
 
     const [tournament] = await db
-      .select({ id: tournaments.id })
+      .select({ id: tournaments.id, status: tournaments.status })
       .from(tournaments)
       .where(eq(tournaments.slug, tournamentSlug))
       .limit(1);
@@ -77,6 +77,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Torneo no encontrado" },
         { status: 404 }
+      );
+    }
+
+    if (tournament.status === "draft") {
+      return NextResponse.json(
+        { error: "Este torneo aún está en construcción y no acepta inscripciones" },
+        { status: 400 }
       );
     }
 

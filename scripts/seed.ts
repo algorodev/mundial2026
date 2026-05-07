@@ -10,12 +10,22 @@ import {
   CHAMPIONS_2026_MATCHES,
   CHAMPIONS_2026_CODES,
 } from "../lib/champions-2026-data";
+import {
+  LALIGA_2026_27_SLUG,
+  LALIGA_2026_27_NAME,
+  LALIGA_2026_27_MATCHES,
+  LALIGA_2026_27_CODES,
+} from "../lib/laliga-2026-27-data";
 
 type SeedTournament = {
   slug: string;
   name: string;
   sport: string;
-  status: "upcoming" | "live" | "finished";
+  // draft     → torneo creado pero todavía sin calendario; no acepta inscripciones
+  // upcoming  → calendario publicado, los grupos pueden inscribirse, aún no ha arrancado
+  // live      → en curso
+  // finished  → terminado
+  status: "draft" | "upcoming" | "live" | "finished";
   matchData: MatchData[];
   // Resolver el código de equipo a partir del nombre o emoji del partido.
   resolveCode: (m: MatchData, side: "home" | "away") => string | null;
@@ -39,6 +49,15 @@ const TOURNAMENTS: SeedTournament[] = [
     matchData: CHAMPIONS_2026_MATCHES,
     resolveCode: (m, side) =>
       CHAMPIONS_2026_CODES[side === "home" ? m.home : m.away] ?? null,
+  },
+  {
+    slug: LALIGA_2026_27_SLUG,
+    name: LALIGA_2026_27_NAME,
+    sport: "futbol",
+    status: "draft",
+    matchData: LALIGA_2026_27_MATCHES,
+    resolveCode: (m, side) =>
+      LALIGA_2026_27_CODES[side === "home" ? m.home : m.away] ?? null,
   },
 ];
 

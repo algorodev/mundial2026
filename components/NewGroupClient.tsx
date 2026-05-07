@@ -11,6 +11,13 @@ type Tournament = {
   status: string;
 };
 
+const STATUS_LABEL: Record<string, string> = {
+  draft: "En construcción",
+  upcoming: "Próximamente",
+  live: "En curso",
+  finished: "Terminado",
+};
+
 export default function NewGroupClient({
   tournaments,
 }: {
@@ -95,7 +102,7 @@ export default function NewGroupClient({
                       active ? "text-pitch-950/70" : "text-pitch-700"
                     }`}
                   >
-                    {t.status}
+                    {STATUS_LABEL[t.status] ?? t.status}
                   </div>
                 </div>
                 {active && (
