@@ -11,7 +11,8 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx scripts/seed.ts",
     "sim": "tsx scripts/simulate.ts start",
-    "sim:reset": "tsx scripts/simulate.ts reset"
+    "sim:reset": "tsx scripts/simulate.ts reset",
+    "admin-link": "tsx scripts/admin-link.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
