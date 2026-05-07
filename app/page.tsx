@@ -17,7 +17,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-pitch-950 text-chalk-300",
+  draft: "bg-brick-500 text-paper-50",
   upcoming: "bg-flame-500 text-pitch-950",
   live: "bg-grass-500 text-paper-50",
   finished: "bg-paper-200 text-pitch-700",
