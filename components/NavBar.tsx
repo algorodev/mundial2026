@@ -34,6 +34,7 @@ export default function NavBar({
             priority
             unoptimized
             className="h-10 sm:h-12 w-auto group-hover:-translate-y-0.5 transition-transform"
+            style={{ width: "auto" }}
           />
         </Link>
 

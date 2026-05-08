@@ -93,6 +93,7 @@ export default async function HomePage() {
             priority
             unoptimized
             className="mx-auto w-[260px] sm:w-[420px] h-auto drop-shadow-2xl"
+            style={{ height: "auto" }}
           />
 
           <p className="mt-10 text-chalk-200 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
