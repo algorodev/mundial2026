@@ -35,7 +35,7 @@ export default function TournamentBadge({
 }) {
   const { h, maxW } = SIZE[size];
   const wrapperClass = onDark
-    ? "bg-paper-50 border-2 border-pitch-950 rounded shadow-brutal-sm p-2"
+    ? "bg-paper-50 border-2 border-pitch-950 rounded-sm shadow-brutal-sm p-2"
     : "";
   return (
     <span

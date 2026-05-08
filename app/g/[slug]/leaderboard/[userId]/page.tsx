@@ -133,7 +133,7 @@ export default async function MemberPredictionsPage({
         <p className="font-mono text-[11px] uppercase tracking-widest text-chalk-400 mb-1">
           Pronósticos de
         </p>
-        <h1 className="font-display text-5xl sm:text-7xl text-chalk-50 leading-none uppercase break-words">
+        <h1 className="font-display text-5xl sm:text-7xl text-chalk-50 leading-none uppercase wrap-break-word">
           {member.name}
           {isSelf && (
             <span className="ml-4 align-middle inline-block bg-flame-500 text-pitch-950 font-display text-xs px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
@@ -263,7 +263,7 @@ function ReadOnlyMatchCard({
         <div className="flex items-center gap-2 flex-wrap">
           {match.groupName && (
             <span
-              className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
+              className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded-sm`}
             >
               GRUPO {match.groupName}
             </span>

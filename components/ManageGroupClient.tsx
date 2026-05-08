@@ -253,7 +253,7 @@ export default function ManageGroupClient({
           🔗 Enlace de invitación
         </h3>
         <div className="cromo bg-pitch-900 p-5 sm:p-6 space-y-4">
-          <div className="font-mono text-sm text-chalk-50 break-all bg-pitch-950 px-4 py-3 rounded">
+          <div className="font-mono text-sm text-chalk-50 break-all bg-pitch-950 px-4 py-3 rounded-sm">
             {inviteUrl}
           </div>
           <div className="flex gap-3 flex-wrap">

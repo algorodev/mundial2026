@@ -19,7 +19,7 @@ export default function NavBar({
   }
 
   return (
-    <nav className="border-b-2 border-pitch-950 bg-pitch-950/85 backdrop-blur-sm sticky top-0 z-30">
+    <nav className="border-b-2 border-pitch-950 bg-pitch-950/85 backdrop-blur-xs sticky top-0 z-30">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         <Link
           href={session ? "/groups" : "/"}

@@ -290,7 +290,7 @@ function PodiumCard({
         <div className="font-mono text-[9px] uppercase tracking-widest opacity-70 mt-1">
           puntos
         </div>
-        <div className="font-display text-sm sm:text-lg mt-3 text-center leading-tight tracking-tight uppercase break-words">
+        <div className="font-display text-sm sm:text-lg mt-3 text-center leading-tight tracking-tight uppercase wrap-break-word">
           {row.name}
         </div>
       </div>

@@ -187,7 +187,7 @@ function ResultRow({
     >
       {match.groupName && (
         <span
-          className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
+          className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded-sm`}
         >
           {match.groupName}
         </span>
@@ -213,7 +213,7 @@ function ResultRow({
             value={home}
             onChange={(e) => setHome(e.target.value)}
             onBlur={commit}
-            className="score-input !w-12 !h-11 !text-xl"
+            className="score-input w-12! h-11! text-xl!"
           />
           <span className="font-display text-xl text-pitch-950">·</span>
           <input
@@ -223,7 +223,7 @@ function ResultRow({
             value={away}
             onChange={(e) => setAway(e.target.value)}
             onBlur={commit}
-            className="score-input !w-12 !h-11 !text-xl"
+            className="score-input w-12! h-11! text-xl!"
           />
         </div>
         <div className="text-left text-xs sm:text-sm font-display uppercase truncate flex items-center gap-2 justify-start">

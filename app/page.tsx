@@ -126,7 +126,7 @@ export default async function HomePage() {
                   ? "-rotate-1"
                   : idx % 3 === 1
                     ? "rotate-1"
-                    : "-rotate-[0.5deg]";
+                    : "rotate-[-0.5deg]";
               return (
                 <article
                   key={t.slug}

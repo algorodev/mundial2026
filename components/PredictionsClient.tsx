@@ -327,7 +327,7 @@ function MatchCard({
         <div className="flex items-center gap-2 flex-wrap">
           {match.groupName && (
             <span
-              className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded`}
+              className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded-sm`}
             >
               GRUPO {match.groupName}
             </span>

@@ -1,14 +1,68 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap')
+layer(utilities);
 
-:root {
+@theme {
   --font-display: "Archivo Black", sans-serif;
   --font-sport: "Bebas Neue", sans-serif;
   --font-body: "Manrope", sans-serif;
   --font-mono: "Space Mono", monospace;
+
+  --color-pitch-700: #2a3530;
+  --color-pitch-800: #1b231e;
+  --color-pitch-900: #111814;
+  --color-pitch-950: #0a0e0c;
+
+  --color-grass-300: #9adfa0;
+  --color-grass-400: #5fc07a;
+  --color-grass-500: #34a259;
+  --color-grass-600: #1f7d3f;
+  --color-grass-700: #155a2c;
+
+  --color-flame-300: #ffe06a;
+  --color-flame-400: #ffc83d;
+  --color-flame-500: #f5b400;
+  --color-flame-600: #cc9300;
+
+  --color-brick-400: #ed6f4a;
+  --color-brick-500: #c84a26;
+  --color-brick-600: #9c3517;
+
+  --color-paper-50: #fbf3dc;
+  --color-paper-100: #f3e6c2;
+  --color-paper-200: #e7d099;
+
+  --color-chalk-50: #fbf6e7;
+  --color-chalk-100: #f1ebd5;
+  --color-chalk-200: #dcd5b6;
+  --color-chalk-400: #9b9479;
+
+  --shadow-brutal: 5px 5px 0 0 rgba(0, 0, 0, 0.95);
+  --shadow-brutal-lg: 8px 8px 0 0 rgba(0, 0, 0, 0.95);
+  --shadow-brutal-sm: 3px 3px 0 0 rgba(0, 0, 0, 0.95);
+  --shadow-brutal-mustard: 5px 5px 0 0 #f5b400;
+  --shadow-brutal-brick: 5px 5px 0 0 #c84a26;
+  --shadow-glow:
+    0 0 0 1px rgba(245, 180, 0, 0.45), 0 8px 32px -8px rgba(245, 180, 0, 0.35);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
 }
 
 html,
@@ -65,7 +119,7 @@ body::before {
   @apply border-2 border-pitch-950 rounded-lg shadow-brutal;
 }
 .cromo-sm {
-  @apply border-2 border-pitch-950 rounded shadow-brutal-sm;
+  @apply border-2 border-pitch-950 rounded-sm shadow-brutal-sm;
 }
 
 /* === Botones brutalist === */
@@ -92,7 +146,7 @@ body::before {
 .input-base {
   @apply bg-paper-50 border-2 border-pitch-950 text-pitch-950 px-4 py-3 rounded-lg
     shadow-brutal-sm
-    focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5
+    focus:outline-hidden focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5
     transition-all placeholder:text-pitch-700/40;
 }
 
@@ -100,7 +154,7 @@ body::before {
   @apply w-14 h-14 text-center text-2xl font-display
     bg-paper-50 border-2 border-pitch-950 text-pitch-950 rounded-lg
     shadow-brutal-sm
-    focus:outline-none focus:bg-flame-300 focus:shadow-brutal
+    focus:outline-hidden focus:bg-flame-300 focus:shadow-brutal
     focus:-translate-x-0.5 focus:-translate-y-0.5
     transition-all
     [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;

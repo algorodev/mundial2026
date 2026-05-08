@@ -119,7 +119,7 @@ export default function LiveScoreboard({
 
   return (
     <aside
-      className="fixed z-40 bottom-4 right-4 left-4 sm:left-auto sm:w-[22rem] cromo bg-pitch-900 text-chalk-50 max-h-[70vh] flex flex-col overflow-hidden"
+      className="fixed z-40 bottom-4 right-4 left-4 sm:left-auto sm:w-88 cromo bg-pitch-900 text-chalk-50 max-h-[70vh] flex flex-col overflow-hidden"
       aria-label="Marcador en vivo"
     >
       <header className="flex items-center justify-between px-4 py-3 border-b-2 border-pitch-700 bg-pitch-950 shrink-0">
@@ -164,7 +164,7 @@ function LiveRow({ match }: { match: LiveMatch }) {
     <div className="cromo-sm bg-paper-50 text-pitch-950 p-3">
       <div className="flex items-center justify-between gap-2 mb-1">
         <span
-          className={`group-${match.groupName} text-[9px] px-2 py-0.5 rounded`}
+          className={`group-${match.groupName} text-[9px] px-2 py-0.5 rounded-sm`}
         >
           GRUPO {match.groupName}
         </span>
@@ -231,7 +231,7 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
             alt={next.homeTeam}
             size="sm"
           />
-          <span className="font-display uppercase text-[11px] tracking-tight mt-0.5 truncate max-w-[7rem]">
+          <span className="font-display uppercase text-[11px] tracking-tight mt-0.5 truncate max-w-28">
             {next.homeTeam}
           </span>
         </div>
@@ -243,7 +243,7 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
             alt={next.awayTeam}
             size="sm"
           />
-          <span className="font-display uppercase text-[11px] tracking-tight mt-0.5 truncate max-w-[7rem]">
+          <span className="font-display uppercase text-[11px] tracking-tight mt-0.5 truncate max-w-28">
             {next.awayTeam}
           </span>
         </div>
