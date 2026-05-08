@@ -34,7 +34,15 @@ const BLACK = "#1A1A1A";
 const PAPER = "#FAFAF7";
 const MUTED = "#6B7280";
 
-function renderHtml(url: string, logoUrl: string): string {
+function renderHtml(url: string, logoUrl: string, isReset: boolean): string {
+  const heading = isReset ? "Restablece tu contraseña" : "Crea tu contraseña";
+  const intro = isReset
+    ? "Pulsa el botón para elegir una contraseña nueva. El enlace es de un solo uso y caduca en"
+    : "Pulsa el botón para fijar tu contraseña en PorraBros. El enlace es de un solo uso y caduca en";
+  const buttonLabel = isReset ? "Cambiar contraseña →" : "Crear contraseña →";
+  const preheader = isReset
+    ? "Restablece tu contraseña de PorraBros · caduca en 15 minutos"
+    : "Crea tu contraseña de PorraBros · caduca en 15 minutos";
   // Email HTML usa tablas e inline styles para sobrevivir a clientes torpes
   // (Outlook desktop sobre todo). SVG no funciona — usamos PNG.
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -43,12 +51,12 @@ function renderHtml(url: string, logoUrl: string): string {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<title>Entra en PorraBros</title>
+<title>${heading} · PorraBros</title>
 </head>
 <body style="margin:0;padding:0;background-color:${BLACK};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${BLACK};">
 <!-- preheader: el texto que sale en el preview de la bandeja -->
 <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:${BLACK};opacity:0">
-  Tu enlace para entrar en PorraBros · caduca en 15 minutos
+  ${preheader}
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${BLACK};">
@@ -68,12 +76,11 @@ function renderHtml(url: string, logoUrl: string): string {
           <td style="background-color:${PAPER};border:3px solid ${BLACK};border-radius:12px;padding:40px 32px;box-shadow:6px 6px 0 ${YELLOW};">
 
             <h1 style="margin:0 0 16px 0;font-size:32px;line-height:1.1;font-weight:900;letter-spacing:-0.5px;color:${BLACK};text-transform:uppercase;">
-              Entra en <span style="color:${YELLOW};-webkit-text-stroke:1px ${BLACK};text-stroke:1px ${BLACK};">PorraBros</span>
+              ${heading.split(" ")[0]} <span style="color:${YELLOW};-webkit-text-stroke:1px ${BLACK};text-stroke:1px ${BLACK};">${heading.split(" ").slice(1).join(" ")}</span>
             </h1>
 
             <p style="margin:0 0 32px 0;font-size:16px;line-height:1.5;color:${BLACK};">
-              Pulsa el botón para entrar a tu cuenta. El enlace es de un solo uso y caduca en
-              <strong>15 minutos</strong>.
+              ${intro} <strong>15 minutos</strong>.
             </p>
 
             <!-- Bulletproof button: tabla anidada para Outlook -->
@@ -81,7 +88,7 @@ function renderHtml(url: string, logoUrl: string): string {
               <tr>
                 <td align="center" bgcolor="${YELLOW}" style="background-color:${YELLOW};border:3px solid ${BLACK};border-radius:8px;box-shadow:4px 4px 0 ${BLACK};">
                   <a href="${url}" target="_blank" style="display:inline-block;padding:14px 28px;font-size:16px;font-weight:900;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:${BLACK};text-decoration:none;text-transform:uppercase;letter-spacing:1px;">
-                    Entrar →
+                    ${buttonLabel}
                   </a>
                 </td>
               </tr>
@@ -119,29 +126,53 @@ function renderHtml(url: string, logoUrl: string): string {
 </html>`;
 }
 
-export async function sendMagicLink(email: string, token: string) {
+type LinkKind = "set" | "reset";
+
+/**
+ * Manda un email con un enlace para crear o resetear la contraseña.
+ *
+ * El enlace apunta a la página intermedia /auth/set-password (no al endpoint
+ * de la API): los prefetchers de los clientes de correo (Outlook Safe Links,
+ * antivirus corporativos…) hacen GET sobre el link automáticamente y nos
+ * "consumirían" el token antes de que el usuario llegase a pulsarlo. La
+ * página intermedia muestra un formulario que dispara el POST que sí consume.
+ */
+export async function sendSetPasswordLink(
+  email: string,
+  token: string,
+  kind: LinkKind = "set"
+) {
   const { from, appUrl } = readEnv();
-  // El email apunta a la página intermedia /auth/verify (no al endpoint).
-  // Esta página muestra un botón que sí dispara el POST que consume el token.
-  // Los prefetchers de los clientes de correo solo hacen GET, así que con
-  // este indireccionamiento no consumen el token antes de que el usuario
-  // llegue a pulsar.
-  const url = `${appUrl}/auth/verify?token=${encodeURIComponent(token)}`;
+  const url = `${appUrl}/auth/set-password?token=${encodeURIComponent(token)}`;
   const logoUrl = `${appUrl}/brand/porrabros-logo-horizontal-1200.png`;
   const resend = getClient();
+
+  const isReset = kind === "reset";
+  const subject = isReset
+    ? "Restablece tu contraseña de PorraBros"
+    : "Crea tu contraseña de PorraBros";
+  const textBody = isReset
+    ? `Restablece tu contraseña en PorraBros
+
+Pulsa este enlace para elegir una nueva contraseña (caduca en 15 minutos):
+
+${url}
+
+Si no has pedido cambiar la contraseña, puedes ignorar este correo.`
+    : `Crea tu contraseña en PorraBros
+
+Pulsa este enlace para fijar tu contraseña (caduca en 15 minutos):
+
+${url}
+
+Si no has pedido entrar a PorraBros, puedes ignorar este correo.`;
 
   const { error } = await resend.emails.send({
     from,
     to: email,
-    subject: "Tu acceso a PorraBros",
-    text: `Entra en PorraBros
-
-Pulsa este enlace para entrar (caduca en 15 minutos):
-
-${url}
-
-Si no has pedido entrar, puedes ignorar este correo.`,
-    html: renderHtml(url, logoUrl),
+    subject,
+    text: textBody,
+    html: renderHtml(url, logoUrl, isReset),
   });
 
   if (error) {

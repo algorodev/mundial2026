@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Entrar",
   description:
-    "Accede a PorraBros con tu email. Te mandamos un enlace mágico — sin contraseñas.",
+    "Accede a PorraBros con tu email y contraseña.",
   alternates: { canonical: "/login" },
 };
 

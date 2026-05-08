@@ -4,8 +4,9 @@ import { db } from "../lib/db";
 import { users } from "../lib/db/schema";
 import { createMagicLink } from "../lib/auth";
 
-// Genera un magic link para entrar sin pasar por SMTP. Útil cuando aún no
-// tienes el email configurado o quieres entrar como admin rápidamente.
+// Genera un enlace para crear/restablecer la contraseña sin pasar por SMTP.
+// Útil cuando aún no tienes Resend configurado o quieres entrar como admin
+// rápidamente: el admin abre el link, fija una contraseña y entra.
 //
 // Uso:
 //   pnpm tsx scripts/admin-link.ts                    → usa ADMIN_EMAIL del .env
@@ -54,10 +55,10 @@ async function main() {
 
   const token = await createMagicLink(email, null);
   const appUrl = process.env.APP_URL || "http://localhost:3000";
-  const url = `${appUrl}/auth/verify?token=${encodeURIComponent(token)}`;
+  const url = `${appUrl}/auth/set-password?token=${encodeURIComponent(token)}`;
 
   console.log("");
-  console.log("🔑 Magic link generado (válido 15 minutos, un solo uso):");
+  console.log("🔑 Enlace para crear contraseña (válido 15 minutos, un solo uso):");
   console.log("");
   console.log(url);
   console.log("");

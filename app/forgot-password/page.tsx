@@ -1,63 +1,44 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
-function LoginInner() {
-  const router = useRouter();
+function ForgotPasswordInner() {
   const params = useSearchParams();
   const redirectTo = params.get("next");
-  const errorParam = params.get("error");
   const nextQuery = redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : "";
 
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
-
-  useEffect(() => {
-    if (errorParam === "invalid") {
-      setError("El enlace ya no es válido. Vuelve a intentarlo.");
-    } else if (errorParam === "missing") {
-      setError("El enlace no es válido.");
-    }
-  }, [errorParam]);
+  const [sent, setSent] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const r = await fetch("/api/auth/login", {
+      const r = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.trim(),
-          password,
           redirectTo: redirectTo || null,
         }),
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "No se pudo iniciar sesión");
+        setError(data.error || "No se pudo enviar el correo");
         return;
       }
-      // Cuenta transicional sin contraseña: el server ha mandado un email
-      // con un enlace para crearla. Mostramos panel "revisa tu correo".
-      if (data.sentLink) {
-        setLinkSent(true);
-        return;
-      }
-      router.push(redirectTo || "/groups");
-      router.refresh();
+      setSent(true);
     } finally {
       setLoading(false);
     }
   }
 
-  if (linkSent) {
+  if (sent) {
     return (
       <div className="pt-12 sm:pt-20 max-w-md mx-auto">
         <div className="text-center mb-10">
@@ -65,20 +46,14 @@ function LoginInner() {
             REVISA TU CORREO
           </h1>
           <p className="mt-5 text-chalk-300">
-            Tu cuenta ya existía pero aún no tiene contraseña. Te hemos enviado
-            un enlace a <strong>{email}</strong> para que la crees. Caduca en
-            15 minutos.
+            Si <strong>{email}</strong> está registrado en PorraBros, te hemos
+            enviado un enlace para crear una contraseña nueva. Caduca en 15
+            minutos.
           </p>
         </div>
-        <button
-          onClick={() => {
-            setLinkSent(false);
-            setPassword("");
-          }}
-          className="btn-secondary w-full"
-        >
-          Volver
-        </button>
+        <Link href={`/login${nextQuery}`} className="btn-secondary w-full block text-center">
+          Volver a entrar
+        </Link>
       </div>
     );
   }
@@ -86,11 +61,11 @@ function LoginInner() {
   return (
     <div className="pt-12 sm:pt-20 max-w-md mx-auto">
       <div className="text-center mb-10">
-        <h1 className="font-display text-6xl sm:text-7xl text-chalk-50 leading-none">
-          ENTRAR
+        <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+          RECUPERAR ACCESO
         </h1>
         <p className="mt-5 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          Email y contraseña
+          Te mandamos un enlace
         </p>
       </div>
 
@@ -98,6 +73,11 @@ function LoginInner() {
         onSubmit={submit}
         className="cromo bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
+        <p className="text-chalk-200 text-sm leading-relaxed">
+          Pon tu email y te enviamos un enlace para crear una contraseña
+          nueva.
+        </p>
+
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
             Email
@@ -114,21 +94,6 @@ function LoginInner() {
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Contraseña
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="input-base w-full"
-            placeholder="••••••••"
-            required
-            autoComplete="current-password"
-          />
-        </div>
-
         {error && (
           <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 font-semibold text-sm">
             ⚠️ {error}
@@ -136,32 +101,26 @@ function LoginInner() {
         )}
 
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Entrando..." : "Entrar →"}
+          {loading ? "Enviando..." : "Enviarme el enlace →"}
         </button>
 
-        <div className="flex items-center justify-between text-xs text-chalk-400">
+        <p className="text-xs text-chalk-400 text-center">
           <Link
-            href={`/forgot-password${nextQuery}`}
+            href={`/login${nextQuery}`}
             className="hover:text-flame-400 underline underline-offset-2"
           >
-            ¿Olvidaste tu contraseña?
+            Volver a entrar
           </Link>
-          <Link
-            href={`/register${nextQuery}`}
-            className="hover:text-flame-400 underline underline-offset-2"
-          >
-            Crear cuenta
-          </Link>
-        </div>
+        </p>
       </form>
     </div>
   );
 }
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   return (
     <Suspense fallback={null}>
-      <LoginInner />
+      <ForgotPasswordInner />
     </Suspense>
   );
 }

@@ -161,7 +161,7 @@ async function promoteAdminEmail() {
     });
     console.log(`✅ Admin creado en frío: ${adminEmail}`);
     console.log(
-      "   (Aún sin sesión — entrará al pedir magic link la primera vez)"
+      "   (Aún sin contraseña — entrará al pedir el enlace de \"Crear contraseña\" desde /login)"
     );
   }
 }

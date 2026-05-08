@@ -9,13 +9,17 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 
-// Usuarios — auth por email + magic link, sin contraseña.
+// Usuarios — auth por email + contraseña (bcrypt). passwordHash es nullable
+// para soportar usuarios "transicionales" que existen desde la era magic-link
+// y aún no han fijado su contraseña: piden el link, vuelven a /auth/set-password
+// y pasan a operar con password de ahí en adelante.
 export const users = pgTable(
   "users",
   {
     id: serial("id").primaryKey(),
     email: varchar("email", { length: 200 }).notNull(),
     name: varchar("name", { length: 60 }).notNull(),
+    passwordHash: text("password_hash"),
     isGlobalAdmin: integer("is_global_admin").default(0).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
@@ -201,7 +205,9 @@ export const groupJoinRequests = pgTable(
   })
 );
 
-// Magic links para login por email. Token de un solo uso, expira en 15 min.
+// Magic links para crear/resetear contraseña. Token de un solo uso, expira
+// en 15 min. Se usan en dos flujos: (a) usuario transicional sin password,
+// (b) "olvidé mi contraseña".
 export const magicLinks = pgTable(
   "magic_links",
   {

@@ -1,11 +1,11 @@
 import { randomBytes } from "crypto";
 import { and, eq, isNull, gte, sql } from "drizzle-orm";
 import { db } from "./db";
-import { magicLinks, users } from "./db/schema";
+import { magicLinks } from "./db/schema";
 
 const TOKEN_TTL_MS = 15 * 60 * 1000; // 15 min
 
-function normalizeEmail(email: string): string {
+export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
@@ -19,8 +19,11 @@ function generateToken(): string {
 }
 
 /**
- * Crea un magic link y devuelve el token. El caller manda el email.
- * redirectTo: ruta interna a la que volver tras login (e.g. /join/ABC123).
+ * Crea un magic link para el flujo de "crear/resetear contraseña" y devuelve
+ * el token. El caller decide a quién mandar el email.
+ *
+ * redirectTo: ruta interna a la que volver tras fijar la contraseña (e.g.
+ * /join/ABC123). Se persiste y se devuelve cuando se consume el token.
  */
 export async function createMagicLink(
   email: string,
@@ -40,16 +43,52 @@ export async function createMagicLink(
   return token;
 }
 
-export type ConsumedLink = {
-  userId: number;
+export type MagicLinkPeek = {
   email: string;
-  name: string;
-  isGlobalAdmin: boolean;
   redirectTo: string | null;
 };
 
 /**
- * Consume un token: valida, marca como usado, busca o crea el user por email.
+ * Lee un token sin consumirlo. Útil en server components que pintan el form
+ * de set-password antes de que el usuario pulse "guardar". Devuelve null si
+ * el token no existe, ya fue consumido o caducó.
+ *
+ * Importante: NO marca el token como consumido. Esto deja el flujo a salvo
+ * de prefetchers de email (Outlook Safe Links etc.) que hacen GET sobre el
+ * link y nos dejarían el token "ya usado" antes de que el usuario llegase.
+ */
+export async function peekMagicLink(
+  token: string
+): Promise<MagicLinkPeek | null> {
+  const now = new Date();
+  const [link] = await db
+    .select({
+      email: magicLinks.email,
+      redirectTo: magicLinks.redirectTo,
+    })
+    .from(magicLinks)
+    .where(
+      and(
+        eq(magicLinks.token, token),
+        isNull(magicLinks.consumedAt),
+        gte(magicLinks.expiresAt, now)
+      )
+    )
+    .limit(1);
+
+  if (!link) return null;
+  return { email: link.email, redirectTo: link.redirectTo };
+}
+
+export type ConsumedLink = {
+  email: string;
+  redirectTo: string | null;
+};
+
+/**
+ * Consume un token: valida y lo marca como usado de forma atómica. El caller
+ * se encarga de localizar/actualizar el user (set passwordHash, etc.).
+ *
  * Devuelve null si el token no existe, ya fue consumido o caducó.
  */
 export async function consumeMagicLink(
@@ -71,8 +110,8 @@ export async function consumeMagicLink(
 
   if (!link) return null;
 
-  // Marcar consumido (idempotente: si alguien lo consume entre el SELECT y el UPDATE,
-  // sólo uno gana porque la siguiente lectura ya no encontrará consumedAt nulo).
+  // Marcar consumido (idempotente: si alguien lo consume entre el SELECT y
+  // el UPDATE, sólo uno gana porque el WHERE filtra consumedAt nulo).
   const updated = await db
     .update(magicLinks)
     .set({ consumedAt: now })
@@ -81,34 +120,12 @@ export async function consumeMagicLink(
 
   if (updated.length === 0) return null;
 
-  // Buscar o crear user por email. El nombre por defecto es la parte local del email
-  // (lo puede cambiar luego en su perfil — TODO si hace falta).
-  let [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, link.email))
-    .limit(1);
-
-  if (!user) {
-    const defaultName = link.email.split("@")[0].slice(0, 60);
-    [user] = await db
-      .insert(users)
-      .values({ email: link.email, name: defaultName })
-      .returning();
-  }
-
-  return {
-    userId: user.id,
-    email: user.email,
-    name: user.name,
-    isGlobalAdmin: user.isGlobalAdmin === 1,
-    redirectTo: link.redirectTo,
-  };
+  return { email: link.email, redirectTo: link.redirectTo };
 }
 
 /**
  * Borra magic links caducados o consumidos hace más de 1 día.
- * Llamar oportunísticamente desde el endpoint de request-link.
+ * Llamar oportunísticamente desde los endpoints que crean tokens.
  */
 export async function gcMagicLinks() {
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);

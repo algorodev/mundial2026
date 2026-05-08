@@ -1,6 +1,6 @@
 # PorraBros
 
-Plataforma multi-tenant de porras de deportes. Un usuario crea grupos, cada grupo elige un torneo (que mantiene el admin global), invita por enlace mágico, los miembros pronostican y el leaderboard del grupo se actualiza en directo.
+Plataforma multi-tenant de porras de deportes. Un usuario crea grupos, cada grupo elige un torneo (que mantiene el admin global), invita por enlace, los miembros pronostican y el leaderboard del grupo se actualiza en directo.
 
 UI, copy, comentarios y errores van en **español**.
 
@@ -12,7 +12,7 @@ UI, copy, comentarios y errores van en **español**.
 - **Postgres** en **Neon** (driver `@neondatabase/serverless`, HTTP, sin pool)
 - **Drizzle ORM** 0.36 — schema único en `lib/db/schema.ts`
 - **Tailwind CSS** 3 con paleta custom (`pitch`, `grass`, `flame`, `chalk`)
-- **jose** para JWT en cookie httpOnly · **Resend** para enviar magic links
+- **bcryptjs** para hash de contraseñas · **jose** para JWT en cookie httpOnly · **Resend** para emails de set/reset password
 - Despliegue: **Vercel** (free tier)
 
 Path alias: `@/*` → raíz del repo.
@@ -51,7 +51,10 @@ Solo en seed (opcional):
 ```
 app/
   page.tsx                          → landing pública (redirige a /groups si hay sesión)
-  login/                            → form de email + magic link
+  login/                            → form email + password
+  register/                         → alta de cuenta (nombre + email + password)
+  forgot-password/                  → pide enlace de reset
+  auth/set-password/                → form para fijar password con token (no consume hasta POST)
   groups/                           → SSR: lista mis grupos
   groups/new/                       → SSR: crear grupo (elige torneo)
   g/[slug]/                         → SSR: predicciones del grupo + LiveScoreboard
@@ -62,8 +65,10 @@ app/
   admin/                            → SSR auth-gate (isGlobalAdmin) + lista torneos
   admin/t/[slug]/                   → gestión de resultados de un torneo
   api/
-    auth/request-link               → POST: crea magic link y lo envía
-    auth/verify                     → GET ?token=…: consume token, crea sesión, redirige
+    auth/login                      → POST email+password (cuenta sin pass aún → manda link "set")
+    auth/register                   → POST nombre+email+password → crea user y sesión
+    auth/forgot-password            → POST email → manda enlace de reset (silencioso si no existe)
+    auth/set-password               → POST token+password → consume token, hashea y firma sesión
     auth/logout                     → POST: limpia cookie
     groups                          → GET mis grupos · POST crear
     groups/[slug]                   → GET detalle (auth) · DELETE (owner)
@@ -79,10 +84,11 @@ components/
   PredictionsClient, LeaderboardClient, AdminResultsClient, LiveScoreboard
 lib/
   db/index.ts                       → cliente Drizzle (Neon HTTP)
-  db/schema.ts                      → users, tournaments, matches, groups,
-                                       group_members, predictions, magic_links
-  auth.ts                           → createMagicLink / consumeMagicLink
-  email.ts                          → Resend SDK + plantilla del magic link
+  db/schema.ts                      → users (con passwordHash nullable), tournaments,
+                                       matches, groups, group_members, predictions, magic_links
+  auth.ts                           → createMagicLink / peekMagicLink / consumeMagicLink
+  password.ts                       → bcryptjs: hashPassword, verifyPassword, validatePassword (min 8)
+  email.ts                          → Resend SDK + plantilla "crea/restablece tu contraseña"
   group-access.ts                   → getGroupForMember (auth + tournamentId)
   matches-data.ts                   → 72 partidos del Mundial 2026 (sólo para seed)
   scoring.ts                        → calcPoints
@@ -96,13 +102,13 @@ scripts/
 
 ## Modelo de datos
 
-- **users** — `email` único (índice), `name`, `isGlobalAdmin` (0/1, no boolean)
+- **users** — `email` único (índice), `name`, `passwordHash` (text nullable, bcrypt), `isGlobalAdmin` (0/1, no boolean). passwordHash null = cuenta "transicional" sin password fijada todavía
 - **tournaments** — `slug` único, `name`, `sport`, `status` ('upcoming'|'live'|'finished')
 - **matches** — pertenece a `tournament` (FK cascade), `matchNumber` único *por torneo*. `groupName`, `matchDate`, `matchTime`, `stadium`, banderas son **nullable** (para soportar deportes no-fútbol más adelante). `homeScore`/`awayScore` nullable (null = sin resultado)
 - **groups** — `slug` único (`mi-grupo-ab12`), `inviteCode` único (6 chars sin caracteres confusos), `tournamentId` FK restrict (no se borra un torneo con grupos), `ownerId` FK restrict
 - **group_members** — `(groupId, userId)` único compuesto, `role` ('owner'|'member')
 - **predictions** — clave compuesta `(userId, matchId, groupId)`. Un user puede pronosticar el mismo match distinto en grupos distintos. FK con `onDelete: "cascade"` en todos los lados.
-- **magic_links** — `token` único, `email`, `redirectTo` (ruta interna opcional), `expiresAt` (15 min), `consumedAt` nullable (uso una vez)
+- **magic_links** — `token` único, `email`, `redirectTo` (ruta interna opcional), `expiresAt` (15 min), `consumedAt` nullable (uso una vez). Hoy se usan **solo** para crear/resetear password (no para login directo)
 
 `isGlobalAdmin` se almacena como **integer 0/1**, no boolean. Comparar con `=== 1`.
 
@@ -119,10 +125,12 @@ El leaderboard se calcula **por grupo**: lista miembros del grupo, suma puntos d
 
 ## Auth
 
-- **Sin contraseñas.** El user pide acceso desde `/login` introduciendo su email.
-- `POST /api/auth/request-link` crea un `magic_link` (token aleatorio base64url, expira en 15 min) y manda el email vía SMTP.
-- El user pulsa el enlace → `GET /api/auth/verify?token=…` → consume token (idempotente), busca/crea user por email, firma JWT y mete cookie `porra_session` (`httpOnly`, `sameSite: lax`, `secure` en prod, 60 días).
-- `redirectTo` viaja en el magic link para volver al destino original tras login (e.g. `/join/ABC123`).
+- **Email + contraseña** (bcryptjs, salt rounds 10, min 8 chars). El JWT se firma con `jose` y va en cookie `porra_session` (`httpOnly`, `sameSite: lax`, `secure` en prod, 60 días).
+- **Login** (`POST /api/auth/login`): valida bcrypt, firma sesión. Si el email existe **sin** `passwordHash` (cuenta transicional creada por seed/admin-link/era magic-link), el endpoint manda automáticamente un enlace "crea tu contraseña" y responde `{ ok: true, sentLink: true }` — el frontend muestra panel "revisa tu correo".
+- **Registro** (`POST /api/auth/register`): nombre + email + password. Si el email ya existe (con o sin password) responde 409 con CTA a iniciar sesión.
+- **Olvido / reset** (`POST /api/auth/forgot-password`): manda enlace si el user existe. Respuesta siempre genérica `{ ok: true }` para no enumerar cuentas.
+- **Magic link → set-password**: el email lleva a `/auth/set-password?token=…` (página intermedia que **no consume** el token; previene prefetchers de email). El form dispara `POST /api/auth/set-password` que consume token, hashea password, firma sesión y devuelve `redirectTo`.
+- `redirectTo` viaja en el magic link y en `?next=` de las pantallas de login/register/forgot, para volver al destino original (e.g. `/join/ABC123`).
 
 `getSession()` se llama desde server components y route handlers. Page-level guards (`redirect("/login?next=…")`) van **siempre** en el server component, no en el client.
 
@@ -170,5 +178,5 @@ Vercel + Neon + Resend. Tras el primer deploy, ejecutar `pnpm db:push && pnpm db
 - El `dynamic = "force-dynamic"` está en `/g/[slug]/leaderboard` y `/g/[slug]/leaderboard/[userId]`. Las demás páginas son dinámicas de facto porque leen cookies (`getSession`).
 - `matches-data.ts` usa `Date.UTC(Y, M-1, D, h-2, m)`. Ese `-2` es la conversión CEST→UTC; no lo toques sin saber qué haces.
 - Crear un grupo bloquea el flujo si no hay torneos cargados — el admin global tiene que crear/seedear al menos uno.
-- `magic_links` tiene basura acumulada — `gcMagicLinks()` se llama oportunísticamente desde `request-link`. No hace falta cron.
+- `magic_links` tiene basura acumulada — `gcMagicLinks()` se llama oportunísticamente desde `login` (cuando manda link transicional) y `forgot-password`. No hace falta cron.
 - Owner del grupo NO puede salir vía DELETE — debe borrar el grupo entero.

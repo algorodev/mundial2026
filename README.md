@@ -2,7 +2,7 @@
 
 Plataforma para hacer porras de deportes entre amigos. Un grupo = una porra de un torneo (Mundial 26, Champions, lo que cargues). Los miembros pronostican, el admin global mete los resultados, la clasificación se actualiza sola.
 
-**Stack:** Next.js 14 · Postgres (Neon) · Drizzle ORM · Tailwind · Magic-link por email (Resend) · Vercel
+**Stack:** Next.js 14 · Postgres (Neon) · Drizzle ORM · Tailwind · Auth con email + contraseña (bcryptjs) · Resend para emails · Vercel
 
 ---
 
@@ -13,7 +13,7 @@ Plataforma para hacer porras de deportes entre amigos. Un grupo = una porra de u
 1. Crea un proyecto en **[console.neon.tech](https://console.neon.tech)** (free tier sobra para amigos).
 2. Copia el connection string (`postgresql://...?sslmode=require`).
 
-### 2. Resend para los magic links
+### 2. Resend para los emails (set/reset password)
 
 1. Cuenta gratis en **[resend.com](https://resend.com)**.
 2. Verifica tu dominio en **Domains** (añade los DNS records que te pida).
@@ -45,12 +45,12 @@ pnpm db:seed     # crea torneo "Mundial 2026" con sus 72 partidos
 
 ### 5. Listo
 
-Abre la URL de Vercel, pulsa **Entrar**, mete tu email, sigue el link del correo. Si tu email coincide con `ADMIN_EMAIL` ya verás el panel **Admin** para gestionar resultados.
+Abre la URL de Vercel, pulsa **Entrar**. Si tu email coincide con `ADMIN_EMAIL`, mete tu email y cualquier password — el sistema verá que aún no tienes contraseña fijada y te mandará un enlace para crearla. Tras pulsarlo y elegir password ya entras y ves el panel **Admin**. Alternativa rápida sin SMTP: `pnpm admin-link` te imprime un enlace local de "crear contraseña".
 
 Para empezar a porrear:
 1. Pulsa **Crear grupo**, ponle nombre y elige torneo (de momento, Mundial 2026).
 2. Ve a **Gestionar** → copia el enlace de invitación → mándalo a tu pandilla por WhatsApp.
-3. Cada uno entra con su email, pronostica los 72 partidos antes del primer pitido.
+3. Cada uno crea su cuenta (nombre + email + password), pronostica los 72 partidos antes del primer pitido.
 4. Tú (admin global) metes resultados → la clasificación del grupo se actualiza en directo.
 
 ---
@@ -91,18 +91,22 @@ pnpm sim:reset    # restaura los kickoffs reales y limpia resultados
 ```
 app/
   page.tsx                  → landing pública
-  login/                    → form de email → manda magic link
+  login/                    → form email + password
+  register/                 → alta de cuenta (nombre + email + password)
+  forgot-password/          → pide enlace para resetear password
+  auth/set-password/        → form para fijar password tras pulsar el enlace
   groups/                   → mis porras + crear grupo
   g/[slug]/                 → página del grupo (predicciones / leaderboard / manage)
   join/[code]               → aceptar invitación
   admin/                    → panel del global admin (lista torneos + resultados)
-  api/                      → endpoints REST
+  api/                      → endpoints REST (auth: login, register, forgot-password, set-password, logout)
 components/                 → React components
 lib/
-  db/schema.ts              → tablas: users, tournaments, matches, groups,
-                              group_members, predictions, magic_links
-  auth.ts                   → magic link create/consume
-  email.ts                  → Resend SDK + plantilla
+  db/schema.ts              → tablas: users (con passwordHash nullable), tournaments,
+                              matches, groups, group_members, predictions, magic_links
+  auth.ts                   → magic link create/peek/consume (solo para set/reset password)
+  password.ts               → bcryptjs: hashPassword, verifyPassword, validatePassword
+  email.ts                  → Resend SDK + plantilla "crea/restablece tu contraseña"
   group-access.ts           → check de membresía
   scoring.ts                → cálculo de puntos
   session.ts                → JWT en cookie httpOnly
@@ -110,13 +114,15 @@ lib/
 scripts/
   seed.ts                   → torneo Mundial + partidos + admin
   simulate.ts               → simulador 24 h
+  admin-link.ts             → genera enlace local de "crear contraseña" (sin SMTP)
 ```
 
 ---
 
 ## ⚠️ Notas
 
-- Auth por **magic link**: el user mete su email, recibe un correo con un enlace válido 15 min. Sin contraseñas.
+- Auth con **email + contraseña** (bcryptjs, mín 8 chars). Magic links sólo para fijar/resetear password — válidos 15 min, un solo uso.
+- Cuentas "transicionales" (creadas por seed/admin-link o que vienen de la era magic-link sin password): al hacer login el sistema lo detecta y manda un email para fijar la contraseña.
 - Las horas de los partidos del Mundial están en **CEST** (España, junio 2026). Si añades torneos con otras zonas, ajusta el `iso()` helper de `matches-data.ts` o crea uno nuevo.
 - Un grupo = un torneo. Si quieres dos porras (una de la Champions y otra del Mundial), crea dos grupos.
 - El admin global no aparece en los leaderboards a menos que también sea miembro del grupo.
