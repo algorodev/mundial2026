@@ -11,11 +11,12 @@ import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import TournamentBadge from "@/components/TournamentBadge";
 
-export default async function GroupPredictionsPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function GroupPredictionsPage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) redirect(`/login?next=${encodeURIComponent(`/g/${params.slug}`)}`);
 

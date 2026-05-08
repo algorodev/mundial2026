@@ -6,10 +6,8 @@ import { getSession } from "@/lib/session";
 import { parseSettings } from "@/lib/group-settings";
 
 // GET detalle del grupo (solo si soy miembro)
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
@@ -79,10 +77,8 @@ export async function GET(
 }
 
 // PATCH — owner edita la configuración del grupo
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
@@ -157,10 +153,8 @@ export async function PATCH(
 }
 
 // DELETE — solo owner puede borrar el grupo
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });

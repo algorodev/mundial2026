@@ -13,11 +13,12 @@ import TournamentBadge from "@/components/TournamentBadge";
 
 export const dynamic = "force-dynamic";
 
-export default async function GroupLeaderboardPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function GroupLeaderboardPage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const session = await getSession();
   if (!session)
     redirect(

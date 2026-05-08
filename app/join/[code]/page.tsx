@@ -6,11 +6,12 @@ import { groups, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import JoinClient from "@/components/JoinClient";
 
-export default async function JoinPage({
-  params,
-}: {
-  params: { code: string };
-}) {
+export default async function JoinPage(
+  props: {
+    params: Promise<{ code: string }>;
+  }
+) {
+  const params = await props.params;
   const code = params.code.toUpperCase();
   const session = await getSession();
 

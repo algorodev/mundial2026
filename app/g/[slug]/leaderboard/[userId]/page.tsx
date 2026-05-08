@@ -18,11 +18,12 @@ export const dynamic = "force-dynamic";
 
 type MatchRow = typeof matches.$inferSelect;
 
-export default async function MemberPredictionsPage({
-  params,
-}: {
-  params: { slug: string; userId: string };
-}) {
+export default async function MemberPredictionsPage(
+  props: {
+    params: Promise<{ slug: string; userId: string }>;
+  }
+) {
+  const params = await props.params;
   const session = await getSession();
   if (!session)
     redirect(

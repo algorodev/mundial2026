@@ -4,10 +4,8 @@ import { db } from "@/lib/db";
 import { matches, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session || !session.isGlobalAdmin) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });

@@ -12,11 +12,12 @@ export const dynamic = "force-dynamic";
 //
 // El token se consume cuando el usuario envía el formulario de password,
 // que dispara un POST a /api/auth/set-password.
-export default async function SetPasswordPage({
-  searchParams,
-}: {
-  searchParams: { token?: string };
-}) {
+export default async function SetPasswordPage(
+  props: {
+    searchParams: Promise<{ token?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const token = searchParams.token;
 
   if (!token) {

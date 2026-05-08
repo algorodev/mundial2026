@@ -7,8 +7,9 @@ import { getSession } from "@/lib/session";
 // DELETE — expulsar miembro o salir uno mismo
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { slug: string; userId: string } }
+  props: { params: Promise<{ slug: string; userId: string }> }
 ) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });

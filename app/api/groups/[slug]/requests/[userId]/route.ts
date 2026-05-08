@@ -11,8 +11,9 @@ import { getSession } from "@/lib/session";
 // POST → aprobar solicitud (mueve a groupMembers, borra la request)
 export async function POST(
   _req: NextRequest,
-  { params }: { params: { slug: string; userId: string } }
+  props: { params: Promise<{ slug: string; userId: string }> }
 ) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
@@ -77,8 +78,9 @@ export async function POST(
 // DELETE → rechazar solicitud
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { slug: string; userId: string } }
+  props: { params: Promise<{ slug: string; userId: string }> }
 ) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });

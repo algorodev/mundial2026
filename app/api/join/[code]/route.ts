@@ -11,10 +11,8 @@ import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
 
 // GET — info del grupo asociado a un código de invitación (sin unir todavía)
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { code: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   const code = params.code.toUpperCase();
   const [row] = await db
     .select({
@@ -45,10 +43,8 @@ export async function GET(
 }
 
 // POST — me uno al grupo (si estoy logado y el grupo lo permite)
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: { code: string } }
-) {
+export async function POST(_req: NextRequest, props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });

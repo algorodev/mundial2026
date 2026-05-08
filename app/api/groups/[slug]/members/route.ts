@@ -5,10 +5,8 @@ import { groups, groupMembers, users } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 
 // GET — lista de miembros (debe ser miembro)
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(_req: NextRequest, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });

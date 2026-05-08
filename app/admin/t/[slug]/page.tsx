@@ -7,11 +7,12 @@ import { asc, eq } from "drizzle-orm";
 import AdminResultsClient from "@/components/AdminResultsClient";
 import TournamentBadge from "@/components/TournamentBadge";
 
-export default async function AdminTournamentPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function AdminTournamentPage(
+  props: {
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
   const session = await getSession();
   if (!session) redirect("/login");
   if (!session.isGlobalAdmin) redirect("/groups");
