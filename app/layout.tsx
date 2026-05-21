@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { getSession } from "@/lib/session";
 import NavBar from "@/components/NavBar";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
 
@@ -110,6 +111,7 @@ export default async function RootLayout({
         <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest">
           ⚽ PorraBros · Hecho con ☕
         </footer>
+        <GoogleAnalytics />
       </body>
     </html>
   );

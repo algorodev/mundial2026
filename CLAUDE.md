@@ -46,6 +46,9 @@ Todas son **obligatorias** (la app revienta en arranque sin ellas):
 Solo en seed (opcional):
 - `ADMIN_EMAIL` — promociona a global admin al ejecutarlo
 
+Opcionales en runtime:
+- `NEXT_PUBLIC_GA4_ID` — GA4 Measurement ID (`G-XXXXXXXXXX`). Si está, `components/GoogleAnalytics.tsx` carga gtag.js. Si no, no se carga.
+
 ## Arquitectura
 
 ```
