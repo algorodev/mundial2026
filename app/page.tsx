@@ -7,6 +7,8 @@ import { tournaments } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
 import TournamentBadge from "@/components/TournamentBadge";
 import MundialHero from "@/components/MundialHero";
+import HomeShowcase from "@/components/HomeShowcase";
+import HomeCompare from "@/components/HomeCompare";
 import { getTournamentStart } from "@/lib/tournament";
 
 const FEATURED_SLUG = "mundial-2026";
@@ -203,6 +205,8 @@ export default async function HomePage() {
         </section>
       )}
 
+      <HomeShowcase />
+
       <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
         <div className="text-center mb-10">
           <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal -rotate-1">
@@ -238,6 +242,10 @@ export default async function HomePage() {
           ⏰ Pronósticos cerrados al pitido del primer partido
         </p>
       </section>
+
+      <HomeCompare />
+
+      <div className="h-24" />
     </div>
   );
 }
