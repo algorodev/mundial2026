@@ -10,6 +10,7 @@ import MundialHero from "@/components/MundialHero";
 import HomeShowcase from "@/components/HomeShowcase";
 import HomeCompare from "@/components/HomeCompare";
 import { getTournamentStart } from "@/lib/tournament";
+import { LANDINGS } from "@/lib/landings";
 
 const FEATURED_SLUG = "mundial-2026";
 
@@ -157,6 +158,10 @@ export default async function HomePage() {
                     ? "rotate-1"
                     : "rotate-[-0.5deg]";
               const inscribable = t.status === "upcoming" || t.status === "live";
+              const hasLanding = !!LANDINGS[t.slug];
+              const landingHref = hasLanding
+                ? `/porra-${t.slug}`
+                : `/groups/new?preselect=${encodeURIComponent(t.slug)}`;
               const cardClass = `cromo bg-paper-50 text-pitch-950 ${tilt} p-5 sm:p-6 hover:rotate-0 hover:-translate-y-1 transition-all flex flex-col items-center text-center`;
               const content = (
                 <>
@@ -178,17 +183,13 @@ export default async function HomePage() {
                   </span>
                   {inscribable && (
                     <span className="mt-3 font-display text-sm uppercase tracking-widest text-flame-600">
-                      Crear porra →
+                      {hasLanding ? "Ver torneo →" : "Crear porra →"}
                     </span>
                   )}
                 </>
               );
               return inscribable ? (
-                <Link
-                  key={t.slug}
-                  href={`/groups/new?preselect=${encodeURIComponent(t.slug)}`}
-                  className={cardClass}
-                >
+                <Link key={t.slug} href={landingHref} className={cardClass}>
                   {content}
                 </Link>
               ) : (
