@@ -28,7 +28,7 @@ export default async function SetPasswordPage(
   // flujo a salvo de prefetchers que hacen GET sobre la URL.
   const link = await peekMagicLink(token);
 
-  if (!link) {
+  if (!link || link.purpose === "login") {
     return (
       <ErrorBlock
         title="Enlace no válido"

@@ -15,7 +15,11 @@ function LoginInner() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
+  // sentLink: "set-password" (cuenta transicional) | "login" (magic link login)
+  const [sentLink, setSentLink] = useState<"set-password" | "login" | null>(
+    null
+  );
 
   useEffect(() => {
     if (errorParam === "invalid") {
@@ -47,7 +51,7 @@ function LoginInner() {
       // Cuenta transicional sin contraseña: el server ha mandado un email
       // con un enlace para crearla. Mostramos panel "revisa tu correo".
       if (data.sentLink) {
-        setLinkSent(true);
+        setSentLink("set-password");
         return;
       }
       router.push(redirectTo || "/groups");
@@ -57,7 +61,36 @@ function LoginInner() {
     }
   }
 
-  if (linkSent) {
+  async function sendMagicLink() {
+    setError(null);
+    const trimmed = email.trim();
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setError("Escribe tu email para recibir el enlace.");
+      return;
+    }
+    setMagicLoading(true);
+    try {
+      const r = await fetch("/api/auth/magic-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: trimmed,
+          redirectTo: redirectTo || null,
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        setError(data.error || "No se pudo enviar el enlace");
+        return;
+      }
+      setSentLink("login");
+    } finally {
+      setMagicLoading(false);
+    }
+  }
+
+  if (sentLink) {
+    const isMagic = sentLink === "login";
     return (
       <div className="pt-12 sm:pt-20 max-w-md mx-auto">
         <div className="text-center mb-10">
@@ -65,14 +98,24 @@ function LoginInner() {
             REVISA TU CORREO
           </h1>
           <p className="mt-5 text-chalk-300">
-            Tu cuenta ya existía pero aún no tiene contraseña. Te hemos enviado
-            un enlace a <strong>{email}</strong> para que la crees. Caduca en
-            15 minutos.
+            {isMagic ? (
+              <>
+                Si tu email <strong>{email}</strong> está registrado, te hemos
+                enviado un enlace para entrar sin contraseña. Caduca en 15
+                minutos.
+              </>
+            ) : (
+              <>
+                Tu cuenta ya existía pero aún no tiene contraseña. Te hemos
+                enviado un enlace a <strong>{email}</strong> para que la crees.
+                Caduca en 15 minutos.
+              </>
+            )}
           </p>
         </div>
         <button
           onClick={() => {
-            setLinkSent(false);
+            setSentLink(null);
             setPassword("");
           }}
           className="btn-secondary w-full"
@@ -90,7 +133,7 @@ function LoginInner() {
           ENTRAR
         </h1>
         <p className="mt-5 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          Email y contraseña
+          Sin fricciones
         </p>
       </div>
 
@@ -114,6 +157,21 @@ function LoginInner() {
           />
         </div>
 
+        <button
+          type="button"
+          onClick={sendMagicLink}
+          disabled={magicLoading || loading}
+          className="btn-primary w-full"
+        >
+          {magicLoading ? "Enviando..." : "Enviar enlace por email →"}
+        </button>
+
+        <div className="flex items-center gap-3 text-[10px] text-chalk-500 uppercase tracking-widest font-mono">
+          <div className="flex-1 h-px bg-pitch-700" />
+          <span>o usa contraseña</span>
+          <div className="flex-1 h-px bg-pitch-700" />
+        </div>
+
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
             Contraseña
@@ -124,7 +182,6 @@ function LoginInner() {
             onChange={(e) => setPassword(e.target.value)}
             className="input-base w-full"
             placeholder="••••••••"
-            required
             autoComplete="current-password"
           />
         </div>
@@ -135,8 +192,12 @@ function LoginInner() {
           </div>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Entrando..." : "Entrar →"}
+        <button
+          type="submit"
+          disabled={loading || magicLoading || !password}
+          className="btn-secondary w-full"
+        >
+          {loading ? "Entrando..." : "Entrar con contraseña →"}
         </button>
 
         <div className="flex items-center justify-between text-xs text-chalk-400">

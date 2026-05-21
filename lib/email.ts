@@ -34,15 +34,39 @@ const BLACK = "#1A1A1A";
 const PAPER = "#FAFAF7";
 const MUTED = "#6B7280";
 
-function renderHtml(url: string, logoUrl: string, isReset: boolean): string {
-  const heading = isReset ? "Restablece tu contraseña" : "Crea tu contraseña";
-  const intro = isReset
-    ? "Pulsa el botón para elegir una contraseña nueva. El enlace es de un solo uso y caduca en"
-    : "Pulsa el botón para fijar tu contraseña en PorraBros. El enlace es de un solo uso y caduca en";
-  const buttonLabel = isReset ? "Cambiar contraseña →" : "Crear contraseña →";
-  const preheader = isReset
-    ? "Restablece tu contraseña de PorraBros · caduca en 15 minutos"
-    : "Crea tu contraseña de PorraBros · caduca en 15 minutos";
+type EmailMode = "set" | "reset" | "login";
+
+function copyFor(mode: EmailMode) {
+  switch (mode) {
+    case "reset":
+      return {
+        heading: "Restablece tu contraseña",
+        intro:
+          "Pulsa el botón para elegir una contraseña nueva. El enlace es de un solo uso y caduca en",
+        buttonLabel: "Cambiar contraseña →",
+        preheader: "Restablece tu contraseña de PorraBros · caduca en 15 minutos",
+      };
+    case "login":
+      return {
+        heading: "Tu enlace de acceso",
+        intro:
+          "Pulsa el botón para entrar a PorraBros sin contraseña. El enlace es de un solo uso y caduca en",
+        buttonLabel: "Entrar →",
+        preheader: "Tu enlace de acceso a PorraBros · caduca en 15 minutos",
+      };
+    default:
+      return {
+        heading: "Crea tu contraseña",
+        intro:
+          "Pulsa el botón para fijar tu contraseña en PorraBros. El enlace es de un solo uso y caduca en",
+        buttonLabel: "Crear contraseña →",
+        preheader: "Crea tu contraseña de PorraBros · caduca en 15 minutos",
+      };
+  }
+}
+
+function renderHtml(url: string, logoUrl: string, mode: EmailMode): string {
+  const { heading, intro, buttonLabel, preheader } = copyFor(mode);
   // Email HTML usa tablas e inline styles para sobrevivir a clientes torpes
   // (Outlook desktop sobre todo). SVG no funciona — usamos PNG.
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -172,7 +196,39 @@ Si no has pedido entrar a PorraBros, puedes ignorar este correo.`;
     to: email,
     subject,
     text: textBody,
-    html: renderHtml(url, logoUrl, isReset),
+    html: renderHtml(url, logoUrl, isReset ? "reset" : "set"),
+  });
+
+  if (error) {
+    throw new Error(`Resend: ${error.name} — ${error.message}`);
+  }
+}
+
+/**
+ * Manda un email con un enlace de acceso (login sin contraseña). El enlace
+ * apunta a /auth/magic-login, página intermedia que muestra un botón "Entrar"
+ * antes de consumir el token (mismo motivo prefetcher que set-password).
+ */
+export async function sendMagicLoginLink(email: string, token: string) {
+  const { from, appUrl } = readEnv();
+  const url = `${appUrl}/auth/magic-login?token=${encodeURIComponent(token)}`;
+  const logoUrl = `${appUrl}/brand/porrabros-logo-horizontal-1200.png`;
+  const resend = getClient();
+
+  const textBody = `Tu enlace de acceso a PorraBros
+
+Pulsa este enlace para entrar sin contraseña (caduca en 15 minutos):
+
+${url}
+
+Si no has pedido entrar, puedes ignorar este correo.`;
+
+  const { error } = await resend.emails.send({
+    from,
+    to: email,
+    subject: "Tu enlace de acceso a PorraBros",
+    text: textBody,
+    html: renderHtml(url, logoUrl, "login"),
   });
 
   if (error) {

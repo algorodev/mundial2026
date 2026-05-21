@@ -205,15 +205,19 @@ export const groupJoinRequests = pgTable(
   })
 );
 
-// Magic links para crear/resetear contraseña. Token de un solo uso, expira
-// en 15 min. Se usan en dos flujos: (a) usuario transicional sin password,
-// (b) "olvidé mi contraseña".
+// Magic links de un solo uso (15 min). Tres flujos según `purpose`:
+//   "set-password" → usuario transicional crea su contraseña
+//   "reset"        → reset desde /forgot-password (mismo destino que set)
+//   "login"        → sesión sin contraseña ("magic-link login")
 export const magicLinks = pgTable(
   "magic_links",
   {
     id: serial("id").primaryKey(),
     token: varchar("token", { length: 80 }).notNull(),
     email: varchar("email", { length: 200 }).notNull(),
+    purpose: varchar("purpose", { length: 20 })
+      .default("set-password")
+      .notNull(),
     redirectTo: varchar("redirect_to", { length: 200 }),
     expiresAt: timestamp("expires_at").notNull(),
     consumedAt: timestamp("consumed_at"),

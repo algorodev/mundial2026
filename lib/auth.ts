@@ -18,16 +18,23 @@ function generateToken(): string {
   return randomBytes(32).toString("base64url");
 }
 
+export type MagicLinkPurpose = "set-password" | "reset" | "login";
+
 /**
- * Crea un magic link para el flujo de "crear/resetear contraseña" y devuelve
- * el token. El caller decide a quién mandar el email.
+ * Crea un magic link y devuelve el token. El caller decide a quién mandar el
+ * email.
  *
- * redirectTo: ruta interna a la que volver tras fijar la contraseña (e.g.
- * /join/ABC123). Se persiste y se devuelve cuando se consume el token.
+ * purpose distingue los tres flujos: "set-password" / "reset" (ambos llevan
+ * a /auth/set-password) y "login" (sesión sin contraseña, lleva a
+ * /auth/magic-login).
+ *
+ * redirectTo: ruta interna a la que volver tras consumir el token (e.g.
+ * /join/ABC123). Se persiste y se devuelve cuando se consume.
  */
 export async function createMagicLink(
   email: string,
-  redirectTo: string | null = null
+  redirectTo: string | null = null,
+  purpose: MagicLinkPurpose = "set-password"
 ): Promise<string> {
   const normalized = normalizeEmail(email);
   const token = generateToken();
@@ -36,6 +43,7 @@ export async function createMagicLink(
   await db.insert(magicLinks).values({
     token,
     email: normalized,
+    purpose,
     redirectTo: redirectTo && redirectTo.startsWith("/") ? redirectTo : null,
     expiresAt,
   });
@@ -45,6 +53,7 @@ export async function createMagicLink(
 
 export type MagicLinkPeek = {
   email: string;
+  purpose: MagicLinkPurpose;
   redirectTo: string | null;
 };
 
@@ -64,6 +73,7 @@ export async function peekMagicLink(
   const [link] = await db
     .select({
       email: magicLinks.email,
+      purpose: magicLinks.purpose,
       redirectTo: magicLinks.redirectTo,
     })
     .from(magicLinks)
@@ -77,11 +87,16 @@ export async function peekMagicLink(
     .limit(1);
 
   if (!link) return null;
-  return { email: link.email, redirectTo: link.redirectTo };
+  return {
+    email: link.email,
+    purpose: link.purpose as MagicLinkPurpose,
+    redirectTo: link.redirectTo,
+  };
 }
 
 export type ConsumedLink = {
   email: string;
+  purpose: MagicLinkPurpose;
   redirectTo: string | null;
 };
 
@@ -120,7 +135,11 @@ export async function consumeMagicLink(
 
   if (updated.length === 0) return null;
 
-  return { email: link.email, redirectTo: link.redirectTo };
+  return {
+    email: link.email,
+    purpose: link.purpose as MagicLinkPurpose,
+    redirectTo: link.redirectTo,
+  };
 }
 
 /**
