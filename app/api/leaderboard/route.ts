@@ -4,22 +4,36 @@ import { users, matches, predictions, groupMembers } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { calcPoints } from "@/lib/scoring";
-import { getGroupForMember } from "@/lib/group-access";
+import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
 
 export async function GET(req: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
-  }
-
   const groupSlug = req.nextUrl.searchParams.get("groupSlug");
   if (!groupSlug) {
     return NextResponse.json({ error: "Falta groupSlug" }, { status: 400 });
   }
 
-  const ctx = await getGroupForMember(groupSlug, session.userId);
+  const session = await getSession();
+
+  // Resolución de contexto: primero miembro (con sesión), si falla y el grupo
+  // es público, lo dejamos pasar como visitante (read-only).
+  let ctx: { groupId: number; tournamentId: number } | null = null;
+  if (session) {
+    const memberCtx = await getGroupForMember(groupSlug, session.userId);
+    if (memberCtx) {
+      ctx = { groupId: memberCtx.groupId, tournamentId: memberCtx.tournamentId };
+    }
+  }
   if (!ctx) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    const pub = await getPublicGroup(groupSlug);
+    if (pub) {
+      ctx = { groupId: pub.groupId, tournamentId: pub.tournamentId };
+    }
+  }
+  if (!ctx) {
+    return NextResponse.json(
+      { error: session ? "No autorizado" : "No autenticado" },
+      { status: session ? 403 : 401 }
+    );
   }
 
   // Miembros del grupo + partidos del torneo + predicciones del grupo

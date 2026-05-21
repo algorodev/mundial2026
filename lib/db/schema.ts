@@ -29,6 +29,13 @@ export const users = pgTable(
 );
 
 // Torneos creados por el admin global (Mundial 2026, Champions, etc.)
+//
+// officialGroupId apunta a la "porra oficial pública" del torneo (gestionada
+// por el admin global, abierta a todos sin invitación). Cada torneo tiene
+// como mucho una. El campo es nullable: si está vacío, no hay porra oficial.
+// No usamos FK estricta porque introduce un ciclo (groups → tournaments)
+// que drizzle-kit no maneja del todo bien; la integridad se mantiene en
+// scripts/make-official.ts y al borrar el grupo (oportunístico).
 export const tournaments = pgTable(
   "tournaments",
   {
@@ -37,6 +44,7 @@ export const tournaments = pgTable(
     name: varchar("name", { length: 120 }).notNull(),
     sport: varchar("sport", { length: 30 }).default("futbol").notNull(),
     status: varchar("status", { length: 20 }).default("upcoming").notNull(), // upcoming | live | finished
+    officialGroupId: integer("official_group_id"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({
@@ -120,6 +128,11 @@ export const groups = pgTable(
     allowLateJoin: integer("allow_late_join").default(0).notNull(),
     predictionsVisibility: varchar("predictions_visibility", { length: 24 })
       .default("hidden-until-lock")
+      .notNull(),
+    // "private" (default) = sólo miembros ven nada. "public" = leaderboard
+    // accesible sin sesión. Usado por la "porra oficial" por torneo.
+    visibility: varchar("visibility", { length: 16 })
+      .default("private")
       .notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },

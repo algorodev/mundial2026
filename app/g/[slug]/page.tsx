@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { matches, predictions, tournaments, groups } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
-import { getGroupForMember } from "@/lib/group-access";
+import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
 import PredictionsClient from "@/components/PredictionsClient";
 import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
@@ -18,10 +18,21 @@ export default async function GroupPredictionsPage(
 ) {
   const params = await props.params;
   const session = await getSession();
-  if (!session) redirect(`/login?next=${encodeURIComponent(`/g/${params.slug}`)}`);
+  if (!session) {
+    // Si el grupo es público, mandamos directo al leaderboard (visible sin
+    // sesión) en vez de forzar el login para el flow de predicciones.
+    const pub = await getPublicGroup(params.slug);
+    if (pub) redirect(`/g/${params.slug}/leaderboard`);
+    redirect(`/login?next=${encodeURIComponent(`/g/${params.slug}`)}`);
+  }
 
   const ctx = await getGroupForMember(params.slug, session.userId);
-  if (!ctx) notFound();
+  if (!ctx) {
+    // Logado pero no miembro: si es público, leaderboard; si no, 404.
+    const pub = await getPublicGroup(params.slug);
+    if (pub) redirect(`/g/${params.slug}/leaderboard`);
+    notFound();
+  }
 
   const [tournament, group, allMatches, myPreds, start] = await Promise.all([
     db

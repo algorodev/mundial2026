@@ -3,7 +3,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { getGroupForMember } from "@/lib/group-access";
+import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
 
 export const dynamic = "force-dynamic";
 
@@ -15,19 +15,26 @@ const REAL_LIVE_WINDOW_MS = 2.5 * 3600_000;
 const SIM_THRESHOLD_MS = 2 * 24 * 3600_000;
 
 export async function GET(req: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
-  }
-
   const groupSlug = req.nextUrl.searchParams.get("groupSlug");
   if (!groupSlug) {
     return NextResponse.json({ error: "Falta groupSlug" }, { status: 400 });
   }
 
-  const ctx = await getGroupForMember(groupSlug, session.userId);
+  const session = await getSession();
+  let ctx: { tournamentId: number } | null = null;
+  if (session) {
+    const memberCtx = await getGroupForMember(groupSlug, session.userId);
+    if (memberCtx) ctx = { tournamentId: memberCtx.tournamentId };
+  }
   if (!ctx) {
-    return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    const pub = await getPublicGroup(groupSlug);
+    if (pub) ctx = { tournamentId: pub.tournamentId };
+  }
+  if (!ctx) {
+    return NextResponse.json(
+      { error: session ? "No autorizado" : "No autenticado" },
+      { status: session ? 403 : 401 }
+    );
   }
 
   const all = await db

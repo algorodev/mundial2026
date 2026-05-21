@@ -16,6 +16,17 @@ export type GroupContext = {
   joinDeadline: Date | null;
   allowLateJoin: boolean;
   predictionsVisibility: string;
+  visibility: "private" | "public";
+};
+
+export type PublicGroupContext = {
+  groupId: number;
+  slug: string;
+  name: string;
+  tournamentId: number;
+  ownerId: number;
+  visibility: "public";
+  inviteCode: string;
 };
 
 /**
@@ -39,6 +50,7 @@ export async function getGroupForMember(
       joinDeadline: groups.joinDeadline,
       allowLateJoin: groups.allowLateJoin,
       predictionsVisibility: groups.predictionsVisibility,
+      visibility: groups.visibility,
     })
     .from(groups)
     .innerJoin(
@@ -66,5 +78,41 @@ export async function getGroupForMember(
     joinDeadline: row.joinDeadline,
     allowLateJoin: row.allowLateJoin === 1,
     predictionsVisibility: row.predictionsVisibility,
+    visibility: row.visibility === "public" ? "public" : "private",
+  };
+}
+
+/**
+ * Devuelve info del grupo si es público (visibility = "public"), o null en
+ * cualquier otro caso. Pensado para que un visitante sin sesión pueda ver
+ * el leaderboard de la porra oficial.
+ */
+export async function getPublicGroup(
+  slug: string
+): Promise<PublicGroupContext | null> {
+  const [row] = await db
+    .select({
+      groupId: groups.id,
+      slug: groups.slug,
+      name: groups.name,
+      tournamentId: groups.tournamentId,
+      ownerId: groups.ownerId,
+      visibility: groups.visibility,
+      inviteCode: groups.inviteCode,
+    })
+    .from(groups)
+    .where(eq(groups.slug, slug))
+    .limit(1);
+
+  if (!row || row.visibility !== "public") return null;
+
+  return {
+    groupId: row.groupId,
+    slug: row.slug,
+    name: row.name,
+    tournamentId: row.tournamentId,
+    ownerId: row.ownerId,
+    visibility: "public",
+    inviteCode: row.inviteCode,
   };
 }

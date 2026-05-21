@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, tournaments } from "@/lib/db/schema";
+import { matches, tournaments, groups } from "@/lib/db/schema";
 import TournamentBadge from "@/components/TournamentBadge";
 import type { LandingConfig } from "@/lib/landings";
 
@@ -34,10 +34,23 @@ export default async function TournamentLanding({
       name: tournaments.name,
       slug: tournaments.slug,
       status: tournaments.status,
+      officialGroupId: tournaments.officialGroupId,
     })
     .from(tournaments)
     .where(eq(tournaments.slug, cfg.tournamentSlug))
     .limit(1);
+
+  const [officialGroup] = tournament?.officialGroupId
+    ? await db
+        .select({ slug: groups.slug, visibility: groups.visibility })
+        .from(groups)
+        .where(eq(groups.id, tournament.officialGroupId))
+        .limit(1)
+    : [];
+  const officialSlug =
+    officialGroup && officialGroup.visibility === "public"
+      ? officialGroup.slug
+      : null;
 
   const upcomingMatches = tournament
     ? await db
@@ -111,6 +124,37 @@ export default async function TournamentLanding({
           </a>
         </div>
       </section>
+
+      {officialSlug && (
+        <section className="mt-16 max-w-3xl mx-auto">
+          <div className="cromo bg-flame-500 text-pitch-950 p-6 sm:p-7 text-center -rotate-1">
+            <div className="font-mono text-[10px] uppercase tracking-widest opacity-80">
+              🏆 Sin amigos a mano, juega solo
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl mt-2 uppercase leading-none">
+              Porra oficial pública
+            </h2>
+            <p className="mt-3 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
+              Únete a la porra abierta del torneo. Leaderboard en directo,
+              visible para todos.
+            </p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href={`/g/${officialSlug}/leaderboard`}
+                className="btn-secondary"
+              >
+                Ver leaderboard →
+              </Link>
+              <Link
+                href={`/g/${officialSlug}/leaderboard`}
+                className="font-mono text-[10px] uppercase tracking-widest underline underline-offset-4 hover:opacity-70"
+              >
+                (público, sin login)
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* FORMATO */}
       <section className="mt-24 sm:mt-32 max-w-3xl mx-auto">
