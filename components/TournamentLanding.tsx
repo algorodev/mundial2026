@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, tournaments, groups } from "@/lib/db/schema";
 import TournamentBadge from "@/components/TournamentBadge";
@@ -72,21 +72,68 @@ export default async function TournamentLanding({
 
   const preselectHref = `/groups/new?preselect=${encodeURIComponent(cfg.tournamentSlug)}`;
   const calendarHref = `/api/calendar/${cfg.tournamentSlug}`;
+  const landingUrl = `${APP_URL}/porra-${cfg.tournamentSlug}`;
 
-  const structuredData = {
+  // startDate / endDate del torneo se sacan del primer y último partido
+  // (ya tenemos upcomingMatches por kickoff asc). Para el endDate hacemos
+  // otra query si encontramos torneo.
+  let startDateIso: string | null = null;
+  let endDateIso: string | null = null;
+  if (tournament && upcomingMatches.length > 0) {
+    startDateIso = upcomingMatches[0].kickoffAt.toISOString();
+    const [last] = await db
+      .select({ kickoffAt: matches.kickoffAt })
+      .from(matches)
+      .where(eq(matches.tournamentId, tournament.id))
+      .orderBy(desc(matches.kickoffAt))
+      .limit(1);
+    if (last) endDateIso = last.kickoffAt.toISOString();
+  }
+
+  const sportsEvent = {
     "@context": "https://schema.org",
     "@type": "SportsEvent",
-    name: cfg.h1,
+    name: tournament?.name ?? cfg.h1,
     description: cfg.seoDescription,
     sport: "Football",
-    url: `${APP_URL}/porra-${cfg.tournamentSlug}`,
+    url: landingUrl,
+    ...(startDateIso && { startDate: startDateIso }),
+    ...(endDateIso && { endDate: endDateIso }),
+    organizer: {
+      "@type": "Organization",
+      name: "PorraBros",
+      url: APP_URL,
+    },
+  };
+
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "PorraBros",
+        item: `${APP_URL}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: cfg.h1,
+        item: landingUrl,
+      },
+    ],
   };
 
   return (
     <div className="pt-10 sm:pt-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(sportsEvent) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
       />
 
       {/* HERO */}

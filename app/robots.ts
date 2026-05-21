@@ -7,9 +7,18 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/login"],
-        // Todo lo demás requiere autenticación o es backend; no debe
-        // indexarse aunque algún scraper acabe descubriendo las URLs.
+        // Allow tiene precedencia sobre Disallow en googlebot. Habilitamos
+        // las landings SEO y las porras oficiales públicas (prefijo
+        // /g/oficial-); el resto de /g sigue cerrado (grupos privados).
+        allow: [
+          "/",
+          "/login",
+          "/register",
+          "/porra-mundial-2026",
+          "/porra-champions-2025-26",
+          "/porra-laliga-2026-27",
+          "/g/oficial-",
+        ],
         disallow: [
           "/api/",
           "/admin",

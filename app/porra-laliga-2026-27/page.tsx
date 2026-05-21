@@ -5,7 +5,7 @@ import { LANDINGS } from "@/lib/landings";
 const cfg = LANDINGS["laliga-2026-27"];
 
 export const metadata: Metadata = {
-  title: cfg.seoTitle,
+  title: { absolute: cfg.seoTitle },
   description: cfg.seoDescription,
   keywords: cfg.keywords,
   alternates: { canonical: "/porra-laliga-2026-27" },
