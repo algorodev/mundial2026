@@ -18,19 +18,23 @@ type Tournament = {
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "En construcción",
-  upcoming: "Próximamente",
+  upcoming: "Inscripciones abiertas",
   live: "En curso",
   finished: "Terminado",
 };
 
 export default function NewGroupClient({
   tournaments,
+  preselectSlug,
 }: {
   tournaments: Tournament[];
+  preselectSlug?: string | null;
 }) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [tournamentSlug, setTournamentSlug] = useState(tournaments[0].slug);
+  const [tournamentSlug, setTournamentSlug] = useState(
+    preselectSlug ?? tournaments[0].slug
+  );
   const [settings, setSettings] = useState<GroupSettingsValue>(DEFAULT_SETTINGS);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -6,9 +6,18 @@ import { tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import NewGroupClient from "@/components/NewGroupClient";
 
-export default async function NewGroupPage() {
+export default async function NewGroupPage({
+  searchParams,
+}: {
+  searchParams: { preselect?: string };
+}) {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) {
+    const next = searchParams.preselect
+      ? `/groups/new?preselect=${encodeURIComponent(searchParams.preselect)}`
+      : "/groups/new";
+    redirect(`/login?next=${encodeURIComponent(next)}`);
+  }
 
   // Excluimos torneos en construcción (sin calendario): no se pueden inscribir
   // grupos hasta que el admin publique el calendario y lo pase a 'upcoming'.
@@ -22,6 +31,11 @@ export default async function NewGroupPage() {
     .from(tournaments)
     .where(ne(tournaments.status, "draft"))
     .orderBy(asc(tournaments.createdAt));
+
+  const preselectSlug =
+    searchParams.preselect && list.some((t) => t.slug === searchParams.preselect)
+      ? searchParams.preselect
+      : null;
 
   return (
     <div className="pt-8">
@@ -39,7 +53,7 @@ export default async function NewGroupPage() {
           No hay torneos disponibles. Pide al admin que cree uno.
         </div>
       ) : (
-        <NewGroupClient tournaments={list} />
+        <NewGroupClient tournaments={list} preselectSlug={preselectSlug} />
       )}
     </div>
   );

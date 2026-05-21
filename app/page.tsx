@@ -6,12 +6,16 @@ import { db } from "@/lib/db";
 import { tournaments } from "@/lib/db/schema";
 import { asc } from "drizzle-orm";
 import TournamentBadge from "@/components/TournamentBadge";
+import MundialHero from "@/components/MundialHero";
+import { getTournamentStart } from "@/lib/tournament";
+
+const FEATURED_SLUG = "mundial-2026";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "En construcción",
-  upcoming: "Próximamente",
+  upcoming: "Inscripciones abiertas",
   live: "En curso",
   finished: "Terminado",
 };
@@ -64,12 +68,22 @@ export default async function HomePage() {
 
   const tournamentList = await db
     .select({
+      id: tournaments.id,
       slug: tournaments.slug,
       name: tournaments.name,
       status: tournaments.status,
     })
     .from(tournaments)
     .orderBy(asc(tournaments.createdAt));
+
+  const featured = tournamentList.find(
+    (t) =>
+      t.slug === FEATURED_SLUG &&
+      (t.status === "upcoming" || t.status === "live")
+  );
+  const featuredStart = featured
+    ? await getTournamentStart(featured.id)
+    : null;
 
   return (
     <div className="pt-10 sm:pt-16 overflow-x-hidden">
@@ -103,13 +117,25 @@ export default async function HomePage() {
             ser el mejor.
           </p>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/login" className="btn-primary">
-              Empezar →
-            </Link>
-          </div>
+          {!featured && (
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+              <Link href="/login" className="btn-primary">
+                Empezar →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
+
+      {featured && featuredStart && (
+        <MundialHero
+          tournamentSlug={featured.slug}
+          tournamentName={featured.name}
+          kickoffIso={featuredStart.iso}
+          kickoffLabel={featuredStart.label}
+          status={featured.status as "upcoming" | "live"}
+        />
+      )}
 
       {/* Torneos disponibles */}
       {tournamentList.length > 0 && (
@@ -128,11 +154,10 @@ export default async function HomePage() {
                   : idx % 3 === 1
                     ? "rotate-1"
                     : "rotate-[-0.5deg]";
-              return (
-                <article
-                  key={t.slug}
-                  className={`cromo bg-paper-50 text-pitch-950 ${tilt} p-5 sm:p-6 hover:rotate-0 hover:-translate-y-1 transition-all flex flex-col items-center text-center`}
-                >
+              const inscribable = t.status === "upcoming" || t.status === "live";
+              const cardClass = `cromo bg-paper-50 text-pitch-950 ${tilt} p-5 sm:p-6 hover:rotate-0 hover:-translate-y-1 transition-all flex flex-col items-center text-center`;
+              const content = (
+                <>
                   <TournamentBadge
                     slug={t.slug}
                     name={t.name}
@@ -149,6 +174,24 @@ export default async function HomePage() {
                   >
                     {STATUS_LABEL[t.status] ?? t.status}
                   </span>
+                  {inscribable && (
+                    <span className="mt-3 font-display text-sm uppercase tracking-widest text-flame-600">
+                      Crear porra →
+                    </span>
+                  )}
+                </>
+              );
+              return inscribable ? (
+                <Link
+                  key={t.slug}
+                  href={`/groups/new?preselect=${encodeURIComponent(t.slug)}`}
+                  className={cardClass}
+                >
+                  {content}
+                </Link>
+              ) : (
+                <article key={t.slug} className={cardClass}>
+                  {content}
                 </article>
               );
             })}
