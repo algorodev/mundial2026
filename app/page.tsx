@@ -245,6 +245,32 @@ export default async function HomePage() {
 
       <HomeCompare />
 
+      <section className="mt-24 max-w-3xl mx-auto text-center">
+        <p className="font-mono text-[11px] text-chalk-400 uppercase tracking-widest mb-3">
+          Más sobre cada torneo
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
+          <Link
+            href="/porra-mundial-2026"
+            className="text-chalk-300 hover:text-flame-400 underline underline-offset-4"
+          >
+            Porra Mundial 2026
+          </Link>
+          <Link
+            href="/porra-champions-2025-26"
+            className="text-chalk-300 hover:text-flame-400 underline underline-offset-4"
+          >
+            Porra Champions 2025-26
+          </Link>
+          <Link
+            href="/porra-laliga-2026-27"
+            className="text-chalk-300 hover:text-flame-400 underline underline-offset-4"
+          >
+            Porra LaLiga 2026-27
+          </Link>
+        </div>
+      </section>
+
       <div className="h-24" />
     </div>
   );
