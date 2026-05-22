@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import NavBar from "@/components/NavBar";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import CookieBanner from "@/components/CookieBanner";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
 
@@ -118,8 +119,30 @@ export default async function RootLayout({
             >
               Sobre nosotros
             </Link>
+            <span aria-hidden="true">·</span>
+            <Link
+              href="/privacidad"
+              className="hover:text-flame-400 underline underline-offset-4"
+            >
+              Privacidad
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link
+              href="/terminos"
+              className="hover:text-flame-400 underline underline-offset-4"
+            >
+              Términos
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link
+              href="/cookies"
+              className="hover:text-flame-400 underline underline-offset-4"
+            >
+              Cookies
+            </Link>
           </nav>
         </footer>
+        <CookieBanner />
         <GoogleAnalytics />
       </body>
     </html>
