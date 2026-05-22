@@ -44,6 +44,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...landingEntries,
     ...officialEntries,
     {
+      url: `${APP_URL}/about`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
       url: `${APP_URL}/login`,
       lastModified: now,
       changeFrequency: "yearly",

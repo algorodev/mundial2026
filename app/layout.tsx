@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { getSession } from "@/lib/session";
 import NavBar from "@/components/NavBar";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
@@ -108,8 +109,16 @@ export default async function RootLayout({
       <body className="min-h-screen">
         <NavBar session={session} />
         <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">{children}</main>
-        <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest">
-          ⚽ PorraBros · Hecho con ☕
+        <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest space-y-3">
+          <div>⚽ PorraBros · Hecho con ☕</div>
+          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link
+              href="/about"
+              className="hover:text-flame-400 underline underline-offset-4"
+            >
+              Sobre nosotros
+            </Link>
+          </nav>
         </footer>
         <GoogleAnalytics />
       </body>

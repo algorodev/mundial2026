@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
           "/",
           "/login",
           "/register",
+          "/about",
           "/porra-mundial-2026",
           "/porra-champions-2025-26",
           "/porra-laliga-2026-27",
