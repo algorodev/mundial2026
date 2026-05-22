@@ -30,7 +30,7 @@ export default function PrivacyPage() {
       <p>
         El responsable del tratamiento de tus datos es el equipo de
         PorraBros. Puedes ponerte en contacto con nosotros en{" "}
-        <a href="mailto:hola@porrabros.com">hola@porrabros.com</a> para
+        <a href="mailto:admin@porrabros.com">admin@porrabros.com</a> para
         cualquier cuestión relacionada con tus datos personales.
       </p>
 
@@ -112,7 +112,7 @@ export default function PrivacyPage() {
       <p>
         Guardamos tus datos mientras tu cuenta esté activa. Si quieres que
         borremos tu cuenta y tus datos asociados, escríbenos a{" "}
-        <a href="mailto:hola@porrabros.com">hola@porrabros.com</a> y los
+        <a href="mailto:admin@porrabros.com">admin@porrabros.com</a> y los
         eliminaremos en un plazo máximo de 30 días, salvo que tengamos
         obligación legal de conservarlos durante más tiempo.
       </p>
@@ -123,7 +123,7 @@ export default function PrivacyPage() {
         portar tus datos, limitar u oponerte al tratamiento, y a no ser
         objeto de decisiones automatizadas. Para ejercerlos basta con
         escribirnos a{" "}
-        <a href="mailto:hola@porrabros.com">hola@porrabros.com</a>.
+        <a href="mailto:admin@porrabros.com">admin@porrabros.com</a>.
       </p>
       <p>
         También tienes derecho a presentar una reclamación ante la Agencia

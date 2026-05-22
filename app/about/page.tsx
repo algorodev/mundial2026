@@ -133,10 +133,10 @@ export default function AboutPage() {
           contarnos qué falla. Cualquier sugerencia, bug o idea, escríbenos
           a{" "}
           <a
-            href="mailto:hola@porrabros.com"
+            href="mailto:admin@porrabros.com"
             className="text-flame-400 hover:text-flame-300 underline underline-offset-4"
           >
-            hola@porrabros.com
+            admin@porrabros.com
           </a>
           .
         </p>

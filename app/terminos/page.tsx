@@ -106,7 +106,7 @@ export default function TermsPage() {
       <p>
         Puedes dejar de usar PorraBros y solicitar el borrado de tu cuenta
         cuando quieras escribiendo a{" "}
-        <a href="mailto:hola@porrabros.com">hola@porrabros.com</a>.
+        <a href="mailto:admin@porrabros.com">admin@porrabros.com</a>.
         Nos reservamos el derecho a suspender cuentas que incumplan
         gravemente estos términos.
       </p>

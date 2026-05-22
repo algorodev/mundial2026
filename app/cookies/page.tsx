@@ -124,7 +124,7 @@ export default function CookiesPage() {
         Para entender mejor cómo tratamos los datos asociados, revisa
         nuestra <a href="/privacidad">Política de privacidad</a>. Si tienes
         dudas, escríbenos a{" "}
-        <a href="mailto:hola@porrabros.com">hola@porrabros.com</a>.
+        <a href="mailto:admin@porrabros.com">admin@porrabros.com</a>.
       </p>
     </LegalLayout>
   );
