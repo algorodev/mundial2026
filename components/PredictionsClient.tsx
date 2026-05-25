@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef } from "react";
+import Link from "next/link";
 import TeamBadge from "@/components/TeamBadge";
 
 type MatchRow = {
@@ -222,6 +223,7 @@ export default function PredictionsClient({
                 <MatchCard
                   key={m.id}
                   match={m}
+                  groupSlug={groupSlug}
                   pred={preds[m.id]}
                   onUpdate={updateLocal}
                   saving={savingMatchId === m.id}
@@ -263,6 +265,7 @@ function FilterChip({
 
 function MatchCard({
   match,
+  groupSlug,
   pred,
   onUpdate,
   saving,
@@ -271,6 +274,7 @@ function MatchCard({
   tilt,
 }: {
   match: MatchRow;
+  groupSlug: string;
   pred: { homeScore: number; awayScore: number } | undefined;
   onUpdate: (id: number, side: "home" | "away", value: string) => void;
   saving: boolean;
@@ -432,6 +436,15 @@ function MatchCard({
           </div>
         </div>
       )}
+
+      <div className="mt-3 text-right">
+        <Link
+          href={`/g/${groupSlug}/m/${match.matchNumber}`}
+          className="inline-block font-mono text-[10px] uppercase tracking-widest text-pitch-700 hover:text-flame-600"
+        >
+          Alineaciones · eventos · H2H →
+        </Link>
+      </div>
     </article>
   );
 }
