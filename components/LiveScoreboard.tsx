@@ -19,6 +19,15 @@ type LiveMatch = {
   minute: number;
 };
 
+// Subset del payload de /api/match/[matchId]/events que usamos aquí.
+type GoalEvent = {
+  time: { elapsed: number; extra: number | null };
+  team: { id: number; name: string };
+  player: { id: number | null; name: string | null };
+  type: string; // "Goal"
+  detail: string; // "Normal Goal" | "Penalty" | "Own Goal" | "Missed Penalty"
+};
+
 type NextMatch = {
   id: number;
   matchNumber: number;
@@ -159,7 +168,63 @@ export default function LiveScoreboard({
   );
 }
 
+// Formatea minuto del gol (con tiempo añadido si existe).
+function fmtMinute(t: GoalEvent["time"]): string {
+  if (t.extra && t.extra > 0) return `${t.elapsed}+${t.extra}'`;
+  return `${t.elapsed}'`;
+}
+
+// Etiqueta corta para el tipo de gol. Null si es un gol normal (no añadimos texto).
+function goalTag(detail: string): string | null {
+  if (detail === "Penalty") return "(P)";
+  if (detail === "Own Goal") return "(EN P)";
+  return null;
+}
+
 function LiveRow({ match }: { match: LiveMatch }) {
+  // Los goleadores los pedimos al endpoint /api/match/[id]/events (server cachea
+  // 30s en directo, así que aunque el poll vaya cada 12s sólo gastamos cuota
+  // cada 30s real). Fallo silencioso: si la API se cae, sigue mostrándose el
+  // marcador sin la lista de goleadores.
+  const [goals, setGoals] = useState<GoalEvent[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const r = await fetch(`/api/match/${match.id}/events`, {
+          cache: "no-store",
+        });
+        if (!r.ok || cancelled) return;
+        const d = await r.json();
+        if (cancelled || !Array.isArray(d.events)) return;
+        const filtered: GoalEvent[] = d.events
+          .filter(
+            (e: GoalEvent) =>
+              e.type === "Goal" && e.detail !== "Missed Penalty"
+          )
+          .sort(
+            (a: GoalEvent, b: GoalEvent) =>
+              a.time.elapsed +
+              (a.time.extra ?? 0) -
+              (b.time.elapsed + (b.time.extra ?? 0))
+          );
+        setGoals(filtered);
+      } catch {
+        // ignoramos: el siguiente poll lo intentará
+      }
+    }
+    load();
+    const id = setInterval(load, 20_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [match.id]);
+
+  const homeGoals = goals?.filter((g) => g.team.name === match.homeTeam) ?? [];
+  const awayGoals = goals?.filter((g) => g.team.name === match.awayTeam) ?? [];
+
   return (
     <div className="cromo-sm bg-paper-50 text-pitch-950 p-3">
       <div className="flex items-center justify-between gap-2 mb-1">
@@ -206,6 +271,37 @@ function LiveRow({ match }: { match: LiveMatch }) {
           </div>
         </div>
       </div>
+
+      {(homeGoals.length > 0 || awayGoals.length > 0) && (
+        <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-pitch-200/60">
+          <ul className="text-[10px] font-mono text-pitch-800 space-y-0.5 text-right">
+            {homeGoals.map((g, i) => (
+              <li key={`h-${i}`} className="truncate">
+                ⚽ {g.player.name ?? "—"}{" "}
+                <span className="text-pitch-500">{fmtMinute(g.time)}</span>
+                {goalTag(g.detail) && (
+                  <span className="text-brick-500 ml-1">
+                    {goalTag(g.detail)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+          <ul className="text-[10px] font-mono text-pitch-800 space-y-0.5 text-left">
+            {awayGoals.map((g, i) => (
+              <li key={`a-${i}`} className="truncate">
+                <span className="text-pitch-500">{fmtMinute(g.time)}</span>{" "}
+                {g.player.name ?? "—"} ⚽
+                {goalTag(g.detail) && (
+                  <span className="text-brick-500 ml-1">
+                    {goalTag(g.detail)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
