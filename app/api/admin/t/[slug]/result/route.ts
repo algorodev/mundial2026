@@ -44,9 +44,14 @@ export async function POST(req: NextRequest, props: { params: Promise<{ slug: st
       );
     }
 
+    // resultSource: 'admin' cuando se fija un marcador, null cuando se borra
+    // (para que el cron de auto-resultados pueda volver a poblarlo).
+    const resultSource =
+      homeScore === null && awayScore === null ? null : "admin";
+
     const result = await db
       .update(matches)
-      .set({ homeScore, awayScore })
+      .set({ homeScore, awayScore, resultSource })
       .where(and(eq(matches.id, matchId), eq(matches.tournamentId, tournament.id)))
       .returning({ id: matches.id });
 

@@ -49,7 +49,8 @@ Solo en seed (opcional):
 
 Opcionales en runtime:
 - `NEXT_PUBLIC_GA4_ID` — GA4 Measurement ID (`G-XXXXXXXXXX`). Si está, `components/GoogleAnalytics.tsx` carga gtag.js. Si no, no se carga.
-- `API_FOOTBALL_KEY` — API key de [api-sports.io](https://www.api-football.com/) (plan Pro). Requerida para `pnpm db:map-api` y, más adelante, para el cron de auto-resultados y los endpoints de enriquecimiento. Sin ella, la app sigue funcionando con resultados manuales.
+- `API_FOOTBALL_KEY` — API key de [api-sports.io](https://www.api-football.com/) (plan Pro). Requerida para `pnpm db:map-api`, el cron `/api/cron/results` y los endpoints de enriquecimiento. Sin ella, la app sigue funcionando con resultados manuales.
+- `CRON_SECRET` — token aleatorio (e.g. `openssl rand -hex 32`). Vercel lo inyecta automáticamente como `Authorization: Bearer …` cuando ejecuta los crons configurados en `vercel.json`. **Sin él, el endpoint del cron rechaza todo (401)** — esto es deliberado para evitar abusos.
 
 ## Arquitectura
 
@@ -83,7 +84,8 @@ app/
     predictions?groupSlug=…         → GET mis preds del grupo · POST upsert (rechaza si torneo iniciado)
     leaderboard?groupSlug=…         → GET ranking del grupo
     live?groupSlug=…                → GET partidos en directo del torneo
-    admin/t/[slug]/result           → POST set/borra resultado (admin global)
+    admin/t/[slug]/result           → POST set/borra resultado (admin global) — marca resultSource='admin'
+    cron/results                    → GET (auth Bearer CRON_SECRET) — actualiza scores FT desde API-Football
 components/
   NavBar, GroupTabs, NewGroupClient, ManageGroupClient, JoinClient
   PredictionsClient, LeaderboardClient, AdminResultsClient, LiveScoreboard
@@ -161,7 +163,23 @@ Flujo de mapeo (`pnpm db:map-api`, idempotente, puede filtrarse por `pnpm db:map
 1. `/teams?league=L&season=S` → casa por `team.code` (case-insensitive) contra `teams.code`. Rellena `apiTeamId` + `logoUrl`. Reporta huecos en consola.
 2. `/fixtures?league=L&season=S` → indexa por `(apiHomeTeamId, apiAwayTeamId, día UTC)` y casa con nuestros matches usando `homeCode/awayCode`. Tolera ±1 día por desfase de zona horaria.
 
-Si los códigos de la API no coinciden con los nuestros (típico en clubes), añade overrides manuales en `TEAM_OVERRIDES` dentro de `scripts/map-api-ids.ts`: `{ "<slug-torneo>": { OUR_CODE: apiTeamId } }`.
+Si los códigos de la API no coinciden con los nuestros (típico en clubes y, sorprendentemente, en muchas selecciones del Mundial — la API usa `SPA` en vez de `ESP`, `SAU` en vez de `KSA`, `IRA` para Irán e Irak, etc.), añade overrides manuales en `TEAM_OVERRIDES` dentro de `scripts/map-api-ids.ts`: `{ "<slug-torneo>": { OUR_CODE: apiTeamId } }`. Cuando faltan equipos por casar, el script imprime los candidatos libres de la API para que puedas construir el override sin adivinar.
+
+### Cron de auto-resultados
+
+`vercel.json` programa `GET /api/cron/results` cada 10 minutos. Vercel inyecta `Authorization: Bearer ${CRON_SECRET}`; el endpoint rechaza cualquier llamada sin ese header.
+
+Flujo (`app/api/cron/results/route.ts`):
+- Filtra torneos con `apiLeagueId/apiSeason` y `status in ('live','upcoming')`.
+- Pide `/fixtures?league=L&season=S&from=ayer&to=hoy` (UTC).
+- Por cada fixture cuyo `apiFixtureId` coincida con un match nuestro:
+  - Si `resultSource = 'admin'` → **skip** (override manual gana siempre).
+  - Si el status no es FT/AET/PEN → skip (no escribimos parciales).
+  - Si el score coincide con lo que ya hay → skip (no spameamos updates).
+  - Si no, escribe `homeScore/awayScore` y marca `resultSource='api'`.
+- Devuelve un resumen JSON `{ ok, window, summary: [{ slug, fetched, updated, skippedAdmin, skippedNotFinal }] }` útil para debugging desde la consola de Vercel.
+
+El endpoint admin `/api/admin/t/[slug]/result` marca `resultSource='admin'` al guardar y `null` al borrar (para que el cron pueda volver a rellenar si quiere).
 
 ## Zona horaria — CUIDADO
 
