@@ -86,6 +86,10 @@ app/
     live?groupSlug=…                → GET partidos en directo del torneo
     admin/t/[slug]/result           → POST set/borra resultado (admin global) — marca resultSource='admin'
     cron/results                    → GET (auth Bearer CRON_SECRET) — actualiza scores FT desde API-Football
+    match/[matchId]/lineups         → GET alineaciones (cache adaptado al estado del partido)
+    match/[matchId]/events          → GET eventos (goles, tarjetas, cambios)
+    match/[matchId]/h2h             → GET últimos 10 enfrentamientos entre los dos equipos
+    tournaments/[slug]/standings    → GET clasificación de grupos / liga
 components/
   NavBar, GroupTabs, NewGroupClient, ManageGroupClient, JoinClient
   PredictionsClient, LeaderboardClient, AdminResultsClient, LiveScoreboard
@@ -180,6 +184,19 @@ Flujo (`app/api/cron/results/route.ts`):
 - Devuelve un resumen JSON `{ ok, window, summary: [{ slug, fetched, updated, skippedAdmin, skippedNotFinal }] }` útil para debugging desde la consola de Vercel.
 
 El endpoint admin `/api/admin/t/[slug]/result` marca `resultSource='admin'` al guardar y `null` al borrar (para que el cron pueda volver a rellenar si quiere).
+
+### Endpoints de enriquecimiento (Fase 2)
+
+Todos requieren sesión (`getSession()`) y devuelven `{ ok: true, ... }` o `{ error }`. El cache de Next se comparte entre todos los usuarios, así que sólo gastamos cuota de API una vez por ventana de revalidate aunque pidan 1000 personas:
+
+- `GET /api/match/[matchId]/lineups` — usa `apiFixtureId`. TTL via `matchCacheTtl` con `liveTtl: 300` (lineups no cambian salvo por sustituciones).
+- `GET /api/match/[matchId]/events` — usa `apiFixtureId`. TTL via `matchCacheTtl` (30s en directo).
+- `GET /api/match/[matchId]/h2h` — usa `teams.apiTeamId` (home + away). Cache 24h. Devuelve los últimos 10 enfrentamientos.
+- `GET /api/tournaments/[slug]/standings` — usa `apiLeagueId/apiSeason`. TTL 5 min si torneo `live`, 24h si no.
+
+Si un partido no tiene `apiFixtureId` o sus equipos no tienen `apiTeamId`, los endpoints devuelven 422 con mensaje explícito (corre `pnpm db:map-api` para completar el mapeo).
+
+`lib/api-football.ts::matchCacheTtl(kickoffAt, hasFinalScore, opts?)` centraliza la lógica: 10 min pre-partido lejano, 1 min cerca, 30s (o `opts.liveTtl`) en directo, 1h post.
 
 ## Zona horaria — CUIDADO
 
