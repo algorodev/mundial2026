@@ -254,23 +254,26 @@ function PodiumCard({
   clickable: boolean;
   groupSlug: string;
 }) {
+  // min-h en vez de h fija: la altura sigue marcando la jerarquía del
+  // podio (1º más alto, 3º más bajo) pero deja crecer si un nombre es muy
+  // largo, en vez de recortarlo. line-clamp-3 evita explosiones de altura.
   const styles = {
     1: {
-      h: "h-56 sm:h-72",
+      h: "min-h-56 sm:min-h-72",
       bg: "bg-flame-500",
       text: "text-pitch-950",
       medal: "🥇",
       rotate: "rotate-1",
     },
     2: {
-      h: "h-48 sm:h-60",
+      h: "min-h-48 sm:min-h-60",
       bg: "bg-paper-100",
       text: "text-pitch-950",
       medal: "🥈",
       rotate: "-rotate-2",
     },
     3: {
-      h: "h-44 sm:h-52",
+      h: "min-h-44 sm:min-h-52",
       bg: "bg-brick-500",
       text: "text-paper-50",
       medal: "🥉",
@@ -286,13 +289,13 @@ function PodiumCard({
       <div
         className={`cromo ${s.h} ${s.bg} ${s.text} flex flex-col items-center justify-end p-3 sm:p-4`}
       >
-        <div className="font-display text-5xl sm:text-7xl leading-none">
+        <div className="font-display text-5xl sm:text-7xl leading-none tabular-nums">
           {row.total}
         </div>
         <div className="font-mono text-[9px] uppercase tracking-widest opacity-70 mt-1">
           puntos
         </div>
-        <div className="font-display text-sm sm:text-lg mt-3 text-center leading-tight tracking-tight uppercase wrap-break-word">
+        <div className="font-display text-sm sm:text-base mt-3 text-center leading-tight tracking-tight uppercase wrap-break-word line-clamp-3 max-w-full text-balance">
           {row.name}
         </div>
       </div>

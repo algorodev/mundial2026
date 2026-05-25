@@ -38,32 +38,34 @@ export default function NavBar({
           />
         </Link>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           {session && (
             <>
+              {/* En mobile el logo ya lleva a /groups → "Mis porras" sería
+                  redundante. Lo escondemos para liberar espacio. */}
               <Link
                 href="/groups"
-                className="text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display"
+                className="hidden sm:inline text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display"
               >
                 Mis porras
               </Link>
               <Link
                 href="/profile"
-                className="text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display"
+                className="text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display truncate min-w-0 max-w-[8rem] sm:max-w-none"
               >
                 {session.name}
               </Link>
               {session.isGlobalAdmin && (
                 <Link
                   href="/admin"
-                  className="text-xs text-pitch-950 bg-flame-500 hover:bg-flame-400 px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest font-display"
+                  className="shrink-0 text-xs text-pitch-950 bg-flame-500 hover:bg-flame-400 px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest font-display"
                 >
                   Admin
                 </Link>
               )}
               <button
                 onClick={logout}
-                className="text-xs text-chalk-400 hover:text-chalk-50 transition-colors uppercase tracking-widest font-mono"
+                className="shrink-0 text-xs text-chalk-400 hover:text-chalk-50 transition-colors uppercase tracking-widest font-mono"
                 aria-label="Cerrar sesión"
               >
                 Salir
