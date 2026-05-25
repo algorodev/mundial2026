@@ -73,19 +73,21 @@ export default async function MatchDetailPage(props: {
         ← {ctx.name}
       </Link>
 
-      <div className="cromo bg-paper-50 text-pitch-950 p-6 sm:p-8 mb-6">
-        <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] font-mono uppercase tracking-widest text-pitch-700 mb-5">
+      <div className="cromo bg-paper-50 text-pitch-950 p-5 sm:p-8 mb-6">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-mono uppercase tracking-widest text-pitch-700 mb-5">
           {match.groupName && (
             <span className={`group-${match.groupName} px-2 py-0.5 rounded-sm`}>
               GRUPO {match.groupName}
             </span>
           )}
           <span>{dateLabel}</span>
-          {match.stadium && <span>· {match.stadium}</span>}
+          {match.stadium && (
+            <span className="text-pitch-700/80">· {match.stadium}</span>
+          )}
         </div>
 
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-4 sm:gap-6 items-center">
-          <div className="flex flex-col items-center min-w-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 sm:gap-6 items-center">
+          <div className="flex flex-col items-center min-w-0 w-full">
             <TeamBadge
               code={match.homeCode}
               flag={match.homeFlag}
@@ -93,22 +95,22 @@ export default async function MatchDetailPage(props: {
               alt={match.homeTeam}
               size="lg"
             />
-            <span className="font-display uppercase text-sm sm:text-base tracking-tight mt-2 text-center truncate max-w-full">
+            <span className="font-display uppercase text-sm sm:text-base tracking-tight leading-tight text-balance mt-2 text-center w-full min-h-[2.5em] flex items-start justify-center">
               {match.homeTeam}
             </span>
           </div>
-          <div className="font-display text-4xl sm:text-6xl tabular-nums whitespace-nowrap">
+          <div className="font-display text-3xl sm:text-6xl tabular-nums whitespace-nowrap shrink-0 self-start mt-3 sm:mt-4">
             {match.homeScore !== null && match.awayScore !== null ? (
               <>
                 {match.homeScore}
-                <span className="text-brick-500 mx-2">·</span>
+                <span className="text-brick-500 mx-1.5 sm:mx-2">·</span>
                 {match.awayScore}
               </>
             ) : (
               <span className="text-pitch-400">vs</span>
             )}
           </div>
-          <div className="flex flex-col items-center min-w-0">
+          <div className="flex flex-col items-center min-w-0 w-full">
             <TeamBadge
               code={match.awayCode}
               flag={match.awayFlag}
@@ -116,7 +118,7 @@ export default async function MatchDetailPage(props: {
               alt={match.awayTeam}
               size="lg"
             />
-            <span className="font-display uppercase text-sm sm:text-base tracking-tight mt-2 text-center truncate max-w-full">
+            <span className="font-display uppercase text-sm sm:text-base tracking-tight leading-tight text-balance mt-2 text-center w-full min-h-[2.5em] flex items-start justify-center">
               {match.awayTeam}
             </span>
           </div>
