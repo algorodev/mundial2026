@@ -476,15 +476,15 @@ function H2HSection({
         <>
           {stats && (
             <div className="grid grid-cols-3 gap-2 mb-4 text-center font-mono">
-              <div className="bg-grass-100 text-grass-800 py-2 cromo-sm">
+              <div className="bg-grass-100 text-grass-800 py-2 px-1 cromo-sm">
                 <div className="font-display text-2xl tabular-nums">
                   {stats.homeWins}
                 </div>
-                <div className="text-[10px] uppercase tracking-widest mt-0.5">
+                <div className="text-[10px] uppercase tracking-widest mt-0.5 truncate">
                   {homeName} gana
                 </div>
               </div>
-              <div className="bg-pitch-100 text-pitch-700 py-2 cromo-sm">
+              <div className="bg-pitch-100 text-pitch-700 py-2 px-1 cromo-sm">
                 <div className="font-display text-2xl tabular-nums">
                   {stats.draws}
                 </div>
@@ -492,11 +492,11 @@ function H2HSection({
                   Empates
                 </div>
               </div>
-              <div className="bg-grass-100 text-grass-800 py-2 cromo-sm">
+              <div className="bg-grass-100 text-grass-800 py-2 px-1 cromo-sm">
                 <div className="font-display text-2xl tabular-nums">
                   {stats.awayWins}
                 </div>
-                <div className="text-[10px] uppercase tracking-widest mt-0.5">
+                <div className="text-[10px] uppercase tracking-widest mt-0.5 truncate">
                   {awayName} gana
                 </div>
               </div>
@@ -504,47 +504,53 @@ function H2HSection({
           )}
           <ul className="divide-y divide-pitch-200">
             {state.data.map((f) => (
-              <li key={f.fixture.id} className="py-2">
-                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-pitch-500 mb-1">
-                  <span>
+              <li key={f.fixture.id} className="py-2.5">
+                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-pitch-500 mb-1.5 min-w-0">
+                  <span className="shrink-0">
                     {new Date(f.fixture.date).toLocaleDateString("es-ES", {
                       year: "numeric",
                       month: "short",
                       day: "2-digit",
                     })}
                   </span>
-                  <span>·</span>
-                  <span className="truncate">{f.league.name}</span>
+                  <span className="shrink-0">·</span>
+                  <span className="truncate min-w-0">{f.league.name}</span>
                 </div>
-                <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center text-sm">
-                  <div className="text-right truncate flex items-center justify-end gap-1.5">
-                    <span className="truncate">{f.teams.home.name}</span>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-3 items-center text-sm">
+                  <div className="flex items-center justify-end gap-1.5 min-w-0">
+                    <span className="truncate min-w-0 font-display uppercase text-xs sm:text-sm tracking-tight">
+                      {f.teams.home.name}
+                    </span>
                     {f.teams.home.logo && (
                       <Image
                         src={f.teams.home.logo}
                         alt=""
-                        width={16}
-                        height={16}
-                        className="inline-block"
+                        width={18}
+                        height={18}
+                        className="inline-block shrink-0"
                         unoptimized
                       />
                     )}
                   </div>
-                  <span className="font-display tabular-nums">
-                    {f.goals.home ?? "—"} · {f.goals.away ?? "—"}
+                  <span className="font-display tabular-nums whitespace-nowrap px-2 text-base">
+                    {f.goals.home ?? "—"}
+                    <span className="text-pitch-400 mx-1">·</span>
+                    {f.goals.away ?? "—"}
                   </span>
-                  <div className="text-left truncate flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     {f.teams.away.logo && (
                       <Image
                         src={f.teams.away.logo}
                         alt=""
-                        width={16}
-                        height={16}
-                        className="inline-block"
+                        width={18}
+                        height={18}
+                        className="inline-block shrink-0"
                         unoptimized
                       />
                     )}
-                    <span className="truncate">{f.teams.away.name}</span>
+                    <span className="truncate min-w-0 font-display uppercase text-xs sm:text-sm tracking-tight">
+                      {f.teams.away.name}
+                    </span>
                   </div>
                 </div>
               </li>
