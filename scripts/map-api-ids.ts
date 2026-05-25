@@ -25,11 +25,30 @@ import {
 } from "../lib/api-football";
 import type { Tournament } from "../lib/db/schema";
 
-// Overrides manuales: cuando team.code de la API no coincide con el nuestro
-// (típico en clubes), añade aquí `slug-de-torneo` → `{ ourCode: apiTeamId }`.
-// Para Mundial los códigos FIFA suelen coincidir; para LaLiga/Champions hará
-// falta llenarlo. Vacío por ahora — el script reporta huecos para que se vea.
+// Overrides manuales: cuando team.code de la API no coincide con el nuestro,
+// fijamos aquí `slug-de-torneo` → `{ ourCode: apiTeamId }`. Para selecciones,
+// los codes de API-Football son inestables/raros (SPA en vez de ESP, SAU en
+// vez de KSA, IRA para Irán e Irak, etc.). Generamos esta tabla corriendo
+// `pnpm db:map-api` y leyendo los "Equipos de la API libres" en consola.
 const TEAM_OVERRIDES: Record<string, Record<string, number>> = {
+  "mundial-2026": {
+    AUT: 775, // Austria
+    BIH: 1113, // Bosnia & Herzegovina
+    CPV: 1533, // Cape Verde Islands
+    COD: 1508, // Congo DR
+    CUW: 5530, // Curaçao
+    IRN: 22, // Iran
+    IRQ: 1567, // Iraq
+    CIV: 1501, // Ivory Coast
+    JPN: 12, // Japan
+    MAR: 31, // Morocco
+    NED: 1118, // Netherlands
+    NZL: 4673, // New Zealand
+    KSA: 23, // Saudi Arabia
+    RSA: 1531, // South Africa
+    ESP: 9, // Spain
+    SUI: 15, // Switzerland
+  },
   // "laliga-2026-27": { REA: 541, BAR: 529, ATM: 530, ... },
 };
 
@@ -59,8 +78,9 @@ async function mapTeams(t: Tournament): Promise<Map<string, number>> {
 
   const overrides = TEAM_OVERRIDES[t.slug] ?? {};
   const result = new Map<string, number>();
+  const usedApiIds = new Set<number>();
   let matched = 0;
-  const unmatched: string[] = [];
+  const unmatched: typeof ours = [];
 
   for (const ourTeam of ours) {
     let apiId: number | undefined = overrides[ourTeam.code];
@@ -82,7 +102,7 @@ async function mapTeams(t: Tournament): Promise<Map<string, number>> {
     }
 
     if (!apiId) {
-      unmatched.push(`${ourTeam.code} (${ourTeam.name})`);
+      unmatched.push(ourTeam);
       continue;
     }
 
@@ -91,16 +111,38 @@ async function mapTeams(t: Tournament): Promise<Map<string, number>> {
       .set({ apiTeamId: apiId, logoUrl })
       .where(eq(teams.id, ourTeam.id));
     result.set(ourTeam.code, apiId);
+    usedApiIds.add(apiId);
     matched++;
   }
 
   console.log(`   ✅ Equipos casados: ${matched}/${ours.length}`);
   if (unmatched.length > 0) {
-    console.log(`   ⚠️  Sin casar (${unmatched.length}):`);
-    for (const u of unmatched) console.log(`        · ${u}`);
-    console.log(
-      `      → Añade overrides en scripts/map-api-ids.ts: TEAM_OVERRIDES["${t.slug}"]`
-    );
+    console.log(`   ⚠️  Sin casar en DB (${unmatched.length}):`);
+    for (const u of unmatched) console.log(`        · ${u.code} (${u.name})`);
+
+    // Lista de candidatos de la API que tampoco se usaron: aquí está la
+    // verdad para construir TEAM_OVERRIDES. Imprime id/code/name/country.
+    const candidates = apiTeams
+      .filter((a) => !usedApiIds.has(a.team.id))
+      .sort((a, b) =>
+        (a.team.country ?? "").localeCompare(b.team.country ?? "")
+      );
+    if (candidates.length > 0) {
+      console.log(
+        `   🔎 Equipos de la API libres (${candidates.length}) — usa estos id para los overrides:`
+      );
+      console.log(`        id\tcode\tname\t\t\tcountry`);
+      for (const c of candidates) {
+        const code = c.team.code ?? "—";
+        const name = (c.team.name ?? "").padEnd(24).slice(0, 24);
+        console.log(
+          `        ${c.team.id}\t${code}\t${name}\t${c.team.country ?? ""}`
+        );
+      }
+      console.log(
+        `      → Pega los ids en TEAM_OVERRIDES["${t.slug}"] dentro de scripts/map-api-ids.ts y vuelve a correr.`
+      );
+    }
   }
   return result;
 }
@@ -160,12 +202,12 @@ async function mapFixtures(
       continue;
     }
     const day = m.kickoffAt.toISOString().slice(0, 10);
-    // Buscamos primero el día exacto. Si no, intentamos ±1 día porque
-    // la zona horaria puede mover la fecha local de la API respecto a la nuestra.
-    let fx =
-      fxIndex.get(`${homeApiId}|${awayApiId}|${day}`) ??
-      shiftDay(fxIndex, homeApiId, awayApiId, day, -1) ??
-      shiftDay(fxIndex, homeApiId, awayApiId, day, 1);
+    // Búsqueda con tolerancia: día exacto > ±1 > ±2. Y si nada, intentamos
+    // con home/away invertidos (la API a veces los lista al revés sobre
+    // todo en finales y rondas neutrales).
+    const fx =
+      lookup(fxIndex, homeApiId, awayApiId, day) ??
+      lookup(fxIndex, awayApiId, homeApiId, day);
 
     if (!fx) {
       unmatched.push(
@@ -193,17 +235,20 @@ async function mapFixtures(
   }
 }
 
-function shiftDay(
+function lookup(
   fxIndex: Map<string, ApiFixture>,
   home: number,
   away: number,
-  isoDay: string,
-  delta: number
+  isoDay: string
 ): ApiFixture | undefined {
-  const d = new Date(`${isoDay}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + delta);
-  const day = d.toISOString().slice(0, 10);
-  return fxIndex.get(`${home}|${away}|${day}`);
+  for (const delta of [0, -1, 1, -2, 2]) {
+    const d = new Date(`${isoDay}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + delta);
+    const day = d.toISOString().slice(0, 10);
+    const hit = fxIndex.get(`${home}|${away}|${day}`);
+    if (hit) return hit;
+  }
+  return undefined;
 }
 
 async function main() {
