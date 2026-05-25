@@ -16,9 +16,26 @@ import { useEffect, useState } from "react";
 type Status =
   | { kind: "loading" }
   | { kind: "unsupported"; reason: string }
+  | { kind: "ios-needs-pwa" } // iPhone/iPad en Safari fuera de pantalla de inicio
   | { kind: "denied" }
   | { kind: "idle" } // soportado, sin sub
   | { kind: "active"; endpoint: string };
+
+// iOS sólo soporta Web Push cuando la web está instalada como PWA en la
+// pantalla de inicio. Detectamos iPhone/iPad (incluyendo iPadOS que se
+// disfraza de Mac) y comprobamos display-mode standalone.
+function isIOSWithoutPWA(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent;
+  const isIOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (ua.includes("Macintosh") && "ontouchend" in document);
+  if (!isIOS) return false;
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  return !isStandalone;
+}
 
 export default function PushOptIn() {
   const [status, setStatus] = useState<Status>({ kind: "loading" });
@@ -28,6 +45,13 @@ export default function PushOptIn() {
   useEffect(() => {
     (async () => {
       if (typeof window === "undefined") return;
+      // iOS Safari: chequeamos PWA antes que serviceWorker porque incluso
+      // sin PWA tiene serviceWorker registrable pero el push silenciosamente
+      // no funciona. Mostramos instrucción específica.
+      if (isIOSWithoutPWA()) {
+        setStatus({ kind: "ios-needs-pwa" });
+        return;
+      }
       if (!("serviceWorker" in navigator)) {
         setStatus({ kind: "unsupported", reason: "Tu navegador no soporta service workers" });
         return;
@@ -124,6 +148,26 @@ export default function PushOptIn() {
 
   if (status.kind === "loading") return null;
   if (status.kind === "unsupported") return null; // sin ruido en navegadores que no soportan
+
+  // iOS sin PWA: banner especial con instrucción "Añadir a inicio".
+  if (status.kind === "ios-needs-pwa") {
+    return (
+      <div className="cromo bg-pitch-900 text-chalk-50 px-4 py-3 mb-4">
+        <div className="font-display text-sm uppercase tracking-widest mb-1">
+          🔔 Notificaciones push
+        </div>
+        <p className="font-mono text-[10px] text-chalk-400 uppercase tracking-wider leading-relaxed">
+          En iPhone necesitas instalar PorraBros para recibirlas. Toca el
+          icono de Compartir
+          <span className="mx-1 inline-block bg-paper-50 text-pitch-950 px-1.5 py-0.5 rounded-sm font-display text-[10px]">
+            ⬆️
+          </span>
+          en Safari y elige <strong>Añadir a pantalla de inicio</strong>.
+          Luego abre la app desde el icono y vuelve aquí.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="cromo bg-pitch-900 text-chalk-50 px-4 py-3 flex flex-wrap items-center justify-between gap-3 mb-4">
