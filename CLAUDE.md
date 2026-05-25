@@ -50,7 +50,7 @@ Solo en seed (opcional):
 Opcionales en runtime:
 - `NEXT_PUBLIC_GA4_ID` — GA4 Measurement ID (`G-XXXXXXXXXX`). Si está, `components/GoogleAnalytics.tsx` carga gtag.js. Si no, no se carga.
 - `API_FOOTBALL_KEY` — API key de [api-sports.io](https://www.api-football.com/) (plan Pro). Requerida para `pnpm db:map-api`, el cron `/api/cron/results` y los endpoints de enriquecimiento. Sin ella, la app sigue funcionando con resultados manuales.
-- `CRON_SECRET` — token aleatorio (e.g. `openssl rand -hex 32`). Vercel lo inyecta automáticamente como `Authorization: Bearer …` cuando ejecuta los crons configurados en `vercel.json`. **Sin él, el endpoint del cron rechaza todo (401)** — esto es deliberado para evitar abusos.
+- `CRON_SECRET` — token aleatorio (e.g. `openssl rand -hex 32`). Lo usa el workflow `.github/workflows/cron-results.yml` para autenticarse contra `/api/cron/results` (header `Authorization: Bearer …`). **Sin él, el endpoint del cron rechaza todo (401)** — esto es deliberado para evitar abusos. Debe existir tanto en Vercel (env var) como en GitHub (repo secret).
 
 ## Arquitectura
 
@@ -167,7 +167,7 @@ Si los códigos de la API no coinciden con los nuestros (típico en clubes y, so
 
 ### Cron de auto-resultados
 
-`vercel.json` programa `GET /api/cron/results` cada 10 minutos. Vercel inyecta `Authorization: Bearer ${CRON_SECRET}`; el endpoint rechaza cualquier llamada sin ese header.
+**Scheduler: GitHub Actions, no Vercel.** Vercel Hobby sólo permite crons diarios, así que el workflow `.github/workflows/cron-results.yml` pingea `GET /api/cron/results` cada 10 minutos (con `workflow_dispatch` para test manual). Requiere dos repo secrets: `APP_URL` (URL pública sin barra final) y `CRON_SECRET`. El endpoint rechaza cualquier llamada sin `Authorization: Bearer ${CRON_SECRET}`.
 
 Flujo (`app/api/cron/results/route.ts`):
 - Filtra torneos con `apiLeagueId/apiSeason` y `status in ('live','upcoming')`.
@@ -210,6 +210,10 @@ Paleta y componentes en `tailwind.config.ts` y utilidades CSS en `app/globals.cs
 ## Despliegue
 
 Vercel + Neon + Resend. Tras el primer deploy, ejecutar `pnpm db:push && pnpm db:seed` desde local apuntando a la DB de Neon (mismo `DATABASE_URL`) para crear tablas y poblar el torneo Mundial + admin.
+
+Para los crons hace falta repo en GitHub conectado, con dos secrets en Settings → Secrets and variables → Actions:
+- `APP_URL` — URL pública (`https://porrabros.com`), sin barra final
+- `CRON_SECRET` — el mismo valor que el env var en Vercel
 
 ## Gotchas
 

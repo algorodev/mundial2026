@@ -1,0 +1,46 @@
+# Cron de auto-resultados (Fase 1 de la integración API-Football).
+#
+# Pingea /api/cron/results en producción cada 10 minutos. Vercel Hobby sólo
+# admite crons diarios; GitHub Actions es gratis y permite cualquier frecuencia
+# (con caveat: scheduled workflows se ejecutan "best effort" y pueden tardar
+# hasta ~15 min en horas pico, lo que para resultados FT es perfectamente OK).
+#
+# Secrets requeridos en GitHub (repo → Settings → Secrets and variables → Actions):
+#   APP_URL       → URL pública de producción, p.ej. https://porrabros.com
+#                   (sin barra al final)
+#   CRON_SECRET   → mismo valor que el env var CRON_SECRET en Vercel
+#
+# También se puede ejecutar manualmente desde la pestaña Actions del repo.
+name: cron-results
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+# Si una ejecución se queda corriendo, no encolar otra encima.
+concurrency:
+  group: cron-results
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Llamar /api/cron/results
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APP_URL}" ] || [ -z "${CRON_SECRET}" ]; then
+            echo "❌ Faltan secrets APP_URL o CRON_SECRET en el repo." >&2
+            exit 1
+          fi
+          curl -fsS --max-time 70 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL%/}/api/cron/results" \
+            | tee response.json
+          echo
+          jq -e '.ok == true' response.json > /dev/null
