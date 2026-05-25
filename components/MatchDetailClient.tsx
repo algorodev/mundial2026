@@ -303,13 +303,18 @@ function LineupsSection({
                   </h3>
                   <ul className="text-sm font-mono space-y-0.5">
                     {lu.startXI.map((p, i) => (
-                      <li key={`s-${i}`} className="flex gap-2">
-                        <span className="text-pitch-500 w-6 text-right tabular-nums">
+                      <li
+                        key={`s-${i}`}
+                        className="flex items-center gap-2 min-w-0"
+                      >
+                        <span className="text-pitch-500 w-6 text-right tabular-nums shrink-0">
                           {p.player.number ?? "—"}
                         </span>
-                        <span className="truncate">{p.player.name}</span>
+                        <span className="truncate min-w-0 flex-1">
+                          {p.player.name}
+                        </span>
                         {p.player.pos && (
-                          <span className="ml-auto text-[10px] uppercase tracking-widest text-pitch-500">
+                          <span className="text-[10px] uppercase tracking-widest text-pitch-500 shrink-0 px-1.5 bg-pitch-100 rounded-sm">
                             {p.player.pos}
                           </span>
                         )}
@@ -324,11 +329,21 @@ function LineupsSection({
                     </h3>
                     <ul className="text-sm font-mono space-y-0.5 text-pitch-700">
                       {lu.substitutes.map((p, i) => (
-                        <li key={`b-${i}`} className="flex gap-2">
-                          <span className="text-pitch-400 w-6 text-right tabular-nums">
+                        <li
+                          key={`b-${i}`}
+                          className="flex items-center gap-2 min-w-0"
+                        >
+                          <span className="text-pitch-400 w-6 text-right tabular-nums shrink-0">
                             {p.player.number ?? "—"}
                           </span>
-                          <span className="truncate">{p.player.name}</span>
+                          <span className="truncate min-w-0 flex-1">
+                            {p.player.name}
+                          </span>
+                          {p.player.pos && (
+                            <span className="text-[10px] uppercase tracking-widest text-pitch-400 shrink-0">
+                              {p.player.pos}
+                            </span>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -372,22 +387,22 @@ function EventsSection({
             return (
               <li
                 key={i}
-                className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center text-sm"
+                className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-3 items-center text-sm"
               >
-                <div className="text-right font-mono">
+                <div className="text-right font-mono min-w-0">
                   {isHome ? (
                     <EventLabel ev={e} side="home" />
                   ) : !isAway ? (
-                    <span className="text-pitch-500 italic">
-                      {e.team.name}: <EventLabel ev={e} side="home" />
+                    <span className="text-pitch-500 italic text-xs truncate inline-block max-w-full align-middle">
+                      {e.team.name}
                     </span>
                   ) : null}
                 </div>
-                <span className="font-mono text-xs text-pitch-600 tabular-nums px-2 py-0.5 bg-pitch-100 rounded-sm whitespace-nowrap">
+                <span className="font-mono text-xs text-pitch-600 tabular-nums px-2 py-0.5 bg-pitch-100 rounded-sm whitespace-nowrap shrink-0">
                   {e.time.elapsed}
                   {e.time.extra ? `+${e.time.extra}` : ""}'
                 </span>
-                <div className="text-left font-mono">
+                <div className="text-left font-mono min-w-0">
                   {isAway && <EventLabel ev={e} side="away" />}
                 </div>
               </li>
@@ -399,21 +414,28 @@ function EventsSection({
   );
 }
 
-function EventLabel({ ev, side: _ }: { ev: MatchEvent; side: "home" | "away" }) {
+function EventLabel({ ev, side }: { ev: MatchEvent; side: "home" | "away" }) {
   const icon = iconFor(ev);
+  const playerName = ev.player.name ?? "—";
+  const tag =
+    ev.type === "Goal" && ev.detail === "Penalty"
+      ? " (P)"
+      : ev.type === "Goal" && ev.detail === "Own Goal"
+        ? " (EN P)"
+        : "";
+  // Para mantener el icono pegado al nombre incluso cuando trunca, usamos
+  // un flex con el icono shrink-0 y el bloque del nombre con truncate.
+  const dir = side === "home" ? "flex-row-reverse text-right" : "flex-row text-left";
   return (
-    <span>
-      <span className="mr-1">{icon}</span>
-      {ev.player.name ?? "—"}
-      {ev.type === "Goal" && ev.detail === "Penalty" && (
-        <span className="text-brick-500"> (P)</span>
-      )}
-      {ev.type === "Goal" && ev.detail === "Own Goal" && (
-        <span className="text-brick-500"> (EN P)</span>
-      )}
-      {ev.type === "subst" && ev.assist?.name && (
-        <span className="text-pitch-500"> ← {ev.assist.name}</span>
-      )}
+    <span className={`flex items-baseline gap-1 min-w-0 ${dir}`}>
+      <span className="shrink-0">{icon}</span>
+      <span className="truncate min-w-0">
+        {playerName}
+        {tag && <span className="text-brick-500">{tag}</span>}
+        {ev.type === "subst" && ev.assist?.name && (
+          <span className="text-pitch-500"> ← {ev.assist.name}</span>
+        )}
+      </span>
     </span>
   );
 }
