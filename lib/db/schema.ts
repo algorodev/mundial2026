@@ -282,10 +282,56 @@ export const magicLinks = pgTable(
   })
 );
 
+// Suscripciones del navegador a Web Push (una por dispositivo). `endpoint` es
+// la URL única que entrega el navegador y sirve como id natural de la sub.
+// Se borra (DELETE /api/push/subscribe) cuando el usuario desactiva o el
+// navegador devuelve 410/404 al enviar (subscription caducada).
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    endpointIdx: uniqueIndex("push_subscriptions_endpoint_idx").on(t.endpoint),
+    userIdx: index("push_subscriptions_user_idx").on(t.userId),
+  })
+);
+
+// Idempotencia del envío de push: para cada (match, eventKey) sólo
+// notificamos una vez. Los eventKey los genera el cron (p.ej. "ft",
+// "kickoff-warning", "goal-23-Lamal-9", "red-67-Rodri").
+export const notifiedEvents = pgTable(
+  "notified_events",
+  {
+    id: serial("id").primaryKey(),
+    matchId: integer("match_id")
+      .references(() => matches.id, { onDelete: "cascade" })
+      .notNull(),
+    eventKey: varchar("event_key", { length: 120 }).notNull(),
+    notifiedAt: timestamp("notified_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    matchKeyIdx: uniqueIndex("notified_events_match_key_idx").on(
+      t.matchId,
+      t.eventKey
+    ),
+  })
+);
+
 export type User = typeof users.$inferSelect;
 export type Tournament = typeof tournaments.$inferSelect;
 export type Match = typeof matches.$inferSelect;
 export type Team = typeof teams.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NotifiedEvent = typeof notifiedEvents.$inferSelect;
 export type Group = typeof groups.$inferSelect;
 export type GroupMember = typeof groupMembers.$inferSelect;
 export type GroupJoinRequest = typeof groupJoinRequests.$inferSelect;

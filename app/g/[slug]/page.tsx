@@ -10,6 +10,7 @@ import PredictionsClient from "@/components/PredictionsClient";
 import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import TournamentBadge from "@/components/TournamentBadge";
+import PushOptIn from "@/components/PushOptIn";
 
 export default async function GroupPredictionsPage(
   props: {
@@ -111,6 +112,7 @@ export default async function GroupPredictionsPage(
         active="predictions"
         isOwner={ctx.myRole === "owner"}
       />
+      <PushOptIn />
       {matchesSerialized.length === 0 ? (
         <div className="cromo bg-paper-50 text-pitch-950 p-8 sm:p-10 text-center">
           <div className="font-display text-3xl sm:text-4xl mb-3">

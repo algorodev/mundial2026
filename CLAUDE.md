@@ -51,6 +51,7 @@ Opcionales en runtime:
 - `NEXT_PUBLIC_GA4_ID` — GA4 Measurement ID (`G-XXXXXXXXXX`). Si está, `components/GoogleAnalytics.tsx` carga gtag.js. Si no, no se carga.
 - `API_FOOTBALL_KEY` — API key de [api-sports.io](https://www.api-football.com/) (plan Pro). Requerida para `pnpm db:map-api`, el cron `/api/cron/results` y los endpoints de enriquecimiento. Sin ella, la app sigue funcionando con resultados manuales.
 - `CRON_SECRET` — token aleatorio (e.g. `openssl rand -hex 32`). Lo usa el workflow `.github/workflows/cron-results.yml` para autenticarse contra `/api/cron/results` (header `Authorization: Bearer …`). **Sin él, el endpoint del cron rechaza todo (401)** — esto es deliberado para evitar abusos. Debe existir tanto en Vercel (env var) como en GitHub (repo secret).
+- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` — credenciales de Web Push. Genera el par con `npx web-push generate-vapid-keys`. `VAPID_SUBJECT` debe ser un `mailto:tu@dominio.com` o una URL. Sin estas, el botón "Activar notificaciones" se ve pero falla al suscribirse, y el cron salta el envío de push (los updates de score siguen funcionando).
 
 ## Arquitectura
 
@@ -92,12 +93,15 @@ app/
     match/[matchId]/events          → GET eventos (goles, tarjetas, cambios)
     match/[matchId]/h2h             → GET últimos 10 enfrentamientos entre los dos equipos
     tournaments/[slug]/standings    → GET clasificación de grupos / liga
+    push/vapid-public-key           → GET clave pública para subscribe del navegador
+    push/subscribe                  → POST guarda sub · DELETE la borra
 components/
   NavBar, GroupTabs, NewGroupClient, ManageGroupClient, JoinClient
   PredictionsClient, LeaderboardClient, AdminResultsClient
-  LiveScoreboard (con goleadores tirando de /api/match/[id]/events)
+  LiveScoreboard (con goleadores + minuto real desde API-Football)
   MatchDetailClient (lineups + eventos + H2H)
-  TournamentStandings (tabla de grupos / liga)
+  TournamentStandings (client wrapper) + StandingsView (pura, server-compat)
+  PushOptIn (registra SW + sub + persiste vía /api/push/subscribe)
 lib/
   db/index.ts                       → cliente Drizzle (Neon HTTP)
   db/schema.ts                      → users (con passwordHash nullable), tournaments (con apiLeagueId/Season),
@@ -109,6 +113,8 @@ lib/
   group-access.ts                   → getGroupForMember (auth + tournamentId)
   matches-data.ts                   → 72 partidos del Mundial 2026 (sólo para seed)
   api-football.ts                   → cliente HTTP de api-sports.io v3 (key, fetch, tipado)
+  push.ts                           → sendToUsers + markEventOnce (web-push, idempotencia)
+  notify.ts                         → composición de payloads por tipo de evento + pickRecipients
   scoring.ts                        → calcPoints
   session.ts                        → JWT, payload con email + isGlobalAdmin
   slug.ts                           → slugify, randomInviteCode
@@ -125,6 +131,8 @@ scripts/
 - **tournaments** — `slug` único, `name`, `sport`, `status` ('upcoming'|'live'|'finished'). `apiLeagueId`/`apiSeason` nullable: si están, el torneo participa en `pnpm db:map-api` y en los crons de auto-resultados.
 - **matches** — pertenece a `tournament` (FK cascade), `matchNumber` único *por torneo*. `groupName`, `matchDate`, `matchTime`, `stadium`, banderas son **nullable** (para soportar deportes no-fútbol más adelante). `homeScore`/`awayScore` nullable (null = sin resultado). `apiFixtureId` único global nullable (poblado por el script de mapeo). `resultSource` ('api'|'admin'|null) indica quién escribió el último resultado — el cron NUNCA pisa 'admin'.
 - **teams** — equipos por torneo, `(tournamentId, code)` único compuesto. `code` enlaza con `matches.homeCode/awayCode`. `apiTeamId`/`logoUrl` los rellena `pnpm db:map-api`.
+- **push_subscriptions** — una fila por suscripción de navegador. `endpoint` único global. Se borra cuando el navegador devuelve 410/404 al enviar.
+- **notified_events** — `(matchId, eventKey)` único compuesto. Garantiza que cada gol/roja/FT se notifica una sola vez aunque el cron pase varias veces sobre el mismo evento.
 - **groups** — `slug` único (`mi-grupo-ab12`), `inviteCode` único (6 chars sin caracteres confusos), `tournamentId` FK restrict (no se borra un torneo con grupos), `ownerId` FK restrict
 - **group_members** — `(groupId, userId)` único compuesto, `role` ('owner'|'member')
 - **predictions** — clave compuesta `(userId, matchId, groupId)`. Un user puede pronosticar el mismo match distinto en grupos distintos. FK con `onDelete: "cascade"` en todos los lados.
@@ -189,6 +197,23 @@ Flujo (`app/api/cron/results/route.ts`):
 - Devuelve un resumen JSON `{ ok, window, summary: [{ slug, fetched, updated, skippedAdmin, skippedNotFinal }] }` útil para debugging desde la consola de Vercel.
 
 El endpoint admin `/api/admin/t/[slug]/result` marca `resultSource='admin'` al guardar y `null` al borrar (para que el cron pueda volver a rellenar si quiere).
+
+### Notificaciones push (Web Push API)
+
+El mismo cron `/api/cron/results` además dispara push para 5 disparadores:
+- **Recordatorio kickoff** — 5-20 min antes del kickoff
+- **Final (FT)** — al completar el resultado por primera vez
+- **Gol** — en directo (con etiqueta penalti / en propia)
+- **Roja**
+- **Penalti fallado**
+
+Audiencia: subs cuyo `userId` pertenezca a algún grupo del torneo del match (`lib/notify.ts::pickRecipients`). Opt-in explícito en `/g/[slug]` vía `components/PushOptIn.tsx`.
+
+Idempotencia: cada notificación se registra en `notified_events (matchId, eventKey)` antes de enviar; `markEventOnce` devuelve `false` si ya estaba marcada y el cron skip-ea. eventKeys: `kickoff-warning`, `ft`, `goal-<min>-<extra>-<player>-<team>`, `red-<min>-<extra>-<player>`, `misspen-<min>-<extra>-<player>`.
+
+Transporte: `lib/push.ts::sendToUsers(userIds, payload)` con `web-push`. Si una sub devuelve 410/404 se borra automáticamente. El service worker (`/public/sw.js`) muestra la notificación y abre `/groups` al click.
+
+> ⚠️ **Lag**: GitHub Actions corre "best effort"; entre el evento y el push pueden pasar 5-25 min. El cuerpo de la notificación lleva el minuto exacto (`"Lamal 23'"`) para que se entienda. Para tiempo real haría falta cron por minuto fiable (Vercel Pro, Upstash QStash, etc.).
 
 ### Endpoints de enriquecimiento (Fase 2)
 
