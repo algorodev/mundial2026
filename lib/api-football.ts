@@ -153,6 +153,14 @@ export function getFixturesByDateRange(
   });
 }
 
+// Trae varios fixtures por id en una sola llamada. La API acepta una lista
+// "id1-id2-id3" en el parámetro `ids`. Útil para enriquecer /api/live con
+// minuto real y status sin hacer N requests.
+export function getFixturesByIds(ids: number[], opts: ApiGetOpts = {}) {
+  if (ids.length === 0) return Promise.resolve<ApiFixture[]>([]);
+  return apiGet<ApiFixture>("/fixtures", { ids: ids.join("-") }, opts);
+}
+
 // ─── Endpoints de enriquecimiento (Fase 2) ───────────────────────────────
 
 export type ApiLineupPlayer = {

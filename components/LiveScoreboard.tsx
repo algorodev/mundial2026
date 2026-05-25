@@ -17,7 +17,25 @@ type LiveMatch = {
   awayScore: number;
   kickoffAt: string;
   minute: number;
+  // Status devuelto por API-Football si el match está enriquecido.
+  // null cuando se cae a la heurística por kickoff.
+  //   "1H" | "2H" | "LIVE" → minuto normal
+  //   "HT"                  → descanso
+  //   "ET"                  → prórroga (elapsed sigue subiendo de 90 en adelante)
+  //   "BT"                  → break time entre tiempos de prórroga
+  //   "P"                   → tanda de penaltis
+  statusShort: string | null;
 };
+
+// Etiqueta corta para el reloj. Si la API marca HT/P y similares, mostramos
+// texto en vez de minuto; en el resto el minuto real (o heurístico).
+function liveLabel(m: LiveMatch): string {
+  if (m.statusShort === "HT") return "DESCANSO";
+  if (m.statusShort === "BT") return "DESCANSO";
+  if (m.statusShort === "P") return "PENALTIS";
+  if (m.statusShort === "ET") return `${m.minute}'·PRÓRR`;
+  return `${m.minute}'`;
+}
 
 // Subset del payload de /api/match/[matchId]/events que usamos aquí.
 type GoalEvent = {
@@ -235,7 +253,7 @@ function LiveRow({ match }: { match: LiveMatch }) {
         </span>
         <span className="font-mono text-[10px] text-grass-600 font-bold uppercase tracking-widest flex items-center gap-1">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-grass-500 animate-pulse" />
-          {match.minute}'
+          {liveLabel(match)}
         </span>
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">

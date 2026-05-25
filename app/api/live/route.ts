@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { matches } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
+import { getFixturesByIds, isLive } from "@/lib/api-football";
 
 export const dynamic = "force-dynamic";
 
@@ -84,8 +85,35 @@ export async function GET(req: NextRequest) {
         awayScore: m.awayScore!,
         kickoffAt: m.kickoffAt.toISOString(),
         minute,
+        // Si la API responde, sobrescribimos minute con el valor real y
+        // pasamos también un statusShort ("1H", "HT", "2H", "ET", "P"...)
+        // para que la UI pueda mostrar etiquetas más exactas.
+        statusShort: null as string | null,
+        apiFixtureId: m.apiFixtureId,
       };
     });
+
+  // Enrichment con minuto real desde API-Football. Sólo si hay matches live
+  // mapeados a un fixtureId y la llamada va bien. Si falla, mantenemos el
+  // minuto heurístico — no rompemos al usuario.
+  const mappedIds = live
+    .map((m) => m.apiFixtureId)
+    .filter((x): x is number => x !== null);
+  if (mappedIds.length > 0) {
+    try {
+      const fixtures = await getFixturesByIds(mappedIds, { revalidate: 30 });
+      for (const fx of fixtures) {
+        const target = live.find((m) => m.apiFixtureId === fx.fixture.id);
+        if (!target) continue;
+        if (isLive(fx.fixture.status) && fx.fixture.status.elapsed !== null) {
+          target.minute = fx.fixture.status.elapsed;
+          target.statusShort = fx.fixture.status.short;
+        }
+      }
+    } catch {
+      // ignoramos: nos quedamos con la heurística
+    }
+  }
 
   const nextRow = all.find((m) => m.kickoffAt.getTime() > now);
   const next = nextRow
