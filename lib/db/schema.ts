@@ -45,6 +45,10 @@ export const tournaments = pgTable(
     sport: varchar("sport", { length: 30 }).default("futbol").notNull(),
     status: varchar("status", { length: 20 }).default("upcoming").notNull(), // upcoming | live | finished
     officialGroupId: integer("official_group_id"),
+    // Integración con API-Football. Si ambas están definidas, el script
+    // scripts/map-api-ids.ts y los crons de resultados consumen este torneo.
+    apiLeagueId: integer("api_league_id"),
+    apiSeason: integer("api_season"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({
@@ -74,6 +78,12 @@ export const matches = pgTable(
     stadium: varchar("stadium", { length: 120 }),
     homeScore: integer("home_score"),
     awayScore: integer("away_score"),
+    // 'api' = lo escribió el cron de auto-resultados. 'admin' = lo escribió
+    // un admin global a mano. El cron NUNCA pisa rows con resultSource='admin'.
+    resultSource: varchar("result_source", { length: 10 }),
+    // Id del fixture en API-Football. Nullable porque los partidos pre-existen
+    // al mapeo. Únicó global (postgres ignora nulls en unique indexes).
+    apiFixtureId: integer("api_fixture_id"),
   },
   (t) => ({
     tournamentNumberIdx: uniqueIndex("matches_tournament_number_idx").on(
@@ -81,6 +91,36 @@ export const matches = pgTable(
       t.matchNumber
     ),
     tournamentIdx: index("matches_tournament_idx").on(t.tournamentId),
+    apiFixtureIdx: uniqueIndex("matches_api_fixture_idx").on(t.apiFixtureId),
+  })
+);
+
+// Equipos por torneo. La identidad (Real Madrid, España…) puede repetirse
+// entre torneos distintos, pero los IDs y metadatos de API-Football son
+// específicos del torneo/temporada, así que vive scoped por (tournamentId, code).
+// matches.homeCode/awayCode hacen join lógico con (tournamentId, code).
+export const teams = pgTable(
+  "teams",
+  {
+    id: serial("id").primaryKey(),
+    tournamentId: integer("tournament_id")
+      .references(() => tournaments.id, { onDelete: "cascade" })
+      .notNull(),
+    code: varchar("code", { length: 5 }).notNull(),
+    name: varchar("name", { length: 80 }).notNull(),
+    flagEmoji: varchar("flag_emoji", { length: 10 }),
+    apiTeamId: integer("api_team_id"),
+    logoUrl: text("logo_url"),
+  },
+  (t) => ({
+    tournamentCodeIdx: uniqueIndex("teams_tournament_code_idx").on(
+      t.tournamentId,
+      t.code
+    ),
+    tournamentApiTeamIdx: index("teams_tournament_api_team_idx").on(
+      t.tournamentId,
+      t.apiTeamId
+    ),
   })
 );
 
@@ -245,6 +285,7 @@ export const magicLinks = pgTable(
 export type User = typeof users.$inferSelect;
 export type Tournament = typeof tournaments.$inferSelect;
 export type Match = typeof matches.$inferSelect;
+export type Team = typeof teams.$inferSelect;
 export type Group = typeof groups.$inferSelect;
 export type GroupMember = typeof groupMembers.$inferSelect;
 export type GroupJoinRequest = typeof groupJoinRequests.$inferSelect;

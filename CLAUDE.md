@@ -26,7 +26,8 @@ pnpm dev          # Next dev en :3000
 pnpm build        # Next build
 pnpm lint         # next lint
 pnpm db:push      # Drizzle Kit: aplicar schema directo a la DB (modo usado en este proyecto)
-pnpm db:seed      # tsx scripts/seed.ts → crea torneo Mundial + 72 partidos + promociona ADMIN_EMAIL
+pnpm db:seed      # tsx scripts/seed.ts → crea torneos + partidos + equipos + promociona ADMIN_EMAIL
+pnpm db:map-api   # tsx scripts/map-api-ids.ts → rellena apiTeamId/apiFixtureId desde API-Football
 pnpm sim          # tsx scripts/simulate.ts start → simulador 24h del torneo Mundial
 pnpm sim:reset    # restaura kickoffs reales y borra resultados del torneo Mundial
 ```
@@ -48,6 +49,7 @@ Solo en seed (opcional):
 
 Opcionales en runtime:
 - `NEXT_PUBLIC_GA4_ID` — GA4 Measurement ID (`G-XXXXXXXXXX`). Si está, `components/GoogleAnalytics.tsx` carga gtag.js. Si no, no se carga.
+- `API_FOOTBALL_KEY` — API key de [api-sports.io](https://www.api-football.com/) (plan Pro). Requerida para `pnpm db:map-api` y, más adelante, para el cron de auto-resultados y los endpoints de enriquecimiento. Sin ella, la app sigue funcionando con resultados manuales.
 
 ## Arquitectura
 
@@ -87,27 +89,31 @@ components/
   PredictionsClient, LeaderboardClient, AdminResultsClient, LiveScoreboard
 lib/
   db/index.ts                       → cliente Drizzle (Neon HTTP)
-  db/schema.ts                      → users (con passwordHash nullable), tournaments,
-                                       matches, groups, group_members, predictions, magic_links
+  db/schema.ts                      → users (con passwordHash nullable), tournaments (con apiLeagueId/Season),
+                                       matches (con apiFixtureId/resultSource), teams, groups,
+                                       group_members, predictions, magic_links
   auth.ts                           → createMagicLink / peekMagicLink / consumeMagicLink
   password.ts                       → bcryptjs: hashPassword, verifyPassword, validatePassword (min 8)
   email.ts                          → Resend SDK + plantilla "crea/restablece tu contraseña"
   group-access.ts                   → getGroupForMember (auth + tournamentId)
   matches-data.ts                   → 72 partidos del Mundial 2026 (sólo para seed)
+  api-football.ts                   → cliente HTTP de api-sports.io v3 (key, fetch, tipado)
   scoring.ts                        → calcPoints
   session.ts                        → JWT, payload con email + isGlobalAdmin
   slug.ts                           → slugify, randomInviteCode
   tournament.ts                     → getTournamentStart(tournamentId)
 scripts/
-  seed.ts                           → crea torneo Mundial + partidos + admin (idempotente)
+  seed.ts                           → crea torneos + partidos + equipos + admin (idempotente)
+  map-api-ids.ts                    → rellena apiTeamId/apiFixtureId desde API-Football (idempotente)
   simulate.ts                       → simulador 24h de un torneo (default mundial-2026)
 ```
 
 ## Modelo de datos
 
 - **users** — `email` único (índice), `name`, `passwordHash` (text nullable, bcrypt), `isGlobalAdmin` (0/1, no boolean). passwordHash null = cuenta "transicional" sin password fijada todavía
-- **tournaments** — `slug` único, `name`, `sport`, `status` ('upcoming'|'live'|'finished')
-- **matches** — pertenece a `tournament` (FK cascade), `matchNumber` único *por torneo*. `groupName`, `matchDate`, `matchTime`, `stadium`, banderas son **nullable** (para soportar deportes no-fútbol más adelante). `homeScore`/`awayScore` nullable (null = sin resultado)
+- **tournaments** — `slug` único, `name`, `sport`, `status` ('upcoming'|'live'|'finished'). `apiLeagueId`/`apiSeason` nullable: si están, el torneo participa en `pnpm db:map-api` y en los crons de auto-resultados.
+- **matches** — pertenece a `tournament` (FK cascade), `matchNumber` único *por torneo*. `groupName`, `matchDate`, `matchTime`, `stadium`, banderas son **nullable** (para soportar deportes no-fútbol más adelante). `homeScore`/`awayScore` nullable (null = sin resultado). `apiFixtureId` único global nullable (poblado por el script de mapeo). `resultSource` ('api'|'admin'|null) indica quién escribió el último resultado — el cron NUNCA pisa 'admin'.
+- **teams** — equipos por torneo, `(tournamentId, code)` único compuesto. `code` enlaza con `matches.homeCode/awayCode`. `apiTeamId`/`logoUrl` los rellena `pnpm db:map-api`.
 - **groups** — `slug` único (`mi-grupo-ab12`), `inviteCode` único (6 chars sin caracteres confusos), `tournamentId` FK restrict (no se borra un torneo con grupos), `ownerId` FK restrict
 - **group_members** — `(groupId, userId)` único compuesto, `role` ('owner'|'member')
 - **predictions** — clave compuesta `(userId, matchId, groupId)`. Un user puede pronosticar el mismo match distinto en grupos distintos. FK con `onDelete: "cascade"` en todos los lados.
@@ -144,6 +150,18 @@ Por torneo: con el primer kickoff del torneo se cierran las predicciones de todo
 ## Membresía y autorización
 
 `lib/group-access.ts` expone `getGroupForMember(slug, userId)` que devuelve `null` si el user no es miembro. Todos los endpoints scoped por grupo lo usan como check único de auth + lookup de `tournamentId`.
+
+## Integración con API-Football
+
+Cliente HTTP en `lib/api-football.ts` (api-sports.io v3). Requiere `API_FOOTBALL_KEY`. Lanza `Error` si la API responde con `errors` (rate limit, parámetros inválidos, etc.).
+
+Cada torneo guarda su `apiLeagueId` + `apiSeason` (fijados en `scripts/seed.ts`). IDs típicos: World Cup = 1, UEFA Champions League = 2, LaLiga = 140. La season es el año de inicio (2025-26 → season=2025).
+
+Flujo de mapeo (`pnpm db:map-api`, idempotente, puede filtrarse por `pnpm db:map-api <slug>`):
+1. `/teams?league=L&season=S` → casa por `team.code` (case-insensitive) contra `teams.code`. Rellena `apiTeamId` + `logoUrl`. Reporta huecos en consola.
+2. `/fixtures?league=L&season=S` → indexa por `(apiHomeTeamId, apiAwayTeamId, día UTC)` y casa con nuestros matches usando `homeCode/awayCode`. Tolera ±1 día por desfase de zona horaria.
+
+Si los códigos de la API no coinciden con los nuestros (típico en clubes), añade overrides manuales en `TEAM_OVERRIDES` dentro de `scripts/map-api-ids.ts`: `{ "<slug-torneo>": { OUR_CODE: apiTeamId } }`.
 
 ## Zona horaria — CUIDADO
 

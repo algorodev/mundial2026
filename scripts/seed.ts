@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db";
-import { matches, tournaments, users } from "../lib/db/schema";
+import { matches, teams, tournaments, users } from "../lib/db/schema";
 import type { MatchData } from "../lib/matches-data";
 import { MATCHES, flagToCode } from "../lib/matches-data";
 import {
@@ -29,6 +29,10 @@ type SeedTournament = {
   matchData: MatchData[];
   // Resolver el código de equipo a partir del nombre o emoji del partido.
   resolveCode: (m: MatchData, side: "home" | "away") => string | null;
+  // Integración API-Football. Si están definidas, scripts/map-api-ids.ts
+  // y los crons de resultados toman este torneo.
+  apiLeagueId?: number;
+  apiSeason?: number;
 };
 
 const TOURNAMENTS: SeedTournament[] = [
@@ -40,6 +44,8 @@ const TOURNAMENTS: SeedTournament[] = [
     matchData: MATCHES,
     resolveCode: (m, side) =>
       flagToCode(side === "home" ? m.homeFlag : m.awayFlag),
+    apiLeagueId: 1, // World Cup
+    apiSeason: 2026,
   },
   {
     slug: CHAMPIONS_2026_SLUG,
@@ -49,6 +55,8 @@ const TOURNAMENTS: SeedTournament[] = [
     matchData: CHAMPIONS_2026_MATCHES,
     resolveCode: (m, side) =>
       CHAMPIONS_2026_CODES[side === "home" ? m.home : m.away] ?? null,
+    apiLeagueId: 2, // UEFA Champions League
+    apiSeason: 2025, // temporada 2025-26
   },
   {
     slug: LALIGA_2026_27_SLUG,
@@ -58,6 +66,8 @@ const TOURNAMENTS: SeedTournament[] = [
     matchData: LALIGA_2026_27_MATCHES,
     resolveCode: (m, side) =>
       LALIGA_2026_27_CODES[side === "home" ? m.home : m.away] ?? null,
+    apiLeagueId: 140, // LaLiga
+    apiSeason: 2026,
   },
 ];
 
@@ -76,13 +86,66 @@ async function ensureTournament(t: SeedTournament) {
         name: t.name,
         sport: t.sport,
         status: t.status,
+        apiLeagueId: t.apiLeagueId,
+        apiSeason: t.apiSeason,
       })
       .returning();
     console.log(`✅ Torneo creado: ${row.name}`);
   } else {
-    console.log(`ℹ️  Torneo ya existe: ${row.name}`);
+    // Mantener la config API al día sin pisar nombre/estado (que el admin
+    // puede haber cambiado a mano).
+    if (
+      (t.apiLeagueId !== undefined && row.apiLeagueId !== t.apiLeagueId) ||
+      (t.apiSeason !== undefined && row.apiSeason !== t.apiSeason)
+    ) {
+      [row] = await db
+        .update(tournaments)
+        .set({ apiLeagueId: t.apiLeagueId, apiSeason: t.apiSeason })
+        .where(eq(tournaments.id, row.id))
+        .returning();
+      console.log(`🔁 Torneo actualizado (API config): ${row.name}`);
+    } else {
+      console.log(`ℹ️  Torneo ya existe: ${row.name}`);
+    }
   }
   return row;
+}
+
+async function upsertTeams(t: SeedTournament, tournamentId: number) {
+  // Deducir equipos únicos del match data. Para Mundial: bandera + código FIFA;
+  // para Champions/LaLiga: sin bandera, sólo nombre + código de club.
+  const seen = new Map<
+    string,
+    { code: string; name: string; flagEmoji: string | null }
+  >();
+  for (const m of t.matchData) {
+    for (const side of ["home", "away"] as const) {
+      const code = t.resolveCode(m, side);
+      if (!code) continue;
+      if (seen.has(code)) continue;
+      const name = side === "home" ? m.home : m.away;
+      const flagEmoji = side === "home" ? m.homeFlag : m.awayFlag;
+      seen.set(code, { code, name, flagEmoji: flagEmoji ?? null });
+    }
+  }
+  if (seen.size === 0) return;
+  for (const team of seen.values()) {
+    await db
+      .insert(teams)
+      .values({
+        tournamentId,
+        code: team.code,
+        name: team.name,
+        flagEmoji: team.flagEmoji,
+      })
+      .onConflictDoUpdate({
+        target: [teams.tournamentId, teams.code],
+        set: { name: team.name, flagEmoji: team.flagEmoji },
+        // OJO: deliberadamente no tocamos apiTeamId/logoUrl porque los
+        // rellena scripts/map-api-ids.ts y no queremos perderlos aquí.
+      });
+  }
+  console.log(`✅ ${seen.size} equipos cargados`);
 }
 
 async function upsertMatches(t: SeedTournament, tournamentId: number) {
@@ -171,6 +234,7 @@ async function main() {
 
   for (const t of TOURNAMENTS) {
     const row = await ensureTournament(t);
+    await upsertTeams(t, row.id);
     await upsertMatches(t, row.id);
   }
 
