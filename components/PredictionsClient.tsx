@@ -379,9 +379,13 @@ function MatchCard({
         </div>
       </div>
 
-      {/* Selecciones + score */}
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
-        <div className="text-right">
+      {/* Selecciones + score.
+          minmax(0,1fr) en cols laterales: permite encogerse hasta 0 para
+          que los nombres largos truncan/wrapean en vez de empujar el grid.
+          min-h en el bloque del nombre: reserva siempre el alto de 2 líneas
+          para que home y away queden simétricos aunque uno wrapee y otro no. */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-3 items-center">
+        <div className="text-right min-w-0">
           <div className="flex justify-end mb-1">
             <TeamBadge
               code={match.homeCode}
@@ -391,12 +395,12 @@ function MatchCard({
               size="md"
             />
           </div>
-          <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
+          <div className="font-display uppercase text-pitch-950 text-xs sm:text-sm leading-tight tracking-tight text-balance min-h-[2.5em] flex items-start justify-end">
             {match.homeTeam}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <input
             type="number"
             inputMode="numeric"
@@ -422,7 +426,7 @@ function MatchCard({
           />
         </div>
 
-        <div className="text-left">
+        <div className="text-left min-w-0">
           <div className="flex justify-start mb-1">
             <TeamBadge
               code={match.awayCode}
@@ -432,7 +436,7 @@ function MatchCard({
               size="md"
             />
           </div>
-          <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
+          <div className="font-display uppercase text-pitch-950 text-xs sm:text-sm leading-tight tracking-tight text-balance min-h-[2.5em] flex items-start">
             {match.awayTeam}
           </div>
         </div>
@@ -454,9 +458,9 @@ function MatchCard({
       <div className="mt-3 text-right">
         <Link
           href={`/g/${groupSlug}/m/${match.matchNumber}`}
-          className="inline-block font-mono text-[10px] uppercase tracking-widest text-pitch-700 hover:text-flame-600"
+          className="inline-block font-mono text-[10px] uppercase tracking-widest text-pitch-700 hover:text-flame-600 whitespace-nowrap"
         >
-          Alineaciones · eventos · H2H →
+          Detalle del partido →
         </Link>
       </div>
     </article>

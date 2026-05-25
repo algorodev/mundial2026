@@ -306,8 +306,8 @@ function ReadOnlyMatchCard({
         </div>
       </div>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-center">
-        <div className="text-right">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-3 items-center">
+        <div className="text-right min-w-0">
           <div className="flex justify-end mb-1">
             <TeamBadge
               code={match.homeCode}
@@ -317,18 +317,18 @@ function ReadOnlyMatchCard({
               size="md"
             />
           </div>
-          <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
+          <div className="font-display uppercase text-pitch-950 text-xs sm:text-sm leading-tight tracking-tight text-balance min-h-[2.5em] flex items-start justify-end">
             {match.homeTeam}
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <ScoreBox value={hasPred ? pred!.homeScore : null} />
           <span className="text-pitch-950 font-display text-3xl">·</span>
           <ScoreBox value={hasPred ? pred!.awayScore : null} />
         </div>
 
-        <div className="text-left">
+        <div className="text-left min-w-0">
           <div className="flex justify-start mb-1">
             <TeamBadge
               code={match.awayCode}
@@ -338,7 +338,7 @@ function ReadOnlyMatchCard({
               size="md"
             />
           </div>
-          <div className="font-display uppercase text-pitch-950 text-sm sm:text-base leading-tight tracking-tight">
+          <div className="font-display uppercase text-pitch-950 text-xs sm:text-sm leading-tight tracking-tight text-balance min-h-[2.5em] flex items-start">
             {match.awayTeam}
           </div>
         </div>
