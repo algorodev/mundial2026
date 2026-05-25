@@ -249,18 +249,22 @@ function LiveRow({ match }: { match: LiveMatch }) {
 
   return (
     <div className="cromo-sm bg-paper-50 text-pitch-950 p-3">
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <span
-          className={`group-${match.groupName} text-[9px] px-2 py-0.5 rounded-sm`}
-        >
-          GRUPO {match.groupName}
-        </span>
-        <span className="font-mono text-[10px] text-grass-600 font-bold uppercase tracking-widest flex items-center gap-1">
+      <div className="flex items-center justify-between gap-2 mb-1.5 min-w-0">
+        {match.groupName ? (
+          <span
+            className={`group-${match.groupName} text-[9px] px-2 py-0.5 rounded-sm shrink-0`}
+          >
+            GRUPO {match.groupName}
+          </span>
+        ) : (
+          <span className="shrink-0" />
+        )}
+        <span className="font-mono text-[10px] text-grass-600 font-bold uppercase tracking-widest flex items-center gap-1 shrink-0">
           <span className="inline-block w-1.5 h-1.5 rounded-full bg-grass-500 animate-pulse" />
           {liveLabel(match)}
         </span>
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-center">
         <div className="text-right min-w-0">
           <div className="flex justify-end leading-none">
             <TeamBadge
@@ -275,7 +279,7 @@ function LiveRow({ match }: { match: LiveMatch }) {
             {match.homeTeam}
           </div>
         </div>
-        <div className="font-display text-2xl text-pitch-950 px-2 whitespace-nowrap">
+        <div className="font-display text-2xl text-pitch-950 px-1 whitespace-nowrap tabular-nums shrink-0">
           {match.homeScore}
           <span className="text-brick-500 mx-1">·</span>
           {match.awayScore}
@@ -297,8 +301,8 @@ function LiveRow({ match }: { match: LiveMatch }) {
       </div>
 
       {(homeGoals.length > 0 || awayGoals.length > 0) && (
-        <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-pitch-200/60">
-          <ul className="text-[10px] font-mono text-pitch-800 space-y-0.5 text-right">
+        <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-pitch-200/60 min-w-0">
+          <ul className="text-[10px] font-mono text-pitch-800 space-y-0.5 text-right min-w-0">
             {homeGoals.map((g, i) => (
               <li key={`h-${i}`} className="truncate">
                 ⚽ {g.player.name ?? "—"}{" "}
@@ -311,7 +315,7 @@ function LiveRow({ match }: { match: LiveMatch }) {
               </li>
             ))}
           </ul>
-          <ul className="text-[10px] font-mono text-pitch-800 space-y-0.5 text-left">
+          <ul className="text-[10px] font-mono text-pitch-800 space-y-0.5 text-left min-w-0">
             {awayGoals.map((g, i) => (
               <li key={`a-${i}`} className="truncate">
                 <span className="text-pitch-500">{fmtMinute(g.time)}</span>{" "}
@@ -341,9 +345,9 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
   return (
     <div className="cromo-sm bg-paper-50 text-pitch-950 p-4 text-center">
       <p className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest mb-2">
-        Próximo · Grupo {next.groupName}
+        Próximo {next.groupName ? `· Grupo ${next.groupName}` : ""}
       </p>
-      <div className="flex items-center justify-center gap-3 mb-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-center mb-3">
         <div className="flex flex-col items-center min-w-0">
           <TeamBadge
             code={next.homeCode}
@@ -352,11 +356,11 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
             alt={next.homeTeam}
             size="sm"
           />
-          <span className="font-display uppercase text-[11px] tracking-tight mt-0.5 truncate max-w-28">
+          <span className="font-display uppercase text-[11px] tracking-tight mt-1 text-center leading-tight text-balance max-w-full">
             {next.homeTeam}
           </span>
         </div>
-        <span className="font-display text-pitch-700 text-lg">vs</span>
+        <span className="font-display text-pitch-700 text-lg shrink-0">vs</span>
         <div className="flex flex-col items-center min-w-0">
           <TeamBadge
             code={next.awayCode}
@@ -365,7 +369,7 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
             alt={next.awayTeam}
             size="sm"
           />
-          <span className="font-display uppercase text-[11px] tracking-tight mt-0.5 truncate max-w-28">
+          <span className="font-display uppercase text-[11px] tracking-tight mt-1 text-center leading-tight text-balance max-w-full">
             {next.awayTeam}
           </span>
         </div>
