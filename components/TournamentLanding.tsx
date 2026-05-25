@@ -3,6 +3,8 @@ import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, tournaments, groups } from "@/lib/db/schema";
 import TournamentBadge from "@/components/TournamentBadge";
+import StandingsView, { type StandingRow } from "@/components/StandingsView";
+import { getStandings } from "@/lib/api-football";
 import type { LandingConfig } from "@/lib/landings";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
@@ -35,6 +37,8 @@ export default async function TournamentLanding({
       slug: tournaments.slug,
       status: tournaments.status,
       officialGroupId: tournaments.officialGroupId,
+      apiLeagueId: tournaments.apiLeagueId,
+      apiSeason: tournaments.apiSeason,
     })
     .from(tournaments)
     .where(eq(tournaments.slug, cfg.tournamentSlug))
@@ -73,6 +77,24 @@ export default async function TournamentLanding({
   const preselectHref = `/groups/new?preselect=${encodeURIComponent(cfg.tournamentSlug)}`;
   const calendarHref = `/api/calendar/${cfg.tournamentSlug}`;
   const landingUrl = `${APP_URL}/porra-${cfg.tournamentSlug}`;
+
+  // Clasificación oficial del torneo (si está integrado con API-Football y hay
+  // datos publicados). Cache server-side de 1 hora — esto es marketing, no
+  // necesita frescura de segundos y mucha gente sin sesión puede pegarle.
+  // Si la API se cae o el torneo aún no ha empezado, ocultamos la sección.
+  let standingsGroups: StandingRow[][] = [];
+  if (tournament?.apiLeagueId && tournament?.apiSeason) {
+    try {
+      const data = await getStandings(
+        tournament.apiLeagueId,
+        tournament.apiSeason,
+        { revalidate: 3600 }
+      );
+      standingsGroups = data[0]?.league.standings ?? [];
+    } catch {
+      // silencio: si la API falla, simplemente no mostramos la sección
+    }
+  }
 
   // startDate / endDate del torneo se sacan del primer y último partido
   // (ya tenemos upcomingMatches por kickoff asc). Para el endDate hacemos
@@ -257,6 +279,21 @@ export default async function TournamentLanding({
           </div>
           <p className="mt-4 text-center font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
             {tournament ? `Y ${tournament ? "muchos más" : ""}…` : ""} Descarga el calendario completo para añadirlo a tu móvil.
+          </p>
+        </section>
+      )}
+
+      {/* CLASIFICACIÓN (sólo si hay datos publicados de la API) */}
+      {standingsGroups.length > 0 && (
+        <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal rotate-1">
+              📊 CLASIFICACIÓN
+            </span>
+          </div>
+          <StandingsView groups={standingsGroups} />
+          <p className="mt-4 text-center font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
+            Datos oficiales · actualizado cada hora
           </p>
         </section>
       )}
