@@ -38,9 +38,23 @@ jobs:
             echo "❌ Faltan secrets APP_URL o CRON_SECRET en el repo." >&2
             exit 1
           fi
-          curl -fsS --max-time 70 \
+          URL="${APP_URL%/}/api/cron/results"
+          echo "→ GET ${URL}"
+          # -L sigue redirects (HTTP→HTTPS, www/no-www, etc.). Reenviamos el
+          # header de auth en cada salto con --location-trusted (Vercel a veces
+          # quita el Authorization si el dominio cambia).
+          HTTP_CODE=$(curl -sS -L --location-trusted --max-time 70 \
             -H "Authorization: Bearer ${CRON_SECRET}" \
-            "${APP_URL%/}/api/cron/results" \
-            | tee response.json
+            -o response.body \
+            -w "%{http_code}" \
+            "${URL}")
+          echo "← HTTP ${HTTP_CODE}"
+          echo "── body ──"
+          cat response.body
           echo
-          jq -e '.ok == true' response.json > /dev/null
+          echo "──────────"
+          if [ "${HTTP_CODE}" != "200" ]; then
+            echo "❌ El endpoint no devolvió 200. Revisa APP_URL, CRON_SECRET y que el deploy esté vivo." >&2
+            exit 1
+          fi
+          jq -e '.ok == true' response.body > /dev/null
