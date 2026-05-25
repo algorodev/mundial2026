@@ -96,10 +96,13 @@ function StandingsTable({
               key={r.team.id}
               className="border-b border-pitch-100 last:border-0"
             >
-              <td className="py-2 pl-1 text-pitch-500 font-mono tabular-nums">
+              <td className="py-2 pl-1 text-pitch-500 font-mono tabular-nums w-6">
                 {r.rank}
               </td>
-              <td className="py-2">
+              {/* max-w-0 + w-full es el truco para que truncate funcione
+                  dentro de una celda de tabla: fuerza a la celda a ocupar
+                  todo el espacio sobrante sin pedir más por contenido. */}
+              <td className="py-2 max-w-0 w-full">
                 <div className="flex items-center gap-2 min-w-0">
                   {r.team.logo && (
                     <Image
@@ -111,7 +114,7 @@ function StandingsTable({
                       unoptimized
                     />
                   )}
-                  <span className="font-display uppercase text-xs sm:text-sm truncate">
+                  <span className="font-display uppercase text-xs sm:text-sm truncate min-w-0">
                     {r.team.name}
                   </span>
                 </div>

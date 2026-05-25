@@ -203,9 +203,11 @@ function ResultRow({
       <span className="font-mono text-[10px] sm:text-xs text-pitch-700 w-10 sm:w-12 font-bold">
         {match.matchTime ?? ""}
       </span>
-      <div className="flex-1 grid grid-cols-[1fr_auto_1fr] gap-2 items-center min-w-0">
-        <div className="text-right text-xs sm:text-sm font-display uppercase truncate flex items-center gap-2 justify-end">
-          <span className="truncate">{match.homeTeam}</span>
+      <div className="flex-1 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-center min-w-0">
+        <div className="flex items-center gap-2 justify-end min-w-0">
+          <span className="truncate min-w-0 text-xs sm:text-sm font-display uppercase">
+            {match.homeTeam}
+          </span>
           <TeamBadge
             code={match.homeCode}
             flag={match.homeFlag}
@@ -214,7 +216,7 @@ function ResultRow({
             size="sm"
           />
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <input
             type="number"
             min={0}
@@ -235,7 +237,7 @@ function ResultRow({
             className="score-input w-12! h-11! text-xl!"
           />
         </div>
-        <div className="text-left text-xs sm:text-sm font-display uppercase truncate flex items-center gap-2 justify-start">
+        <div className="flex items-center gap-2 justify-start min-w-0">
           <TeamBadge
             code={match.awayCode}
             flag={match.awayFlag}
@@ -243,7 +245,9 @@ function ResultRow({
             alt={match.awayTeam}
             size="sm"
           />
-          <span className="truncate">{match.awayTeam}</span>
+          <span className="truncate min-w-0 text-xs sm:text-sm font-display uppercase">
+            {match.awayTeam}
+          </span>
         </div>
       </div>
       <div className="w-16 text-right">

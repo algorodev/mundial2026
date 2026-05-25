@@ -181,10 +181,12 @@ function LeaderboardRow({
         {row.position}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-display text-xl sm:text-2xl tracking-tight truncate uppercase">
-          {row.name}
+        <div className="flex items-baseline gap-2 min-w-0">
+          <span className="font-display text-xl sm:text-2xl tracking-tight truncate min-w-0 uppercase">
+            {row.name}
+          </span>
           {isMe && (
-            <span className="ml-3 text-[10px] font-mono uppercase tracking-widest opacity-80">
+            <span className="text-[10px] font-mono uppercase tracking-widest opacity-80 shrink-0">
               ← TÚ
             </span>
           )}
