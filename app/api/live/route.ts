@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches } from "@/lib/db/schema";
+import { matches, teams } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
 import { getFixturesByIds, isLive } from "@/lib/api-football";
@@ -50,6 +50,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ live: [], next: null, serverNow: now });
   }
 
+  // Logos oficiales por código (poblados por pnpm db:map-api). Si un equipo
+  // no tiene apiTeamId aún, su entrada queda en null y el cliente cae al
+  // fallback (asset local o emoji).
+  const teamsRows = await db
+    .select({ code: teams.code, logoUrl: teams.logoUrl })
+    .from(teams)
+    .where(eq(teams.tournamentId, ctx.tournamentId));
+  const logoByCode = new Map<string, string | null>(
+    teamsRows.map((t) => [t.code, t.logoUrl])
+  );
+  const logoFor = (code: string | null) =>
+    code ? logoByCode.get(code) ?? null : null;
+
   const minK = all[0].kickoffAt.getTime();
   const maxK = all[all.length - 1].kickoffAt.getTime();
   const span = maxK - minK;
@@ -81,6 +94,8 @@ export async function GET(req: NextRequest) {
         awayCode: m.awayCode,
         homeFlag: m.homeFlag,
         awayFlag: m.awayFlag,
+        homeLogoUrl: logoFor(m.homeCode),
+        awayLogoUrl: logoFor(m.awayCode),
         homeScore: m.homeScore!,
         awayScore: m.awayScore!,
         kickoffAt: m.kickoffAt.toISOString(),
@@ -127,6 +142,8 @@ export async function GET(req: NextRequest) {
         awayCode: nextRow.awayCode,
         homeFlag: nextRow.homeFlag,
         awayFlag: nextRow.awayFlag,
+        homeLogoUrl: logoFor(nextRow.homeCode),
+        awayLogoUrl: logoFor(nextRow.awayCode),
         kickoffAt: nextRow.kickoffAt.toISOString(),
       }
     : null;

@@ -25,9 +25,11 @@ type MatchRow = {
 export default function AdminResultsClient({
   tournamentSlug,
   matches,
+  teamLogos,
 }: {
   tournamentSlug: string;
   matches: MatchRow[];
+  teamLogos: Record<string, string>;
 }) {
   const [list, setList] = useState(matches);
   const [filter, setFilter] = useState<"all" | "pending" | "done">("all");
@@ -114,6 +116,8 @@ export default function AdminResultsClient({
                   saving={savingId === m.id}
                   saved={savedId === m.id}
                   onSave={saveResult}
+                  homeLogoUrl={m.homeCode ? teamLogos[m.homeCode] ?? null : null}
+                  awayLogoUrl={m.awayCode ? teamLogos[m.awayCode] ?? null : null}
                 />
               ))}
             </div>
@@ -152,11 +156,15 @@ function ResultRow({
   saving,
   saved,
   onSave,
+  homeLogoUrl,
+  awayLogoUrl,
 }: {
   match: MatchRow;
   saving: boolean;
   saved: boolean;
   onSave: (id: number, h: number | null, a: number | null) => void;
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
 }) {
   const [home, setHome] = useState(
     match.homeScore != null ? String(match.homeScore) : ""
@@ -201,6 +209,7 @@ function ResultRow({
           <TeamBadge
             code={match.homeCode}
             flag={match.homeFlag}
+            logoUrl={homeLogoUrl}
             alt={match.homeTeam}
             size="sm"
           />
@@ -230,6 +239,7 @@ function ResultRow({
           <TeamBadge
             code={match.awayCode}
             flag={match.awayFlag}
+            logoUrl={awayLogoUrl}
             alt={match.awayTeam}
             size="sm"
           />

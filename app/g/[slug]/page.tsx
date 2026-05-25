@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { eq, and, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, predictions, tournaments, groups } from "@/lib/db/schema";
+import { matches, predictions, teams, tournaments, groups } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
@@ -35,35 +35,45 @@ export default async function GroupPredictionsPage(
     notFound();
   }
 
-  const [tournament, group, allMatches, myPreds, start] = await Promise.all([
-    db
-      .select()
-      .from(tournaments)
-      .where(eq(tournaments.id, ctx.tournamentId))
-      .limit(1)
-      .then((r) => r[0]),
-    db
-      .select({ description: groups.description })
-      .from(groups)
-      .where(eq(groups.id, ctx.groupId))
-      .limit(1)
-      .then((r) => r[0]),
-    db
-      .select()
-      .from(matches)
-      .where(eq(matches.tournamentId, ctx.tournamentId))
-      .orderBy(asc(matches.matchNumber)),
-    db
-      .select()
-      .from(predictions)
-      .where(
-        and(
-          eq(predictions.userId, session.userId),
-          eq(predictions.groupId, ctx.groupId)
-        )
-      ),
-    getTournamentStart(ctx.tournamentId),
-  ]);
+  const [tournament, group, allMatches, myPreds, tournamentTeams, start] =
+    await Promise.all([
+      db
+        .select()
+        .from(tournaments)
+        .where(eq(tournaments.id, ctx.tournamentId))
+        .limit(1)
+        .then((r) => r[0]),
+      db
+        .select({ description: groups.description })
+        .from(groups)
+        .where(eq(groups.id, ctx.groupId))
+        .limit(1)
+        .then((r) => r[0]),
+      db
+        .select()
+        .from(matches)
+        .where(eq(matches.tournamentId, ctx.tournamentId))
+        .orderBy(asc(matches.matchNumber)),
+      db
+        .select()
+        .from(predictions)
+        .where(
+          and(
+            eq(predictions.userId, session.userId),
+            eq(predictions.groupId, ctx.groupId)
+          )
+        ),
+      db
+        .select({ code: teams.code, logoUrl: teams.logoUrl })
+        .from(teams)
+        .where(eq(teams.tournamentId, ctx.tournamentId)),
+      getTournamentStart(ctx.tournamentId),
+    ]);
+
+  const teamLogos: Record<string, string> = {};
+  for (const t of tournamentTeams) {
+    if (t.logoUrl) teamLogos[t.code] = t.logoUrl;
+  }
 
   const matchesSerialized = allMatches.map((m) => ({
     ...m,
@@ -130,6 +140,7 @@ export default async function GroupPredictionsPage(
             groupSlug={ctx.slug}
             matches={matchesSerialized}
             initialPreds={predsMap}
+            teamLogos={teamLogos}
             tournamentStartIso={start?.iso ?? new Date(0).toISOString()}
             tournamentStartLabel={start?.label ?? ""}
           />

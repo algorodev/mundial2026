@@ -60,6 +60,8 @@ export default function MatchDetailClient({
   awayCode,
   homeFlag,
   awayFlag,
+  homeLogoUrl,
+  awayLogoUrl,
   hasApiFixture,
   kickoffAtIso,
 }: {
@@ -70,6 +72,8 @@ export default function MatchDetailClient({
   awayCode: string | null;
   homeFlag: string | null;
   awayFlag: string | null;
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
   hasApiFixture: boolean;
   kickoffAtIso: string;
 }) {
@@ -163,6 +167,8 @@ export default function MatchDetailClient({
         awayCode={awayCode}
         homeFlag={homeFlag}
         awayFlag={awayFlag}
+        homeLogoUrl={homeLogoUrl}
+        awayLogoUrl={awayLogoUrl}
       />
       <EventsSection state={events} homeName={homeTeam} awayName={awayTeam} />
       <H2HSection state={h2h} homeName={homeTeam} awayName={awayTeam} />
@@ -235,6 +241,8 @@ function LineupsSection({
   awayCode,
   homeFlag,
   awayFlag,
+  homeLogoUrl,
+  awayLogoUrl,
 }: {
   state: LoadState<Lineup[]>;
   homeName: string;
@@ -243,6 +251,8 @@ function LineupsSection({
   awayCode: string | null;
   homeFlag: string | null;
   awayFlag: string | null;
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
 }) {
   return (
     <SectionShell
@@ -260,12 +270,19 @@ function LineupsSection({
             const isAway = lu.team.name === awayName;
             const code = isHome ? homeCode : isAway ? awayCode : null;
             const flag = isHome ? homeFlag : isAway ? awayFlag : null;
+            // Preferimos el logo que viene en la propia respuesta de
+            // /lineups (lu.team.logo) si existe — es del mismo equipo y
+            // siempre lo trae la API. Caemos a los nuestros si no.
+            const logoUrl =
+              lu.team.logo ??
+              (isHome ? homeLogoUrl : isAway ? awayLogoUrl : null);
             return (
               <div key={lu.team.id} className="space-y-3">
                 <div className="flex items-center gap-3 border-b-2 border-pitch-200 pb-2">
                   <TeamBadge
                     code={code}
                     flag={flag}
+                    logoUrl={logoUrl}
                     alt={lu.team.name}
                     size="sm"
                   />

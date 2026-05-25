@@ -30,12 +30,14 @@ export default function PredictionsClient({
   groupSlug,
   matches,
   initialPreds,
+  teamLogos,
   tournamentStartIso,
   tournamentStartLabel,
 }: {
   groupSlug: string;
   matches: MatchRow[];
   initialPreds: PredMap;
+  teamLogos: Record<string, string>;
   tournamentStartIso: string;
   tournamentStartLabel: string;
 }) {
@@ -230,6 +232,12 @@ export default function PredictionsClient({
                   saved={savedFlash === m.id}
                   locked={tournamentLocked}
                   tilt={idx % 2 === 0 ? "even" : "odd"}
+                  homeLogoUrl={
+                    m.homeCode ? teamLogos[m.homeCode] ?? null : null
+                  }
+                  awayLogoUrl={
+                    m.awayCode ? teamLogos[m.awayCode] ?? null : null
+                  }
                 />
               ))}
             </div>
@@ -272,6 +280,8 @@ function MatchCard({
   saved,
   locked,
   tilt,
+  homeLogoUrl,
+  awayLogoUrl,
 }: {
   match: MatchRow;
   groupSlug: string;
@@ -281,6 +291,8 @@ function MatchCard({
   saved: boolean;
   locked: boolean;
   tilt: "even" | "odd";
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
 }) {
   const hasResult = match.homeScore != null && match.awayScore != null;
 
@@ -374,6 +386,7 @@ function MatchCard({
             <TeamBadge
               code={match.homeCode}
               flag={match.homeFlag}
+              logoUrl={homeLogoUrl}
               alt={match.homeTeam}
               size="md"
             />
@@ -414,6 +427,7 @@ function MatchCard({
             <TeamBadge
               code={match.awayCode}
               flag={match.awayFlag}
+              logoUrl={awayLogoUrl}
               alt={match.awayTeam}
               size="md"
             />

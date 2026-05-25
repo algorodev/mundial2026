@@ -1,8 +1,8 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, tournaments } from "@/lib/db/schema";
+import { matches, teams, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
 import TeamBadge from "@/components/TeamBadge";
@@ -41,6 +41,27 @@ export default async function MatchDetailPage(props: {
     .where(eq(tournaments.id, ctx.tournamentId))
     .limit(1);
 
+  // Logos oficiales de los dos equipos del match (si están mapeados).
+  const codes = [match.homeCode, match.awayCode].filter(
+    (c): c is string => !!c
+  );
+  const teamRows =
+    codes.length > 0
+      ? await db
+          .select({ code: teams.code, logoUrl: teams.logoUrl })
+          .from(teams)
+          .where(
+            and(
+              eq(teams.tournamentId, ctx.tournamentId),
+              inArray(teams.code, codes)
+            )
+          )
+      : [];
+  const homeLogoUrl =
+    teamRows.find((t) => t.code === match.homeCode)?.logoUrl ?? null;
+  const awayLogoUrl =
+    teamRows.find((t) => t.code === match.awayCode)?.logoUrl ?? null;
+
   const dateLabel = formatKickoff(match.kickoffAt);
 
   return (
@@ -68,6 +89,7 @@ export default async function MatchDetailPage(props: {
             <TeamBadge
               code={match.homeCode}
               flag={match.homeFlag}
+              logoUrl={homeLogoUrl}
               alt={match.homeTeam}
               size="lg"
             />
@@ -90,6 +112,7 @@ export default async function MatchDetailPage(props: {
             <TeamBadge
               code={match.awayCode}
               flag={match.awayFlag}
+              logoUrl={awayLogoUrl}
               alt={match.awayTeam}
               size="lg"
             />
@@ -114,6 +137,8 @@ export default async function MatchDetailPage(props: {
         awayCode={match.awayCode}
         homeFlag={match.homeFlag}
         awayFlag={match.awayFlag}
+        homeLogoUrl={homeLogoUrl}
+        awayLogoUrl={awayLogoUrl}
         hasApiFixture={match.apiFixtureId !== null}
         kickoffAtIso={match.kickoffAt.toISOString()}
       />

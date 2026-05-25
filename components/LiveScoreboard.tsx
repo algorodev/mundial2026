@@ -13,6 +13,8 @@ type LiveMatch = {
   awayCode: string | null;
   homeFlag: string | null;
   awayFlag: string | null;
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
   homeScore: number;
   awayScore: number;
   kickoffAt: string;
@@ -56,6 +58,8 @@ type NextMatch = {
   awayCode: string | null;
   homeFlag: string | null;
   awayFlag: string | null;
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
   kickoffAt: string;
 };
 
@@ -262,6 +266,7 @@ function LiveRow({ match }: { match: LiveMatch }) {
             <TeamBadge
               code={match.homeCode}
               flag={match.homeFlag}
+              logoUrl={match.homeLogoUrl}
               alt={match.homeTeam}
               size="sm"
             />
@@ -280,6 +285,7 @@ function LiveRow({ match }: { match: LiveMatch }) {
             <TeamBadge
               code={match.awayCode}
               flag={match.awayFlag}
+              logoUrl={match.awayLogoUrl}
               alt={match.awayTeam}
               size="sm"
             />
@@ -342,6 +348,7 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
           <TeamBadge
             code={next.homeCode}
             flag={next.homeFlag}
+            logoUrl={next.homeLogoUrl}
             alt={next.homeTeam}
             size="sm"
           />
@@ -354,6 +361,7 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
           <TeamBadge
             code={next.awayCode}
             flag={next.awayFlag}
+            logoUrl={next.awayLogoUrl}
             alt={next.awayTeam}
             size="sm"
           />

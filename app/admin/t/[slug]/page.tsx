@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
-import { tournaments, matches } from "@/lib/db/schema";
+import { tournaments, matches, teams } from "@/lib/db/schema";
 import { asc, eq } from "drizzle-orm";
 import AdminResultsClient from "@/components/AdminResultsClient";
 import TournamentBadge from "@/components/TournamentBadge";
@@ -25,16 +25,27 @@ export default async function AdminTournamentPage(
 
   if (!tournament) notFound();
 
-  const allMatches = await db
-    .select()
-    .from(matches)
-    .where(eq(matches.tournamentId, tournament.id))
-    .orderBy(asc(matches.matchNumber));
+  const [allMatches, tournamentTeams] = await Promise.all([
+    db
+      .select()
+      .from(matches)
+      .where(eq(matches.tournamentId, tournament.id))
+      .orderBy(asc(matches.matchNumber)),
+    db
+      .select({ code: teams.code, logoUrl: teams.logoUrl })
+      .from(teams)
+      .where(eq(teams.tournamentId, tournament.id)),
+  ]);
 
   const matchesSerialized = allMatches.map((m) => ({
     ...m,
     kickoffAt: m.kickoffAt.toISOString(),
   }));
+
+  const teamLogos: Record<string, string> = {};
+  for (const t of tournamentTeams) {
+    if (t.logoUrl) teamLogos[t.code] = t.logoUrl;
+  }
 
   return (
     <div className="pt-8">
@@ -64,6 +75,7 @@ export default async function AdminTournamentPage(
       <AdminResultsClient
         tournamentSlug={tournament.slug}
         matches={matchesSerialized}
+        teamLogos={teamLogos}
       />
     </div>
   );

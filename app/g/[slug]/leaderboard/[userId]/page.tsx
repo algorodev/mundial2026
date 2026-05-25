@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import {
   matches,
   predictions,
+  teams,
   users,
   groupMembers,
 } from "@/lib/db/schema";
@@ -65,7 +66,7 @@ export default async function MemberPredictionsPage(
 
   if (!member) notFound();
 
-  const [allMatches, userPreds] = await Promise.all([
+  const [allMatches, userPreds, tournamentTeams] = await Promise.all([
     db
       .select()
       .from(matches)
@@ -80,7 +81,16 @@ export default async function MemberPredictionsPage(
           eq(predictions.groupId, ctx.groupId)
         )
       ),
+    db
+      .select({ code: teams.code, logoUrl: teams.logoUrl })
+      .from(teams)
+      .where(eq(teams.tournamentId, ctx.tournamentId)),
   ]);
+
+  const logoByCode: Record<string, string> = {};
+  for (const t of tournamentTeams) {
+    if (t.logoUrl) logoByCode[t.code] = t.logoUrl;
+  }
 
   const predMap = new Map<number, { homeScore: number; awayScore: number }>();
   for (const p of userPreds) {
@@ -174,6 +184,8 @@ export default async function MemberPredictionsPage(
                   match={m}
                   pred={predMap.get(m.id)}
                   tilt={idx % 2 === 0 ? "even" : "odd"}
+                  homeLogoUrl={m.homeCode ? logoByCode[m.homeCode] ?? null : null}
+                  awayLogoUrl={m.awayCode ? logoByCode[m.awayCode] ?? null : null}
                 />
               ))}
             </div>
@@ -209,10 +221,14 @@ function ReadOnlyMatchCard({
   match,
   pred,
   tilt,
+  homeLogoUrl,
+  awayLogoUrl,
 }: {
   match: MatchRow;
   pred: { homeScore: number; awayScore: number } | undefined;
   tilt: "even" | "odd";
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
 }) {
   const hasResult = match.homeScore != null && match.awayScore != null;
   const hasPred = pred !== undefined;
@@ -296,6 +312,7 @@ function ReadOnlyMatchCard({
             <TeamBadge
               code={match.homeCode}
               flag={match.homeFlag}
+              logoUrl={homeLogoUrl}
               alt={match.homeTeam}
               size="md"
             />
@@ -316,6 +333,7 @@ function ReadOnlyMatchCard({
             <TeamBadge
               code={match.awayCode}
               flag={match.awayFlag}
+              logoUrl={awayLogoUrl}
               alt={match.awayTeam}
               size="md"
             />
