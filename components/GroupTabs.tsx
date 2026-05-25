@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-type Tab = "predictions" | "leaderboard" | "manage";
+type Tab = "predictions" | "leaderboard" | "standings" | "manage";
 
 const labels: Record<Tab, string> = {
   predictions: "Pronósticos",
   leaderboard: "Clasificación",
+  standings: "Tabla",
   manage: "Gestionar",
 };
 
@@ -20,6 +21,7 @@ export default function GroupTabs({
   const tabs: { key: Tab; href: string }[] = [
     { key: "predictions", href: `/g/${slug}` },
     { key: "leaderboard", href: `/g/${slug}/leaderboard` },
+    { key: "standings", href: `/g/${slug}/standings` },
   ];
   if (isOwner) {
     tabs.push({ key: "manage", href: `/g/${slug}/manage` });

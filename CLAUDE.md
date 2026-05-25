@@ -66,6 +66,8 @@ app/
   g/[slug]/                         → SSR: predicciones del grupo + LiveScoreboard
   g/[slug]/leaderboard/             → SSR auth-gate, datos vía /api/leaderboard
   g/[slug]/leaderboard/[userId]/    → SSR: pronósticos de otro miembro (sólo tras kickoff)
+  g/[slug]/standings/               → SSR auth-gate, datos vía /api/tournaments/[slug]/standings
+  g/[slug]/m/[matchNumber]/         → SSR: detalle de partido (lineups + eventos + H2H)
   g/[slug]/manage/                  → SSR: gestión owner (invite link + miembros + borrar grupo)
   join/[code]/                      → SSR: confirma unirse a grupo (redirige a /login si no logado)
   admin/                            → SSR auth-gate (isGlobalAdmin) + lista torneos
@@ -92,7 +94,10 @@ app/
     tournaments/[slug]/standings    → GET clasificación de grupos / liga
 components/
   NavBar, GroupTabs, NewGroupClient, ManageGroupClient, JoinClient
-  PredictionsClient, LeaderboardClient, AdminResultsClient, LiveScoreboard
+  PredictionsClient, LeaderboardClient, AdminResultsClient
+  LiveScoreboard (con goleadores tirando de /api/match/[id]/events)
+  MatchDetailClient (lineups + eventos + H2H)
+  TournamentStandings (tabla de grupos / liga)
 lib/
   db/index.ts                       → cliente Drizzle (Neon HTTP)
   db/schema.ts                      → users (con passwordHash nullable), tournaments (con apiLeagueId/Season),
