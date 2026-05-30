@@ -53,7 +53,7 @@ export default function NavBar({
                 href="/profile"
                 className="text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display truncate min-w-0 max-w-[8rem] sm:max-w-none"
               >
-                {session.name}
+                {session.name ?? session.email.split("@")[0]}
               </Link>
               {session.isGlobalAdmin && (
                 <Link

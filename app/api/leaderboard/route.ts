@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     number,
     {
       userId: number;
-      name: string;
+      name: string | null;
       total: number;
       exact: number;
       outcome: number;
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
   const leaderboard = Array.from(stats.values()).sort((a, b) => {
     if (b.total !== a.total) return b.total - a.total;
     if (b.exact !== a.exact) return b.exact - a.exact;
-    return a.name.localeCompare(b.name);
+    return (a.name ?? "").localeCompare(b.name ?? "");
   });
 
   let prevTotal: number | null = null;

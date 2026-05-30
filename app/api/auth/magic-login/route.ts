@@ -10,10 +10,6 @@ import {
 } from "@/lib/auth";
 import { sendMagicLoginLink } from "@/lib/email";
 
-// Crea un magic link de tipo "login" y lo manda por email si el usuario
-// existe. Respuesta siempre genérica para no enumerar cuentas. Si el email
-// no está registrado, el frontend muestra el mismo mensaje "revisa tu correo"
-// — pero ningún email se envía.
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -27,19 +23,25 @@ export async function POST(req: NextRequest) {
 
     const email = normalizeEmail(rawEmail);
 
-    const [user] = await db
+    let [user] = await db
       .select({ id: users.id })
       .from(users)
       .where(eq(users.email, email))
       .limit(1);
 
-    if (user) {
-      gcMagicLinks().catch(() => {});
-      const token = await createMagicLink(email, redirectTo, "login");
-      await sendMagicLoginLink(email, token);
+    // Si no existe, creamos un stub con solo el email. El nombre se pedirá
+    // en /onboarding tras consumir el magic link.
+    if (!user) {
+      [user] = await db
+        .insert(users)
+        .values({ email })
+        .returning({ id: users.id });
     }
 
-    // Respuesta genérica con o sin user — anti-enumeración.
+    gcMagicLinks().catch(() => {});
+    const token = await createMagicLink(email, redirectTo, "login");
+    await sendMagicLoginLink(email, token);
+
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     console.error("magic-login error:", e);

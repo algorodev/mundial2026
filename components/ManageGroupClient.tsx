@@ -9,7 +9,7 @@ import GroupSettingsFields, {
 
 type Member = {
   userId: number;
-  name: string;
+  name: string | null;
   email: string;
   role: string;
   joinedAt: string;
@@ -17,7 +17,7 @@ type Member = {
 
 type Request = {
   userId: number;
-  name: string;
+  name: string | null;
   email: string;
   requestedAt: string;
 };
@@ -97,8 +97,8 @@ export default function ManageGroupClient({
     }
   }
 
-  async function remove(userId: number, n: string) {
-    if (!confirm(`¿Expulsar a "${n}" del grupo?`)) return;
+  async function remove(userId: number, n: string | null) {
+    if (!confirm(`¿Expulsar a "${n ?? "este miembro"}" del grupo?`)) return;
     setRemovingId(userId);
     try {
       const r = await fetch(`/api/groups/${slug}/members/${userId}`, {
@@ -162,7 +162,7 @@ export default function ManageGroupClient({
     }
   }
 
-  async function rejectRequest(userId: number, n: string) {
+  async function rejectRequest(userId: number, n: string | null) {
     if (!confirm(`¿Rechazar la solicitud de "${n}"?`)) return;
     setRequestActionId(userId);
     try {

@@ -16,7 +16,7 @@ function getSecret(): Uint8Array {
 export type SessionPayload = {
   userId: number;
   email: string;
-  name: string;
+  name: string | null;
   isGlobalAdmin: boolean;
 };
 
@@ -36,7 +36,7 @@ export async function verifySession(
     return {
       userId: payload.userId as number,
       email: payload.email as string,
-      name: payload.name as string,
+      name: (payload.name as string | null) ?? null,
       isGlobalAdmin: payload.isGlobalAdmin as boolean,
     };
   } catch {

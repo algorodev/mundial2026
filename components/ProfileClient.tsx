@@ -6,15 +6,15 @@ import { useRouter } from "next/navigation";
 export default function ProfileClient({
   initialName,
 }: {
-  initialName: string;
+  initialName: string | null;
 }) {
   const router = useRouter();
-  const [name, setName] = useState(initialName);
+  const [name, setName] = useState(initialName ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const dirty = name.trim() !== initialName && name.trim().length >= 2;
+  const dirty = name.trim() !== (initialName ?? "") && name.trim().length >= 2;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

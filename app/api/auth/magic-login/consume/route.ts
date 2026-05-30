@@ -48,15 +48,18 @@ export async function POST(req: NextRequest) {
     const jwt = await createSession({
       userId: user.id,
       email: user.email,
-      name: user.name,
+      name: user.name ?? null,
       isGlobalAdmin: user.isGlobalAdmin === 1,
     });
     await setSessionCookie(jwt);
 
-    return NextResponse.json({
-      ok: true,
-      redirectTo: consumed.redirectTo ?? "/groups",
-    });
+    // Usuario sin nombre → onboarding antes de entrar al destino final
+    const finalDest = consumed.redirectTo ?? "/groups";
+    const redirectTo = !user.name
+      ? `/onboarding?next=${encodeURIComponent(finalDest)}`
+      : finalDest;
+
+    return NextResponse.json({ ok: true, redirectTo });
   } catch (e: any) {
     console.error("magic-login consume error:", e);
     return NextResponse.json(

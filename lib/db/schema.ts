@@ -18,7 +18,7 @@ export const users = pgTable(
   {
     id: serial("id").primaryKey(),
     email: varchar("email", { length: 200 }).notNull(),
-    name: varchar("name", { length: 60 }).notNull(),
+    name: varchar("name", { length: 60 }),
     passwordHash: text("password_hash"),
     isGlobalAdmin: integer("is_global_admin").default(0).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
