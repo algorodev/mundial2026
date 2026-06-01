@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, tournaments, groups } from "@/lib/db/schema";
+import { matches, tournaments, groups, users, predictions, groupMembers } from "@/lib/db/schema";
 import TournamentBadge from "@/components/TournamentBadge";
 import StandingsView, { type StandingRow } from "@/components/StandingsView";
 import { getStandings } from "@/lib/api-football";
+import { calcPoints } from "@/lib/scoring";
 import type { LandingConfig } from "@/lib/landings";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
@@ -96,6 +97,48 @@ export default async function TournamentLanding({
     }
   }
 
+  // Ganador de la porra oficial cuando el torneo ha terminado
+  type WinnerRow = { name: string | null; total: number; exact: number };
+  let winners: WinnerRow[] = [];
+  if (tournament?.status === "finished" && tournament.officialGroupId) {
+    const officialGroupId = tournament.officialGroupId;
+    const memberRows = await db
+      .select({ userId: groupMembers.userId, name: users.name })
+      .from(groupMembers)
+      .innerJoin(users, eq(groupMembers.userId, users.id))
+      .where(eq(groupMembers.groupId, officialGroupId));
+
+    if (memberRows.length > 0) {
+      const [allMatchesList, allPreds] = await Promise.all([
+        db.select().from(matches).where(eq(matches.tournamentId, tournament.id)),
+        db.select().from(predictions).where(eq(predictions.groupId, officialGroupId)),
+      ]);
+      const matchById = new Map(allMatchesList.map((m) => [m.id, m]));
+      const statsMap = new Map<number, WinnerRow>();
+      for (const m of memberRows) {
+        statsMap.set(m.userId, { name: m.name, total: 0, exact: 0 });
+      }
+      for (const p of allPreds) {
+        const s = statsMap.get(p.userId);
+        if (!s) continue;
+        const m = matchById.get(p.matchId);
+        if (!m || m.homeScore == null || m.awayScore == null) continue;
+        const { points, result } = calcPoints(p.homeScore, p.awayScore, m.homeScore, m.awayScore);
+        s.total += points;
+        if (result === "exact") s.exact += 1;
+      }
+      const sorted = Array.from(statsMap.values()).sort((a, b) => {
+        if (b.total !== a.total) return b.total - a.total;
+        if (b.exact !== a.exact) return b.exact - a.exact;
+        return (a.name ?? "").localeCompare(b.name ?? "");
+      });
+      if (sorted.length > 0) {
+        const { total, exact } = sorted[0];
+        winners = sorted.filter((p) => p.total === total && p.exact === exact);
+      }
+    }
+  }
+
   // startDate / endDate del torneo se sacan del primer y último partido
   // (ya tenemos upcomingMatches por kickoff asc). Para el endDate hacemos
   // otra query si encontramos torneo.
@@ -181,20 +224,23 @@ export default async function TournamentLanding({
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <Link href={preselectHref} className="btn-primary">
-            Crea tu porra gratis →
-          </Link>
-          <a
-            href={calendarHref}
-            className="btn-secondary"
-            download
-          >
+          {tournament?.status !== "finished" && (
+            <Link href={preselectHref} className="btn-primary">
+              Crea tu porra gratis →
+            </Link>
+          )}
+          {tournament?.status === "finished" && officialSlug && (
+            <Link href={`/g/${officialSlug}/leaderboard`} className="btn-primary">
+              Ver resultados →
+            </Link>
+          )}
+          <a href={calendarHref} className="btn-secondary" download>
             ⬇ {cfg.calendarLabel}
           </a>
         </div>
       </section>
 
-      {officialSlug && (
+      {officialSlug && tournament?.status !== "finished" && (
         <section className="mt-16 max-w-3xl mx-auto">
           <div className="cromo bg-flame-500 text-pitch-950 p-6 sm:p-7 text-center -rotate-1">
             <div className="font-mono text-[10px] uppercase tracking-widest opacity-80">
@@ -221,6 +267,44 @@ export default async function TournamentLanding({
                 (público, sin login)
               </Link>
             </div>
+          </div>
+        </section>
+      )}
+
+      {tournament?.status === "finished" && winners.length > 0 && officialSlug && (
+        <section className="mt-16 max-w-3xl mx-auto">
+          <div className="cromo bg-grass-500 text-pitch-950 p-6 sm:p-8 text-center rotate-1">
+            <div className="font-mono text-[10px] uppercase tracking-widest opacity-80">
+              Porra oficial · {tournament.name}
+            </div>
+            <h2 className="font-display text-4xl sm:text-5xl mt-2 uppercase leading-none">
+              {winners.length === 1 ? "🥇 GANADOR" : "🥇 EMPATE EN EL PODIO"}
+            </h2>
+            <div className="mt-5 space-y-2">
+              {winners.map((w) => (
+                <div key={w.name} className="font-display text-2xl sm:text-3xl uppercase">
+                  {w.name}
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 font-mono text-sm opacity-80">
+              {winners[0].total} pts · {winners[0].exact} exactos
+            </p>
+            <div className="mt-5">
+              <Link href={`/g/${officialSlug}/leaderboard`} className="btn-secondary">
+                Ver clasificación completa →
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {tournament?.status === "finished" && !officialSlug && (
+        <section className="mt-16 max-w-3xl mx-auto">
+          <div className="cromo bg-paper-100 text-pitch-700 p-6 text-center">
+            <p className="font-mono text-xs uppercase tracking-widest">
+              Este torneo ha finalizado.
+            </p>
           </div>
         </section>
       )}
@@ -298,22 +382,24 @@ export default async function TournamentLanding({
         </section>
       )}
 
-      {/* CTA FINAL */}
-      <section className="mt-24 sm:mt-32 max-w-3xl mx-auto text-center">
-        <h2 className="font-display text-4xl sm:text-5xl text-chalk-50 leading-none mb-5 uppercase">
-          ¿Listo?
-        </h2>
-        <p className="text-chalk-200 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
-          Crear tu porra es gratis y tarda 30 segundos. Invitas por WhatsApp,
-          tus amigos se unen con un toque y el ranking se actualiza solo.
-        </p>
-        <Link href={preselectHref} className="btn-primary inline-block">
-          Crear porra ahora →
-        </Link>
-        <p className="mt-3 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-          Sin tarjeta · sin instalar · sin Excel
-        </p>
-      </section>
+      {/* CTA FINAL — solo si el torneo sigue abierto */}
+      {tournament?.status !== "finished" && (
+        <section className="mt-24 sm:mt-32 max-w-3xl mx-auto text-center">
+          <h2 className="font-display text-4xl sm:text-5xl text-chalk-50 leading-none mb-5 uppercase">
+            ¿Listo?
+          </h2>
+          <p className="text-chalk-200 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
+            Crear tu porra es gratis y tarda 30 segundos. Invitas por WhatsApp,
+            tus amigos se unen con un toque y el ranking se actualiza solo.
+          </p>
+          <Link href={preselectHref} className="btn-primary inline-block">
+            Crear porra ahora →
+          </Link>
+          <p className="mt-3 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
+            Sin tarjeta · sin instalar · sin Excel
+          </p>
+        </section>
+      )}
 
       <div className="h-24" />
     </div>

@@ -158,10 +158,12 @@ export default async function HomePage() {
                     ? "rotate-1"
                     : "rotate-[-0.5deg]";
               const inscribable = t.status === "upcoming" || t.status === "live";
+              const isFinished = t.status === "finished";
               const hasLanding = !!LANDINGS[t.slug];
               const landingHref = hasLanding
                 ? `/porra-${t.slug}`
                 : `/groups/new?preselect=${encodeURIComponent(t.slug)}`;
+              const isLinkable = inscribable || (isFinished && hasLanding);
               const cardClass = `cromo bg-paper-50 text-pitch-950 ${tilt} p-5 sm:p-6 hover:rotate-0 hover:-translate-y-1 transition-all flex flex-col items-center text-center`;
               const content = (
                 <>
@@ -186,9 +188,14 @@ export default async function HomePage() {
                       {hasLanding ? "Ver torneo →" : "Crear porra →"}
                     </span>
                   )}
+                  {isFinished && hasLanding && (
+                    <span className="mt-3 font-display text-sm uppercase tracking-widest text-chalk-400">
+                      Ver resultados →
+                    </span>
+                  )}
                 </>
               );
-              return inscribable ? (
+              return isLinkable ? (
                 <Link key={t.slug} href={landingHref} className={cardClass}>
                   {content}
                 </Link>

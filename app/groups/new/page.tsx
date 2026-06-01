@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { asc, ne } from "drizzle-orm";
+import { asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
@@ -19,8 +19,8 @@ export default async function NewGroupPage({
     redirect(`/login?next=${encodeURIComponent(next)}`);
   }
 
-  // Excluimos torneos en construcción (sin calendario): no se pueden inscribir
-  // grupos hasta que el admin publique el calendario y lo pase a 'upcoming'.
+  // Solo torneos abiertos a inscripción — ni los que aún no tienen calendario
+  // ni los que ya han terminado.
   const list = await db
     .select({
       slug: tournaments.slug,
@@ -29,7 +29,7 @@ export default async function NewGroupPage({
       status: tournaments.status,
     })
     .from(tournaments)
-    .where(ne(tournaments.status, "draft"))
+    .where(inArray(tournaments.status, ["upcoming", "live"]))
     .orderBy(asc(tournaments.createdAt));
 
   const preselectSlug =
