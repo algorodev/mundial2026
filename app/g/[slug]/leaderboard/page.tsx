@@ -91,7 +91,10 @@ export default async function GroupLeaderboardPage(props: {
           isOwner={memberCtx!.myRole === "owner"}
         />
       ) : (
-        <PublicJoinBanner inviteCode={inviteCode!} />
+        <PublicJoinBanner
+          inviteCode={inviteCode!}
+          tournamentFinished={tournament?.status === "finished"}
+        />
       )}
 
       <LeaderboardClient
@@ -106,7 +109,14 @@ export default async function GroupLeaderboardPage(props: {
   );
 }
 
-function PublicJoinBanner({ inviteCode }: { inviteCode: string }) {
+function PublicJoinBanner({
+  inviteCode,
+  tournamentFinished,
+}: {
+  inviteCode: string;
+  tournamentFinished: boolean;
+}) {
+  if (tournamentFinished) return null;
   return (
     <div className="cromo bg-flame-500 text-pitch-950 p-5 sm:p-6 mb-6 flex items-center justify-between gap-4 flex-wrap">
       <div>

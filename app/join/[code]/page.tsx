@@ -26,6 +26,7 @@ export default async function JoinPage(
       name: groups.name,
       description: groups.description,
       tournamentName: tournaments.name,
+      tournamentStatus: tournaments.status,
       joinPolicy: groups.joinPolicy,
       joinDeadline: groups.joinDeadline,
     })
@@ -50,7 +51,10 @@ export default async function JoinPage(
 
   const deadlineExpired =
     group.joinDeadline && Date.now() > group.joinDeadline.getTime();
-  const closed = group.joinPolicy === "closed" || deadlineExpired;
+  const closed =
+    group.joinPolicy === "closed" ||
+    !!deadlineExpired ||
+    group.tournamentStatus === "finished";
   const requiresApproval = group.joinPolicy === "approval";
 
   return (
