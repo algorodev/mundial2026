@@ -4,7 +4,7 @@
 
 import type { MatchData } from "./matches-data";
 
-export const PREMIER_2026_27_SLUG = "premier-2026-27";
+export const PREMIER_2026_27_SLUG = "premier-league-2026-27";
 export const PREMIER_2026_27_NAME = "Premier League 2026/27";
 
 export const PREMIER_2026_27_MATCHES: MatchData[] = [];
