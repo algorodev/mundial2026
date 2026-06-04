@@ -23,6 +23,8 @@ export type LandingConfig = {
   intro: string;
   // Etiqueta del enlace al calendario
   calendarLabel: string;
+  // Deporte — se usa en el JSON-LD SportsEvent. Default: "Fútbol"
+  sport?: string;
   // Keywords adicionales (separadas por coma, opcional para enriquecer meta)
   keywords?: string[];
 };
@@ -154,6 +156,7 @@ export const LANDINGS: Record<string, LandingConfig> = {
   },
   "nba-2026-27": {
     tournamentSlug: "nba-2026-27",
+    sport: "Baloncesto",
     seoTitle: "Porra NBA 2026-27 · gratis | PorraBros",
     seoDescription:
       "Crea tu porra de la NBA 2026-27. Regular season, playoffs y Finals. Leaderboard en directo, sin instalar nada. Gratis.",
@@ -178,6 +181,7 @@ export const LANDINGS: Record<string, LandingConfig> = {
   },
   "liga-endesa-2026-27": {
     tournamentSlug: "liga-endesa-2026-27",
+    sport: "Baloncesto",
     seoTitle: "Porra Liga Endesa 2026-27 · gratis | PorraBros",
     seoDescription:
       "Crea tu porra de la Liga Endesa 2026-27. 18 equipos, liga regular y playoffs. Leaderboard en directo, sin instalar nada.",

@@ -160,8 +160,9 @@ export default async function TournamentLanding({
     "@type": "SportsEvent",
     name: tournament?.name ?? cfg.h1,
     description: cfg.seoDescription,
-    sport: "Football",
+    sport: cfg.sport ?? "Fútbol",
     url: landingUrl,
+    image: `${APP_URL}/tournaments/${cfg.tournamentSlug}.png`,
     ...(startDateIso && { startDate: startDateIso }),
     ...(endDateIso && { endDate: endDateIso }),
     organizer: {

@@ -21,6 +21,10 @@ export default function robots(): MetadataRoute.Robots {
           "/porra-mundial-2026",
           "/porra-champions-2025-26",
           "/porra-laliga-2026-27",
+          "/porra-premier-league-2026-27",
+          "/porra-premier-2026-27",
+          "/porra-nba-2026-27",
+          "/porra-liga-endesa-2026-27",
           "/g/oficial-",
         ],
         disallow: [
