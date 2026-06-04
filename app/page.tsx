@@ -330,6 +330,24 @@ export default async function HomePage() {
           >
             Porra LaLiga 2026-27
           </Link>
+          <Link
+            href="/porra-premier-league-2026-27"
+            className="text-chalk-300 hover:text-flame-400 underline underline-offset-4"
+          >
+            Porra Premier League 2026-27
+          </Link>
+          <Link
+            href="/porra-nba-2026-27"
+            className="text-chalk-300 hover:text-flame-400 underline underline-offset-4"
+          >
+            Porra NBA 2026-27
+          </Link>
+          <Link
+            href="/porra-liga-endesa-2026-27"
+            className="text-chalk-300 hover:text-flame-400 underline underline-offset-4"
+          >
+            Porra Liga Endesa 2026-27
+          </Link>
         </div>
       </section>
 
