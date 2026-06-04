@@ -140,8 +140,8 @@ export default async function HomePage() {
         />
       )}
 
-      {/* Torneos disponibles */}
-      {tournamentList.length > 0 && (
+      {/* Próximos torneos (upcoming / live / draft) */}
+      {tournamentList.some((t) => t.status !== "finished") && (
         <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal rotate-1">
@@ -150,61 +150,58 @@ export default async function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {tournamentList.map((t, idx) => {
-              const tilt =
-                idx % 3 === 0
-                  ? "-rotate-1"
-                  : idx % 3 === 1
-                    ? "rotate-1"
-                    : "rotate-[-0.5deg]";
-              const inscribable = t.status === "upcoming" || t.status === "live";
-              const isFinished = t.status === "finished";
-              const hasLanding = !!LANDINGS[t.slug];
-              const landingHref = hasLanding
-                ? `/porra-${t.slug}`
-                : `/groups/new?preselect=${encodeURIComponent(t.slug)}`;
-              const isLinkable = inscribable || (isFinished && hasLanding);
-              const cardClass = `cromo bg-paper-50 text-pitch-950 ${tilt} p-5 sm:p-6 hover:rotate-0 hover:-translate-y-1 transition-all flex flex-col items-center text-center`;
-              const content = (
-                <>
-                  <TournamentBadge
-                    slug={t.slug}
-                    name={t.name}
-                    size="xl"
-                    className="mb-4"
-                  />
-                  <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight leading-tight">
-                    {t.name}
-                  </h3>
-                  <span
-                    className={`mt-3 inline-block font-mono text-[10px] uppercase tracking-widest px-2.5 py-1 border-2 border-pitch-950 ${
-                      STATUS_STYLES[t.status] ?? "bg-paper-200 text-pitch-700"
-                    }`}
-                  >
-                    {STATUS_LABEL[t.status] ?? t.status}
-                  </span>
-                  {inscribable && (
-                    <span className="mt-3 font-display text-sm uppercase tracking-widest text-flame-600">
-                      {hasLanding ? "Ver torneo →" : "Crear porra →"}
+            {tournamentList
+              .filter((t) => t.status !== "finished")
+              .map((t, idx) => {
+                const tilt =
+                  idx % 3 === 0
+                    ? "-rotate-1"
+                    : idx % 3 === 1
+                      ? "rotate-1"
+                      : "rotate-[-0.5deg]";
+                const inscribable =
+                  t.status === "upcoming" || t.status === "live";
+                const hasLanding = !!LANDINGS[t.slug];
+                const landingHref = hasLanding
+                  ? `/porra-${t.slug}`
+                  : `/groups/new?preselect=${encodeURIComponent(t.slug)}`;
+                const isLinkable = inscribable && hasLanding;
+                const cardClass = `cromo bg-paper-50 text-pitch-950 ${tilt} p-5 sm:p-6 hover:rotate-0 hover:-translate-y-1 transition-all flex flex-col items-center text-center`;
+                const content = (
+                  <>
+                    <TournamentBadge
+                      slug={t.slug}
+                      name={t.name}
+                      size="xl"
+                      className="mb-4"
+                    />
+                    <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight leading-tight">
+                      {t.name}
+                    </h3>
+                    <span
+                      className={`mt-3 inline-block font-mono text-[10px] uppercase tracking-widest px-2.5 py-1 border-2 border-pitch-950 ${
+                        STATUS_STYLES[t.status] ?? "bg-paper-200 text-pitch-700"
+                      }`}
+                    >
+                      {STATUS_LABEL[t.status] ?? t.status}
                     </span>
-                  )}
-                  {isFinished && hasLanding && (
-                    <span className="mt-3 font-display text-sm uppercase tracking-widest text-chalk-400">
-                      Ver resultados →
-                    </span>
-                  )}
-                </>
-              );
-              return isLinkable ? (
-                <Link key={t.slug} href={landingHref} className={cardClass}>
-                  {content}
-                </Link>
-              ) : (
-                <article key={t.slug} className={cardClass}>
-                  {content}
-                </article>
-              );
-            })}
+                    {inscribable && (
+                      <span className="mt-3 font-display text-sm uppercase tracking-widest text-flame-600">
+                        {hasLanding ? "Ver torneo →" : "Crear porra →"}
+                      </span>
+                    )}
+                  </>
+                );
+                return isLinkable ? (
+                  <Link key={t.slug} href={landingHref} className={cardClass}>
+                    {content}
+                  </Link>
+                ) : (
+                  <article key={t.slug} className={cardClass}>
+                    {content}
+                  </article>
+                );
+              })}
           </div>
 
           <p className="mt-10 text-center font-mono text-[11px] text-chalk-400 uppercase tracking-widest">
@@ -214,6 +211,63 @@ export default async function HomePage() {
       )}
 
       <HomeShowcase />
+
+      {/* Torneos pasados (finished) */}
+      {tournamentList.some((t) => t.status === "finished") && (
+        <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <span className="inline-block bg-pitch-800 text-chalk-300 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-700 shadow-brutal -rotate-1">
+              📁 EDICIONES PASADAS
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {tournamentList
+              .filter((t) => t.status === "finished")
+              .map((t, idx) => {
+                const tilt =
+                  idx % 3 === 0
+                    ? "-rotate-1"
+                    : idx % 3 === 1
+                      ? "rotate-1"
+                      : "rotate-[-0.5deg]";
+                const hasLanding = !!LANDINGS[t.slug];
+                const landingHref = `/porra-${t.slug}`;
+                const cardClass = `cromo bg-paper-100 text-pitch-800 ${tilt} p-5 sm:p-6 hover:rotate-0 hover:-translate-y-1 transition-all flex flex-col items-center text-center opacity-80 hover:opacity-100`;
+                const content = (
+                  <>
+                    <TournamentBadge
+                      slug={t.slug}
+                      name={t.name}
+                      size="xl"
+                      className="mb-4 grayscale"
+                    />
+                    <h3 className="font-display text-xl sm:text-2xl uppercase tracking-tight leading-tight">
+                      {t.name}
+                    </h3>
+                    <span className="mt-3 inline-block font-mono text-[10px] uppercase tracking-widest px-2.5 py-1 border-2 border-pitch-400 bg-paper-200 text-pitch-600">
+                      Terminado
+                    </span>
+                    {hasLanding && (
+                      <span className="mt-3 font-display text-sm uppercase tracking-widest text-chalk-500">
+                        Ver resultados →
+                      </span>
+                    )}
+                  </>
+                );
+                return hasLanding ? (
+                  <Link key={t.slug} href={landingHref} className={cardClass}>
+                    {content}
+                  </Link>
+                ) : (
+                  <article key={t.slug} className={cardClass}>
+                    {content}
+                  </article>
+                );
+              })}
+          </div>
+        </section>
+      )}
 
       <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
         <div className="text-center mb-10">
