@@ -16,6 +16,24 @@ import {
   LALIGA_2026_27_MATCHES,
   LALIGA_2026_27_CODES,
 } from "../lib/laliga-2026-27-data";
+import {
+  NBA_2026_27_SLUG,
+  NBA_2026_27_NAME,
+  NBA_2026_27_MATCHES,
+  NBA_2026_27_CODES,
+} from "../lib/nba-2026-27-data";
+import {
+  LIGA_ENDESA_2026_27_SLUG,
+  LIGA_ENDESA_2026_27_NAME,
+  LIGA_ENDESA_2026_27_MATCHES,
+  LIGA_ENDESA_2026_27_CODES,
+} from "../lib/liga-endesa-2026-27-data";
+import {
+  PREMIER_2026_27_SLUG,
+  PREMIER_2026_27_NAME,
+  PREMIER_2026_27_MATCHES,
+  PREMIER_2026_27_CODES,
+} from "../lib/premier-2026-27-data";
 
 type SeedTournament = {
   slug: string;
@@ -68,6 +86,35 @@ const TOURNAMENTS: SeedTournament[] = [
       LALIGA_2026_27_CODES[side === "home" ? m.home : m.away] ?? null,
     apiLeagueId: 140, // LaLiga
     apiSeason: 2026,
+  },
+  {
+    slug: PREMIER_2026_27_SLUG,
+    name: PREMIER_2026_27_NAME,
+    sport: "futbol",
+    status: "draft",
+    matchData: PREMIER_2026_27_MATCHES,
+    resolveCode: (m, side) =>
+      PREMIER_2026_27_CODES[side === "home" ? m.home : m.away] ?? null,
+    apiLeagueId: 39, // Premier League
+    apiSeason: 2026,
+  },
+  {
+    slug: NBA_2026_27_SLUG,
+    name: NBA_2026_27_NAME,
+    sport: "baloncesto",
+    status: "draft",
+    matchData: NBA_2026_27_MATCHES,
+    resolveCode: (m, side) =>
+      NBA_2026_27_CODES[side === "home" ? m.home : m.away] ?? null,
+  },
+  {
+    slug: LIGA_ENDESA_2026_27_SLUG,
+    name: LIGA_ENDESA_2026_27_NAME,
+    sport: "baloncesto",
+    status: "draft",
+    matchData: LIGA_ENDESA_2026_27_MATCHES,
+    resolveCode: (m, side) =>
+      LIGA_ENDESA_2026_27_CODES[side === "home" ? m.home : m.away] ?? null,
   },
 ];
 
