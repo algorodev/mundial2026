@@ -225,7 +225,7 @@ export default async function TournamentLanding({
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          {tournament?.status !== "finished" && (
+          {(tournament?.status === "upcoming" || tournament?.status === "live") && (
             <Link href={preselectHref} className="btn-primary">
               Crea tu porra gratis →
             </Link>
@@ -235,9 +235,16 @@ export default async function TournamentLanding({
               Ver resultados →
             </Link>
           )}
-          <a href={calendarHref} className="btn-secondary" download>
-            ⬇ {cfg.calendarLabel}
-          </a>
+          {tournament?.status === "draft" && (
+            <span className="btn-secondary opacity-50 cursor-not-allowed select-none">
+              Próximamente
+            </span>
+          )}
+          {upcomingMatches.length > 0 && (
+            <a href={calendarHref} className="btn-secondary" download>
+              ⬇ {cfg.calendarLabel}
+            </a>
+          )}
         </div>
       </section>
 
@@ -383,8 +390,8 @@ export default async function TournamentLanding({
         </section>
       )}
 
-      {/* CTA FINAL — solo si el torneo sigue abierto */}
-      {tournament?.status !== "finished" && (
+      {/* CTA FINAL — solo si el torneo está abierto a inscripciones */}
+      {(tournament?.status === "upcoming" || tournament?.status === "live") && (
         <section className="mt-24 sm:mt-32 max-w-3xl mx-auto text-center">
           <h2 className="font-display text-4xl sm:text-5xl text-chalk-50 leading-none mb-5 uppercase">
             ¿Listo?
