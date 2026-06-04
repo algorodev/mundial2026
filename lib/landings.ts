@@ -115,9 +115,9 @@ export const LANDINGS: Record<string, LandingConfig> = {
     tagline: "La liga más vista del mundo, en formato porra entre amigos.",
     formatBullets: [
       "20 equipos · 38 jornadas (19 ida + 19 vuelta) · 380 partidos",
-      "De agosto de 2026 a mayo de 2027",
-      "Tres descensos a Championship · cuatro plazas europeas (Champions + Europa + Conference)",
-      "Una jornada por semana — fútbol cada fin de semana de otoño a primavera",
+      "Del 22 de agosto de 2026 al 30 de mayo de 2027",
+      "5 plazas en Champions League (top 4 + performance spot) · 3 en Europa League · 1 en Conference",
+      "Tres descensos al Championship · una jornada por semana todo el otoño y primavera",
     ],
     intro:
       "La Premier League es la liga más seguida del planeta: estadios llenos cada fin de semana, equipos compitiendo hasta la última jornada y resultados que nadie predice. Perfecta para una porra: una jornada a la semana da tiempo a debatir cada pronóstico antes del siguiente partido. Crea tu grupo en PorraBros, invita por WhatsApp y empieza en agosto.",
@@ -139,9 +139,9 @@ export const LANDINGS: Record<string, LandingConfig> = {
     tagline: "La liga más vista del mundo, en formato porra entre amigos.",
     formatBullets: [
       "20 equipos · 38 jornadas (19 ida + 19 vuelta) · 380 partidos",
-      "De agosto de 2026 a mayo de 2027",
-      "Tres descensos a Championship · cuatro plazas europeas (Champions + Europa + Conference)",
-      "Una jornada por semana — fútbol cada fin de semana de otoño a primavera",
+      "Del 22 de agosto de 2026 al 30 de mayo de 2027",
+      "5 plazas en Champions League (top 4 + performance spot) · 3 en Europa League · 1 en Conference",
+      "Tres descensos al Championship · una jornada por semana todo el otoño y primavera",
     ],
     intro:
       "La Premier League es la liga más seguida del planeta: estadios llenos cada fin de semana, equipos compitiendo hasta la última jornada y resultados que nadie predice. Perfecta para una porra: una jornada a la semana da tiempo a debatir cada pronóstico antes del siguiente partido. Crea tu grupo en PorraBros, invita por WhatsApp y empieza en agosto.",
@@ -188,10 +188,10 @@ export const LANDINGS: Record<string, LandingConfig> = {
     h1: "PORRA DE LA LIGA ENDESA 2026-27",
     tagline: "El baloncesto ACB de primer nivel, en formato porra entre amigos.",
     formatBullets: [
-      "18 equipos · liga regular de 34 jornadas (septiembre 2026 – abril 2027)",
-      "Copa del Rey en febrero · Final Four en mayo",
-      "Playoffs al mejor de 5 en cuartos y semis · final al mejor de 5",
-      "El campeón representa a España en la EuroLeague la siguiente temporada",
+      "18 equipos · liga regular de 34 jornadas (octubre 2026 – abril 2027)",
+      "Supercopa Endesa en septiembre · Copa del Rey en Valencia en febrero",
+      "Playoffs: 8 equipos · cuartos mejor de 3 · semis mejor de 5 · final mejor de 5",
+      "Real Madrid, Barcelona, Baskonia y Valencia Basket con licencia permanente en EuroLeague",
     ],
     intro:
       "La Liga Endesa ACB es la segunda mejor liga de baloncesto del mundo según la FIBA. Con Real Madrid, Barcelona, Baskonia y Unicaja peleando cada jornada, hay material para debatir pronósticos todo el otoño y la primavera. Crea tu grupo en PorraBros cuando arranque la temporada e invita a tu pandilla.",
