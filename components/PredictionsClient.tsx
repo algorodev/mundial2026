@@ -47,6 +47,9 @@ export default function PredictionsClient({
   const [savedFlash, setSavedFlash] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const debouncers = useRef<Record<number, NodeJS.Timeout>>({});
+  // Valores validados pendientes de guardar (para poder flushear en onBlur
+  // antes de que el debounce dispare, evitando perderlos al navegar).
+  const pendingValues = useRef<Record<number, { homeScore: number; awayScore: number }>>({});
 
   const now = Date.now();
   // Cierre global: con el pitido del primer partido todas las predicciones quedan bloqueadas.
@@ -107,16 +110,34 @@ export default function PredictionsClient({
 
       // Programar guardado debounced
       if (isValid) {
+        pendingValues.current[matchId] = { homeScore: next.homeScore, awayScore: next.awayScore };
         if (debouncers.current[matchId]) {
           clearTimeout(debouncers.current[matchId]);
         }
         debouncers.current[matchId] = setTimeout(() => {
           savePrediction(matchId, next.homeScore, next.awayScore);
+          delete pendingValues.current[matchId];
         }, 600);
+      } else {
+        delete pendingValues.current[matchId];
       }
 
       return newPreds;
     });
+  }
+
+  // Llama al guardar inmediatamente cancelando el debounce pendiente.
+  // Se dispara en onBlur de los inputs para evitar perder el valor al navegar.
+  function flushPrediction(matchId: number) {
+    if (debouncers.current[matchId]) {
+      clearTimeout(debouncers.current[matchId]);
+      delete debouncers.current[matchId];
+    }
+    const pending = pendingValues.current[matchId];
+    if (pending) {
+      savePrediction(matchId, pending.homeScore, pending.awayScore);
+      delete pendingValues.current[matchId];
+    }
   }
 
   async function savePrediction(
@@ -228,6 +249,7 @@ export default function PredictionsClient({
                   groupSlug={groupSlug}
                   pred={preds[m.id]}
                   onUpdate={updateLocal}
+                  onFlush={flushPrediction}
                   saving={savingMatchId === m.id}
                   saved={savedFlash === m.id}
                   locked={tournamentLocked}
@@ -276,6 +298,7 @@ function MatchCard({
   groupSlug,
   pred,
   onUpdate,
+  onFlush,
   saving,
   saved,
   locked,
@@ -287,6 +310,7 @@ function MatchCard({
   groupSlug: string;
   pred: { homeScore: number; awayScore: number } | undefined;
   onUpdate: (id: number, side: "home" | "away", value: string) => void;
+  onFlush: (id: number) => void;
   saving: boolean;
   saved: boolean;
   locked: boolean;
@@ -408,6 +432,7 @@ function MatchCard({
             max={20}
             value={pred && pred.homeScore >= 0 ? pred.homeScore : ""}
             onChange={(e) => onUpdate(match.id, "home", e.target.value)}
+            onBlur={() => onFlush(match.id)}
             disabled={locked}
             className="score-input"
             aria-label={`Goles ${match.homeTeam}`}
@@ -420,6 +445,7 @@ function MatchCard({
             max={20}
             value={pred && pred.awayScore >= 0 ? pred.awayScore : ""}
             onChange={(e) => onUpdate(match.id, "away", e.target.value)}
+            onBlur={() => onFlush(match.id)}
             disabled={locked}
             className="score-input"
             aria-label={`Goles ${match.awayTeam}`}
