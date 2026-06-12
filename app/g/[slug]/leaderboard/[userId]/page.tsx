@@ -137,7 +137,7 @@ export default async function MemberPredictionsPage(
       <div className="mb-8">
         <Link
           href={`/g/${ctx.slug}/leaderboard`}
-          className="inline-block font-mono text-[11px] uppercase tracking-widest text-chalk-400 hover:text-flame-400 transition-colors mb-4"
+          className="back-link mb-4"
         >
           ← Volver a la clasificación
         </Link>

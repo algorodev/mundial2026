@@ -51,7 +51,7 @@ export default async function AdminTournamentPage(
     <div className="pt-8">
       <Link
         href="/admin"
-        className="inline-block font-mono text-xs text-chalk-300 hover:text-flame-400 uppercase tracking-widest mb-4"
+        className="back-link mb-4"
       >
         ← Torneos
       </Link>

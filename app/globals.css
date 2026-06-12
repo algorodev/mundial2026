@@ -121,6 +121,12 @@ body::before {
 }
 
 /* === Botones brutalist === */
+.back-link {
+  @apply inline-block font-mono text-xs text-chalk-300 hover:text-flame-400
+    uppercase tracking-widest
+    py-2 -my-2 pr-4;
+}
+
 .btn-primary {
   @apply bg-flame-500 hover:bg-flame-400 text-pitch-950 font-display
     px-7 py-4 rounded-lg uppercase tracking-wide text-sm

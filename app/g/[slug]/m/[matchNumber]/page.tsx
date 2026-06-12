@@ -68,7 +68,7 @@ export default async function MatchDetailPage(props: {
     <div className="pt-8">
       <Link
         href={`/g/${slug}`}
-        className="inline-block font-mono text-xs text-chalk-300 hover:text-flame-400 uppercase tracking-widest mb-3"
+        className="back-link mb-3"
       >
         ← {ctx.name}
       </Link>
