@@ -2,9 +2,10 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, teams, tournaments } from "@/lib/db/schema";
+import { matches, predictions, teams, tournaments, users } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
+import { calcPoints } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
 import MatchDetailClient from "@/components/MatchDetailClient";
 
@@ -63,6 +64,52 @@ export default async function MatchDetailPage(props: {
   const awayLogoUrl = awayTeamRow?.logoUrl ?? null;
   const homeApiTeamId = homeTeamRow?.apiTeamId ?? null;
   const awayApiTeamId = awayTeamRow?.apiTeamId ?? null;
+
+  // Predicciones del grupo para este partido — solo visibles tras el kickoff.
+  const matchKickedOff = new Date() >= match.kickoffAt;
+  const rawGroupPreds = matchKickedOff
+    ? await db
+        .select({
+          userId: predictions.userId,
+          name: users.name,
+          homeScore: predictions.homeScore,
+          awayScore: predictions.awayScore,
+        })
+        .from(predictions)
+        .innerJoin(users, eq(predictions.userId, users.id))
+        .where(
+          and(
+            eq(predictions.matchId, match.id),
+            eq(predictions.groupId, ctx.groupId)
+          )
+        )
+    : [];
+
+  const groupPredictions = rawGroupPreds
+    .map((p) => {
+      const { points, result } = calcPoints(
+        p.homeScore,
+        p.awayScore,
+        match.homeScore,
+        match.awayScore
+      );
+      return {
+        userId: p.userId,
+        name: p.name,
+        homeScore: p.homeScore,
+        awayScore: p.awayScore,
+        points: match.homeScore !== null ? points : null,
+        result: match.homeScore !== null ? result : null,
+        isMe: p.userId === session.userId,
+      };
+    })
+    .sort((a, b) => {
+      // Primero yo, luego por puntos desc (si hay resultado), luego nombre
+      if (a.isMe !== b.isMe) return a.isMe ? -1 : 1;
+      if (a.points !== null && b.points !== null && a.points !== b.points)
+        return b.points - a.points;
+      return (a.name ?? "").localeCompare(b.name ?? "");
+    });
 
   const dateLabel = formatKickoff(match.kickoffAt);
 
@@ -145,6 +192,7 @@ export default async function MatchDetailPage(props: {
         awayLogoUrl={awayLogoUrl}
         homeApiTeamId={homeApiTeamId}
         awayApiTeamId={awayApiTeamId}
+        groupPredictions={groupPredictions}
         hasApiFixture={match.apiFixtureId !== null}
         kickoffAtIso={match.kickoffAt.toISOString()}
       />

@@ -50,6 +50,16 @@ type LoadState<T> =
   | { status: "error"; error: string }
   | { status: "ok"; data: T };
 
+type GroupPred = {
+  userId: number;
+  name: string | null;
+  homeScore: number;
+  awayScore: number;
+  points: number | null;
+  result: "exact" | "outcome" | "miss" | "pending" | null;
+  isMe: boolean;
+};
+
 // ─── Componente principal ───────────────────────────────────────────────
 
 export default function MatchDetailClient({
@@ -64,6 +74,7 @@ export default function MatchDetailClient({
   awayLogoUrl,
   homeApiTeamId,
   awayApiTeamId,
+  groupPredictions,
   hasApiFixture,
   kickoffAtIso,
 }: {
@@ -78,6 +89,7 @@ export default function MatchDetailClient({
   awayLogoUrl: string | null;
   homeApiTeamId: number | null;
   awayApiTeamId: number | null;
+  groupPredictions: GroupPred[];
   hasApiFixture: boolean;
   kickoffAtIso: string;
 }) {
@@ -157,12 +169,20 @@ export default function MatchDetailClient({
 
   if (!hasApiFixture) {
     return (
-      <NoApiBanner kickoffAtIso={kickoffAtIso} />
+      <div className="space-y-6">
+        {groupPredictions.length > 0 && (
+          <GroupPredictionsSection preds={groupPredictions} />
+        )}
+        <NoApiBanner kickoffAtIso={kickoffAtIso} />
+      </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {groupPredictions.length > 0 && (
+        <GroupPredictionsSection preds={groupPredictions} />
+      )}
       <LineupsSection
         state={lineups}
         homeName={homeTeam}
@@ -187,6 +207,64 @@ export default function MatchDetailClient({
 }
 
 // ─── Subsecciones ────────────────────────────────────────────────────────
+
+function GroupPredictionsSection({ preds }: { preds: GroupPred[] }) {
+  return (
+    <section className="cromo bg-paper-50 text-pitch-950 p-5 sm:p-6">
+      <h2 className="font-display text-2xl sm:text-3xl mb-4 uppercase tracking-tight">
+        Pronósticos del grupo
+      </h2>
+      <ul className="divide-y divide-pitch-100">
+        {preds.map((p) => {
+          const rowBg =
+            p.result === "exact"
+              ? "bg-grass-100"
+              : p.result === "outcome"
+                ? "bg-flame-100"
+                : p.result === "miss"
+                  ? "bg-paper-200"
+                  : "";
+          const badge =
+            p.result === "exact" ? (
+              <span className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-0.5 border border-pitch-950 tracking-wider shrink-0">
+                +3 EXACTO
+              </span>
+            ) : p.result === "outcome" ? (
+              <span className="font-display text-[10px] bg-flame-500 text-pitch-950 px-2 py-0.5 border border-pitch-950 tracking-wider shrink-0">
+                +1 SIGNO
+              </span>
+            ) : p.result === "miss" ? (
+              <span className="font-display text-[10px] bg-pitch-950 text-chalk-400 px-2 py-0.5 border border-pitch-950 tracking-wider shrink-0">
+                +0
+              </span>
+            ) : null;
+
+          return (
+            <li
+              key={p.userId}
+              className={`flex items-center gap-3 py-2.5 px-2 -mx-2 ${rowBg}`}
+            >
+              <span className="font-display uppercase text-sm flex-1 truncate min-w-0">
+                {p.name ?? "—"}
+                {p.isMe && (
+                  <span className="ml-2 font-mono text-[10px] text-pitch-500 normal-case tracking-widest">
+                    ← tú
+                  </span>
+                )}
+              </span>
+              <span className="font-display text-lg tabular-nums shrink-0">
+                {p.homeScore}
+                <span className="text-brick-500 mx-1">·</span>
+                {p.awayScore}
+              </span>
+              {badge}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
 
 function SectionShell({
   title,
