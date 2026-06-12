@@ -62,6 +62,8 @@ export default function MatchDetailClient({
   awayFlag,
   homeLogoUrl,
   awayLogoUrl,
+  homeApiTeamId,
+  awayApiTeamId,
   hasApiFixture,
   kickoffAtIso,
 }: {
@@ -74,6 +76,8 @@ export default function MatchDetailClient({
   awayFlag: string | null;
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
+  homeApiTeamId: number | null;
+  awayApiTeamId: number | null;
   hasApiFixture: boolean;
   kickoffAtIso: string;
 }) {
@@ -171,7 +175,13 @@ export default function MatchDetailClient({
         awayLogoUrl={awayLogoUrl}
       />
       <EventsSection state={events} homeName={homeTeam} awayName={awayTeam} />
-      <H2HSection state={h2h} homeName={homeTeam} awayName={awayTeam} />
+      <H2HSection
+        state={h2h}
+        homeName={homeTeam}
+        awayName={awayTeam}
+        homeApiTeamId={homeApiTeamId}
+        awayApiTeamId={awayApiTeamId}
+      />
     </div>
   );
 }
@@ -456,10 +466,14 @@ function H2HSection({
   state,
   homeName,
   awayName,
+  homeApiTeamId,
+  awayApiTeamId,
 }: {
   state: LoadState<H2HFixture[]>;
   homeName: string;
   awayName: string;
+  homeApiTeamId: number | null;
+  awayApiTeamId: number | null;
 }) {
   // Stats simples sobre los últimos N.
   const stats =
@@ -472,10 +486,14 @@ function H2HSection({
             const hg = f.goals.home;
             const ag = f.goals.away;
             if (hg === null || ag === null) continue;
-            // El "home" del H2H no coincide necesariamente con el "home" de
-            // nuestro partido — usamos los IDs/nombres de cada fixture.
-            const homeIsOurs = f.teams.home.name === homeName;
-            const awayIsOurs = f.teams.away.name === homeName;
+            // Preferimos comparar por apiTeamId (fiable). Fallback a nombre
+            // por si el ID no está mapeado aún.
+            const homeIsOurs = homeApiTeamId
+              ? f.teams.home.id === homeApiTeamId
+              : f.teams.home.name === homeName;
+            const awayIsOurs = homeApiTeamId
+              ? f.teams.away.id === homeApiTeamId
+              : f.teams.away.name === homeName;
             const ourScore = homeIsOurs ? hg : awayIsOurs ? ag : null;
             const theirScore = homeIsOurs ? ag : awayIsOurs ? hg : null;
             if (ourScore === null || theirScore === null) continue;

@@ -48,7 +48,7 @@ export default async function MatchDetailPage(props: {
   const teamRows =
     codes.length > 0
       ? await db
-          .select({ code: teams.code, logoUrl: teams.logoUrl })
+          .select({ code: teams.code, logoUrl: teams.logoUrl, apiTeamId: teams.apiTeamId })
           .from(teams)
           .where(
             and(
@@ -57,10 +57,12 @@ export default async function MatchDetailPage(props: {
             )
           )
       : [];
-  const homeLogoUrl =
-    teamRows.find((t) => t.code === match.homeCode)?.logoUrl ?? null;
-  const awayLogoUrl =
-    teamRows.find((t) => t.code === match.awayCode)?.logoUrl ?? null;
+  const homeTeamRow = teamRows.find((t) => t.code === match.homeCode);
+  const awayTeamRow = teamRows.find((t) => t.code === match.awayCode);
+  const homeLogoUrl = homeTeamRow?.logoUrl ?? null;
+  const awayLogoUrl = awayTeamRow?.logoUrl ?? null;
+  const homeApiTeamId = homeTeamRow?.apiTeamId ?? null;
+  const awayApiTeamId = awayTeamRow?.apiTeamId ?? null;
 
   const dateLabel = formatKickoff(match.kickoffAt);
 
@@ -141,6 +143,8 @@ export default async function MatchDetailPage(props: {
         awayFlag={match.awayFlag}
         homeLogoUrl={homeLogoUrl}
         awayLogoUrl={awayLogoUrl}
+        homeApiTeamId={homeApiTeamId}
+        awayApiTeamId={awayApiTeamId}
         hasApiFixture={match.apiFixtureId !== null}
         kickoffAtIso={match.kickoffAt.toISOString()}
       />
