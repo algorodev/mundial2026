@@ -76,7 +76,7 @@ function StandingsTable({
           <tr className="text-[10px] font-mono uppercase tracking-widest text-pitch-500 border-b-2 border-pitch-200">
             <th className="text-left py-1.5 pl-1 w-6">#</th>
             <th className="text-left py-1.5">Equipo</th>
-            <th className="text-center py-1.5 w-7 tabular-nums">PJ</th>
+            <th className="text-center py-1.5 w-8 tabular-nums border-l border-pitch-200 px-1">PJ</th>
             {!compact && (
               <>
                 <th className="text-center py-1.5 w-7 tabular-nums">G</th>
@@ -86,8 +86,8 @@ function StandingsTable({
                 <th className="text-center py-1.5 w-10 tabular-nums">GC</th>
               </>
             )}
-            <th className="text-center py-1.5 w-8 tabular-nums">DG</th>
-            <th className="text-right py-1.5 pr-1 w-9 tabular-nums">Pts</th>
+            <th className="text-center py-1.5 w-9 tabular-nums border-l border-pitch-200 px-1">DG</th>
+            <th className="text-right py-1.5 pr-2 w-10 tabular-nums border-l border-pitch-200 pl-1">PTS</th>
           </tr>
         </thead>
         <tbody>
@@ -119,7 +119,7 @@ function StandingsTable({
                   </span>
                 </div>
               </td>
-              <td className="py-2 text-center font-mono tabular-nums">
+              <td className="py-2 text-center font-mono tabular-nums border-l border-pitch-100 px-1">
                 {r.all.played}
               </td>
               {!compact && (
@@ -141,11 +141,11 @@ function StandingsTable({
                   </td>
                 </>
               )}
-              <td className="py-2 text-center font-mono tabular-nums text-pitch-600">
+              <td className="py-2 text-center font-mono tabular-nums text-pitch-600 border-l border-pitch-100 px-1">
                 {r.goalsDiff > 0 && "+"}
                 {r.goalsDiff}
               </td>
-              <td className="py-2 pr-1 text-right font-display tabular-nums text-base">
+              <td className="py-2 pr-2 text-right font-display tabular-nums text-base border-l border-pitch-100 pl-1">
                 {r.points}
               </td>
             </tr>
