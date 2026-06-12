@@ -8,6 +8,7 @@ import { getGroupForMember } from "@/lib/group-access";
 import { calcPoints } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
 import MatchDetailClient from "@/components/MatchDetailClient";
+import { getTournamentStart } from "@/lib/tournament";
 
 export default async function MatchDetailPage(props: {
   params: Promise<{ slug: string; matchNumber: string }>;
@@ -65,9 +66,12 @@ export default async function MatchDetailPage(props: {
   const homeApiTeamId = homeTeamRow?.apiTeamId ?? null;
   const awayApiTeamId = awayTeamRow?.apiTeamId ?? null;
 
-  // Predicciones del grupo para este partido — solo visibles tras el kickoff.
-  const matchKickedOff = new Date() >= match.kickoffAt;
-  const rawGroupPreds = matchKickedOff
+  // Predicciones visibles cuando las predicciones están bloqueadas (el torneo ya arrancó).
+  const tournamentStart = await getTournamentStart(ctx.tournamentId);
+  const predictionsLocked = tournamentStart
+    ? new Date() >= new Date(tournamentStart.iso)
+    : false;
+  const rawGroupPreds = predictionsLocked
     ? await db
         .select({
           userId: predictions.userId,
