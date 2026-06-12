@@ -143,6 +143,8 @@ export default async function GroupPredictionsPage(
             teamLogos={teamLogos}
             tournamentStartIso={start?.iso ?? new Date(0).toISOString()}
             tournamentStartLabel={start?.label ?? ""}
+            predictionLockMode={ctx.predictionLockMode}
+            lockMinutesBefore={ctx.lockMinutesBefore}
           />
           <LiveScoreboard groupSlug={ctx.slug} />
         </>

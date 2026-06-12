@@ -33,6 +33,8 @@ export default function PredictionsClient({
   teamLogos,
   tournamentStartIso,
   tournamentStartLabel,
+  predictionLockMode = "per-match",
+  lockMinutesBefore = 0,
 }: {
   groupSlug: string;
   matches: MatchRow[];
@@ -40,6 +42,8 @@ export default function PredictionsClient({
   teamLogos: Record<string, string>;
   tournamentStartIso: string;
   tournamentStartLabel: string;
+  predictionLockMode?: string;
+  lockMinutesBefore?: number;
 }) {
   const [preds, setPreds] = useState<PredMap>(initialPreds);
   const [filter, setFilter] = useState<Filter>("all");
@@ -52,12 +56,26 @@ export default function PredictionsClient({
   const pendingValues = useRef<Record<number, { homeScore: number; awayScore: number }>>({});
 
   const now = Date.now();
-  // Cierre global: con el pitido del primer partido todas las predicciones quedan bloqueadas.
-  const tournamentLocked = now >= new Date(tournamentStartIso).getTime();
+  const tournamentStartMs = new Date(tournamentStartIso).getTime();
+
+  function isMatchLocked(match: MatchRow): boolean {
+    if (predictionLockMode === "tournament-start") {
+      return now >= tournamentStartMs;
+    }
+    const cutoff = new Date(match.kickoffAt).getTime() - Math.max(0, lockMinutesBefore) * 60_000;
+    return now >= cutoff;
+  }
+
+  // En modo tournament-start: true cuando arranca el torneo.
+  // En modo per-match: true solo cuando ya no queda ningún partido abierto.
+  const tournamentLocked =
+    predictionLockMode === "tournament-start"
+      ? now >= tournamentStartMs
+      : matches.every((m) => isMatchLocked(m));
 
   const grouped = useMemo(() => {
     const visible = matches.filter((m) => {
-      if (filter === "pending") return !tournamentLocked && preds[m.id] === undefined;
+      if (filter === "pending") return !isMatchLocked(m) && preds[m.id] === undefined;
       return true;
     });
 
@@ -169,14 +187,18 @@ export default function PredictionsClient({
 
   return (
     <div>
-      {/* Banner de cierre del torneo */}
+      {/* Banner de cierre */}
       {tournamentLocked ? (
         <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
           🔒 El torneo ha empezado · Las predicciones están cerradas
         </div>
-      ) : (
+      ) : predictionLockMode === "tournament-start" ? (
         <div className="cromo bg-pitch-900 text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
           ⏱ Cierre con el primer partido · {tournamentStartLabel}
+        </div>
+      ) : (
+        <div className="cromo bg-pitch-900 text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
+          ⏱ Cada partido se cierra en su pitido inicial
         </div>
       )}
 
@@ -252,7 +274,7 @@ export default function PredictionsClient({
                   onFlush={flushPrediction}
                   saving={savingMatchId === m.id}
                   saved={savedFlash === m.id}
-                  locked={tournamentLocked}
+                  locked={isMatchLocked(m)}
                   tilt={idx % 2 === 0 ? "even" : "odd"}
                   homeLogoUrl={
                     m.homeCode ? teamLogos[m.homeCode] ?? null : null
