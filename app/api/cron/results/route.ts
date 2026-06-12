@@ -152,7 +152,10 @@ export async function GET(req: NextRequest) {
       if (sent) s.notified.kickoff++;
     }
 
-    // ─── FT + actualización de score ─────────────────────────────────────
+    // ─── Score update: FT (definitivo) + en directo (parcial) ──────────────
+    // Para FT/AET/PEN usamos score.fulltime (definitivo) y enviamos push.
+    // Para 1H/HT/2H/ET/BT/P usamos goals.home/away (score actual) sin push,
+    // para que el leaderboard se actualice durante el partido, no solo al final.
     for (const fx of fixtures) {
       const ours = byApiId.get(fx.fixture.id);
       if (!ours) continue;
@@ -160,12 +163,14 @@ export async function GET(req: NextRequest) {
         s.skippedAdmin++;
         continue;
       }
-      if (!isFinalScore(fx.fixture.status)) {
+      const isFinal = isFinalScore(fx.fixture.status);
+      const currentlyLive = isLive(fx.fixture.status);
+      if (!isFinal && !currentlyLive) {
         s.skippedNotFinal++;
         continue;
       }
-      const home = fx.score.fulltime.home;
-      const away = fx.score.fulltime.away;
+      const home = isFinal ? fx.score.fulltime.home : fx.goals.home;
+      const away = isFinal ? fx.score.fulltime.away : fx.goals.away;
       if (home === null || away === null) continue;
 
       const scoreChanged =
@@ -177,7 +182,7 @@ export async function GET(req: NextRequest) {
           .where(eq(matches.id, ours.id));
         s.updated++;
       }
-      if (recipients.length > 0) {
+      if (isFinal && recipients.length > 0) {
         const sent = await notifyFinal(ours, home, away, recipients);
         if (sent) s.notified.ft++;
       }

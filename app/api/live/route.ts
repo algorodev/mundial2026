@@ -73,7 +73,6 @@ export async function GET(req: NextRequest) {
 
   const live = all
     .filter((m) => {
-      if (m.homeScore == null || m.awayScore == null) return false;
       const t = m.kickoffAt.getTime();
       return t <= now && now < t + liveWindowMs;
     })
@@ -96,8 +95,8 @@ export async function GET(req: NextRequest) {
         awayFlag: m.awayFlag,
         homeLogoUrl: logoFor(m.homeCode),
         awayLogoUrl: logoFor(m.awayCode),
-        homeScore: m.homeScore!,
-        awayScore: m.awayScore!,
+        homeScore: m.homeScore ?? 0,
+        awayScore: m.awayScore ?? 0,
         kickoffAt: m.kickoffAt.toISOString(),
         minute,
         // Si la API responde, sobrescribimos minute con el valor real y
