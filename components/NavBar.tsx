@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { SessionPayload } from "@/lib/session";
+import { useI18n } from "@/providers/I18nProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 
 export default function NavBar({
   session,
@@ -13,6 +15,8 @@ export default function NavBar({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const { t, locale, setLocale } = useI18n();
+  const { theme, toggleTheme } = useTheme();
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -23,8 +27,13 @@ export default function NavBar({
 
   const close = () => setOpen(false);
 
+  const nextLocale = locale === "es" ? "en" : "es";
+  const switchLabel = locale === "es" ? t.nav.switchToEn : t.nav.switchToEs;
+  const themeLabel = theme === "dark" ? t.nav.lightMode : t.nav.darkMode;
+  const themeIcon = theme === "dark" ? "☀" : "☾";
+
   return (
-    <nav className="border-b-2 border-pitch-950 bg-pitch-950/95 backdrop-blur-xs sticky top-0 z-30 relative">
+    <nav className="border-b-2 border-pitch-950 dark:bg-pitch-950/95 bg-paper-50/95 backdrop-blur-xs sticky top-0 z-30 relative">
       {/* Barra principal */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         <Link
@@ -51,13 +60,13 @@ export default function NavBar({
             <>
               <Link
                 href="/groups"
-                className="text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display"
+                className="text-xs dark:text-chalk-100 text-pitch-800 hover:text-flame-400 transition-colors uppercase tracking-widest font-display"
               >
-                Mis porras
+                {t.nav.myPools}
               </Link>
               <Link
                 href="/profile"
-                className="text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display truncate min-w-0 max-w-[12rem]"
+                className="text-xs dark:text-chalk-100 text-pitch-800 hover:text-flame-400 transition-colors uppercase tracking-widest font-display truncate min-w-0 max-w-[12rem]"
               >
                 {session.name ?? session.email.split("@")[0]}
               </Link>
@@ -66,15 +75,15 @@ export default function NavBar({
                   href="/admin"
                   className="shrink-0 text-xs text-pitch-950 bg-flame-500 hover:bg-flame-400 px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest font-display"
                 >
-                  Admin
+                  {t.nav.admin}
                 </Link>
               )}
               <button
                 onClick={logout}
-                className="shrink-0 text-xs text-chalk-400 hover:text-chalk-50 transition-colors uppercase tracking-widest font-mono"
-                aria-label="Cerrar sesión"
+                className="shrink-0 text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors uppercase tracking-widest font-mono"
+                aria-label={t.nav.closeSession}
               >
-                Salir
+                {t.nav.logout}
               </button>
             </>
           )}
@@ -83,9 +92,28 @@ export default function NavBar({
               href="/login"
               className="text-xs bg-flame-500 hover:bg-flame-400 text-pitch-950 font-display px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest hover:-translate-y-0.5 transition-transform"
             >
-              Entrar
+              {t.nav.enter}
             </Link>
           )}
+
+          {/* Separator + Language toggle */}
+          <span aria-hidden="true" className="text-xs dark:text-chalk-400 text-pitch-500 font-mono">|</span>
+          <button
+            onClick={() => setLocale(nextLocale)}
+            className="shrink-0 text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors uppercase tracking-widest font-mono"
+            aria-label={switchLabel}
+          >
+            {locale === "es" ? "EN" : "ES"}
+          </button>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="shrink-0 text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors font-mono"
+            aria-label={themeLabel}
+          >
+            {themeIcon}
+          </button>
         </div>
 
         {/* Mobile: botón entrar (sin sesión) o hamburger (con sesión) */}
@@ -95,15 +123,15 @@ export default function NavBar({
               href="/login"
               className="text-xs bg-flame-500 hover:bg-flame-400 text-pitch-950 font-display px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest"
             >
-              Entrar
+              {t.nav.enter}
             </Link>
           )}
           {session && (
             <button
               onClick={() => setOpen((v) => !v)}
-              aria-label={open ? "Cerrar menú" : "Abrir menú"}
+              aria-label={open ? t.nav.closeMenu : t.nav.openMenu}
               aria-expanded={open}
-              className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] text-chalk-100"
+              className="w-10 h-10 flex flex-col items-center justify-center gap-[5px] dark:text-chalk-100 text-pitch-800"
             >
               <span
                 className={`block h-0.5 w-6 bg-current transition-all duration-200 ${open ? "rotate-45 translate-y-[7px]" : ""}`}
@@ -123,24 +151,24 @@ export default function NavBar({
       {session && (
         <div
           aria-hidden={!open}
-          className={`sm:hidden absolute left-0 right-0 top-full border-t-2 border-pitch-800 bg-pitch-950/95 backdrop-blur-sm shadow-2xl transition-all duration-200 ease-out ${
+          className={`sm:hidden absolute left-0 right-0 top-full border-t-2 dark:border-pitch-800 border-paper-200 dark:bg-pitch-950/95 bg-paper-50/95 backdrop-blur-sm shadow-2xl transition-all duration-200 ease-out ${
             open
               ? "opacity-100 translate-y-0 pointer-events-auto"
               : "opacity-0 -translate-y-2 pointer-events-none"
           }`}
         >
-          <div className="flex flex-col divide-y divide-pitch-800">
+          <div className="flex flex-col dark:divide-pitch-800 divide-paper-200 divide-y">
             <Link
               href="/groups"
               onClick={close}
-              className="px-6 py-4 font-display text-xl uppercase tracking-widest text-chalk-50 hover:bg-pitch-800 hover:text-flame-400 transition-colors"
+              className="px-6 py-4 font-display text-xl uppercase tracking-widest dark:text-chalk-50 text-pitch-900 dark:hover:bg-pitch-800 hover:bg-paper-100 hover:text-flame-400 transition-colors"
             >
-              Mis porras
+              {t.nav.myPools}
             </Link>
             <Link
               href="/profile"
               onClick={close}
-              className="px-6 py-4 font-display text-xl uppercase tracking-widest text-chalk-50 hover:bg-pitch-800 hover:text-flame-400 transition-colors"
+              className="px-6 py-4 font-display text-xl uppercase tracking-widest dark:text-chalk-50 text-pitch-900 dark:hover:bg-pitch-800 hover:bg-paper-100 hover:text-flame-400 transition-colors"
             >
               {session.name ?? session.email.split("@")[0]}
             </Link>
@@ -148,16 +176,35 @@ export default function NavBar({
               <Link
                 href="/admin"
                 onClick={close}
-                className="px-6 py-4 font-display text-xl uppercase tracking-widest text-flame-400 hover:bg-pitch-800 transition-colors"
+                className="px-6 py-4 font-display text-xl uppercase tracking-widest text-flame-400 dark:hover:bg-pitch-800 hover:bg-paper-100 transition-colors"
               >
-                Admin
+                {t.nav.admin}
               </Link>
             )}
+
+            {/* Language toggle (mobile) */}
+            <button
+              onClick={() => { setLocale(nextLocale); close(); }}
+              className="w-full text-left px-6 py-4 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
+              aria-label={switchLabel}
+            >
+              {locale === "es" ? "English" : "Español"}
+            </button>
+
+            {/* Theme toggle (mobile) */}
+            <button
+              onClick={() => { toggleTheme(); close(); }}
+              className="w-full text-left px-6 py-4 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
+              aria-label={themeLabel}
+            >
+              {themeIcon} {themeLabel}
+            </button>
+
             <button
               onClick={logout}
-              className="w-full text-left px-6 py-4 font-mono text-sm uppercase tracking-widest text-chalk-400 hover:bg-pitch-800 hover:text-chalk-50 transition-colors"
+              className="w-full text-left px-6 py-4 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
             >
-              Cerrar sesión
+              {t.nav.closeSession}
             </button>
           </div>
         </div>

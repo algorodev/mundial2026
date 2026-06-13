@@ -1,11 +1,16 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { getSession } from "@/lib/session";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 import NavBar from "@/components/NavBar";
 import WhatsNewModal from "@/components/WhatsNewModal";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieBanner from "@/components/CookieBanner";
+import { I18nProvider } from "@/providers/I18nProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
 
@@ -96,7 +101,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#FFD23F" },
     { media: "(prefers-color-scheme: dark)", color: "#1A1A1A" },
   ],
-  colorScheme: "dark",
+  colorScheme: "dark light",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -108,46 +113,61 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
+  const locale = await getLocale();
+  const dictionary = getDictionary(locale);
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("theme")?.value;
+  const theme =
+    themeCookie === "light" || themeCookie === "dark" ? themeCookie : "dark";
+
+  const t = dictionary;
+
   return (
-    <html lang="es">
+    <html lang={locale} data-theme={theme}>
       <body className="min-h-screen">
-        <NavBar session={session} />
-        {session && <WhatsNewModal />}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">{children}</main>
-        <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest space-y-3">
-          <div>⚽ PorraBros · Hecho con ☕</div>
-          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-            <Link
-              href="/about"
-              className="hover:text-flame-400 underline underline-offset-4"
-            >
-              Sobre nosotros
-            </Link>
-            <span aria-hidden="true">·</span>
-            <Link
-              href="/privacidad"
-              className="hover:text-flame-400 underline underline-offset-4"
-            >
-              Privacidad
-            </Link>
-            <span aria-hidden="true">·</span>
-            <Link
-              href="/terminos"
-              className="hover:text-flame-400 underline underline-offset-4"
-            >
-              Términos
-            </Link>
-            <span aria-hidden="true">·</span>
-            <Link
-              href="/cookies"
-              className="hover:text-flame-400 underline underline-offset-4"
-            >
-              Cookies
-            </Link>
-          </nav>
-        </footer>
-        <CookieBanner />
-        <GoogleAnalytics />
+        <ThemeProvider defaultTheme={theme}>
+          <I18nProvider locale={locale} dictionary={dictionary}>
+            <NavBar session={session} />
+            {session && <WhatsNewModal />}
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">
+              {children}
+            </main>
+            <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest space-y-3">
+              <div>{t.footer.tagline}</div>
+              <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                <Link
+                  href="/about"
+                  className="hover:text-flame-400 underline underline-offset-4"
+                >
+                  {t.footer.about}
+                </Link>
+                <span aria-hidden="true">·</span>
+                <Link
+                  href="/privacidad"
+                  className="hover:text-flame-400 underline underline-offset-4"
+                >
+                  {t.footer.privacy}
+                </Link>
+                <span aria-hidden="true">·</span>
+                <Link
+                  href="/terminos"
+                  className="hover:text-flame-400 underline underline-offset-4"
+                >
+                  {t.footer.terms}
+                </Link>
+                <span aria-hidden="true">·</span>
+                <Link
+                  href="/cookies"
+                  className="hover:text-flame-400 underline underline-offset-4"
+                >
+                  {t.footer.cookies}
+                </Link>
+              </nav>
+            </footer>
+            <CookieBanner />
+            <GoogleAnalytics />
+          </I18nProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
