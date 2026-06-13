@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 @import 'tailwindcss';
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme {
   --font-display: "Archivo Black", sans-serif;
@@ -65,10 +66,14 @@
 
 html,
 body {
-  background: #0a0e0c;
-  color: #fbf6e7;
+  background: var(--color-paper-50);
+  color: var(--color-pitch-900);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+}
+html[data-theme=dark], html[data-theme=dark] body {
+  background: #0a0e0c;
+  color: #fbf6e7;
 }
 
 /* Fondo: glow cálido + halftone discreto */
@@ -78,11 +83,18 @@ body::before {
   inset: 0;
   z-index: -1;
   background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(245, 180, 0, 0.07), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(200, 74, 38, 0.04), transparent 60%),
+    radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.035) 1px, transparent 0);
+  background-size: auto, auto, 16px 16px;
+  pointer-events: none;
+}
+html[data-theme=dark] body::before {
+  background:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(245, 180, 0, 0.10), transparent 60%),
     radial-gradient(ellipse 60% 40% at 100% 100%, rgba(200, 74, 38, 0.08), transparent 60%),
     radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.025) 1px, transparent 0);
   background-size: auto, auto, 16px 16px;
-  pointer-events: none;
 }
 
 .font-display {
@@ -103,6 +115,9 @@ body::before {
   height: 10px;
 }
 ::-webkit-scrollbar-track {
+  background: var(--color-paper-100);
+}
+html[data-theme=dark] ::-webkit-scrollbar-track {
   background: #111814;
 }
 ::-webkit-scrollbar-thumb {
@@ -122,7 +137,7 @@ body::before {
 
 /* === Botones brutalist === */
 .back-link {
-  @apply inline-block font-mono text-xs text-chalk-400 hover:text-flame-400
+  @apply inline-block font-mono text-xs text-pitch-500 dark:text-chalk-400 hover:text-flame-500 dark:hover:text-flame-400
     uppercase tracking-widest
     py-2 -my-2 pr-4;
 }
@@ -164,7 +179,7 @@ body::before {
     [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none;
 }
 .score-input:disabled {
-  @apply opacity-60 cursor-not-allowed bg-pitch-800 text-chalk-400 border-pitch-700 shadow-none;
+  @apply opacity-60 cursor-not-allowed bg-paper-200 dark:bg-pitch-800 text-pitch-500 dark:text-chalk-400 border-paper-200 dark:border-pitch-700 shadow-none;
 }
 
 /* === Group color stickers — color base + acabado brutalist === */
@@ -253,4 +268,15 @@ body::before {
 }
 .prose-legal strong {
   color: #fbf6e7;
+}
+
+html:not([data-theme=dark]) .prose-legal h2 { color: var(--color-pitch-900); }
+html:not([data-theme=dark]) .prose-legal h3 { color: var(--color-flame-600); }
+html:not([data-theme=dark]) .prose-legal strong { color: var(--color-pitch-900); }
+html:not([data-theme=dark]) .prose-legal a { color: var(--color-flame-600); }
+html:not([data-theme=dark]) .prose-legal a:hover { color: var(--color-flame-500); }
+
+html:not([data-theme=dark]) nav.sticky {
+  background: rgba(251, 243, 220, 0.96) !important;
+  border-color: var(--color-paper-200) !important;
 }
