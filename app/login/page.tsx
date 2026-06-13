@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useI18n } from "@/providers/I18nProvider";
 
 function LoginInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useI18n();
   const redirectTo = params.get("next");
   const errorParam = params.get("error");
   const nextQuery = redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : "";
@@ -23,11 +25,11 @@ function LoginInner() {
 
   useEffect(() => {
     if (errorParam === "invalid") {
-      setError("El enlace ya no es válido. Vuelve a intentarlo.");
+      setError(t.auth.login.errorInvalidLink);
     } else if (errorParam === "missing") {
-      setError("El enlace no es válido.");
+      setError(t.auth.login.errorMissingLink);
     }
-  }, [errorParam]);
+  }, [errorParam, t]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +47,7 @@ function LoginInner() {
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "No se pudo iniciar sesión");
+        setError(data.error || t.auth.login.errorDefault);
         return;
       }
       // Cuenta transicional sin contraseña: el server ha mandado un email
@@ -65,7 +67,7 @@ function LoginInner() {
     setError(null);
     const trimmed = email.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setError("Escribe tu email para recibir el enlace.");
+      setError(t.auth.login.emailForLink);
       return;
     }
     setMagicLoading(true);
@@ -80,7 +82,7 @@ function LoginInner() {
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "No se pudo enviar el enlace");
+        setError(data.error || t.auth.login.errorNoLink);
         return;
       }
       setSentLink("login");
@@ -94,21 +96,21 @@ function LoginInner() {
     return (
       <div className="pt-12 sm:pt-20 max-w-md mx-auto">
         <div className="text-center mb-10">
-          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
-            REVISA TU CORREO
+          <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
+            {t.auth.login.checkEmail}
           </h1>
-          <p className="mt-5 text-chalk-300">
+          <p className="mt-5 text-pitch-500 dark:text-chalk-300">
             {isMagic ? (
               <>
-                Si tu email <strong>{email}</strong> está registrado, te hemos
-                enviado un enlace para entrar sin contraseña. Caduca en 15
-                minutos.
+                {t.auth.login.magicLinkSent.split("{email}")[0]}
+                <strong>{email}</strong>
+                {t.auth.login.magicLinkSent.split("{email}")[1]}
               </>
             ) : (
               <>
-                Tu cuenta ya existía pero aún no tiene contraseña. Te hemos
-                enviado un enlace a <strong>{email}</strong> para que la crees.
-                Caduca en 15 minutos.
+                {t.auth.login.transitionLinkSent.split("{email}")[0]}
+                <strong>{email}</strong>
+                {t.auth.login.transitionLinkSent.split("{email}")[1]}
               </>
             )}
           </p>
@@ -120,7 +122,7 @@ function LoginInner() {
           }}
           className="btn-secondary w-full"
         >
-          Volver
+          {t.auth.login.goBack}
         </button>
       </div>
     );
@@ -129,28 +131,28 @@ function LoginInner() {
   return (
     <div className="pt-12 sm:pt-20 max-w-md mx-auto">
       <div className="text-center mb-10">
-        <h1 className="font-display text-6xl sm:text-7xl text-chalk-50 leading-none">
-          ENTRAR
+        <h1 className="font-display text-6xl sm:text-7xl text-pitch-900 dark:text-chalk-50 leading-none">
+          {t.auth.login.title}
         </h1>
         <p className="mt-5 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          Sin fricciones
+          {t.auth.login.tagline}
         </p>
       </div>
 
       <form
         onSubmit={submit}
-        className="cromo bg-pitch-900 p-6 sm:p-8 space-y-5"
+        className="cromo bg-white dark:bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Email
+            {t.auth.login.emailLabel}
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input-base w-full"
-            placeholder="tu@email.com"
+            placeholder={t.auth.login.emailPlaceholder}
             required
             autoFocus
             autoComplete="email"
@@ -163,25 +165,25 @@ function LoginInner() {
           disabled={magicLoading || loading}
           className="btn-primary w-full"
         >
-          {magicLoading ? "Enviando..." : "Enviar enlace por email →"}
+          {magicLoading ? t.auth.login.sendingLink : t.auth.login.sendMagicLink}
         </button>
 
-        <div className="flex items-center gap-3 text-[10px] text-chalk-500 uppercase tracking-widest font-mono">
-          <div className="flex-1 h-px bg-pitch-700" />
-          <span>o usa contraseña</span>
-          <div className="flex-1 h-px bg-pitch-700" />
+        <div className="flex items-center gap-3 text-[10px] text-pitch-500 dark:text-chalk-500 uppercase tracking-widest font-mono">
+          <div className="flex-1 h-px bg-paper-200 dark:bg-pitch-700" />
+          <span>{t.auth.login.orUsePassword}</span>
+          <div className="flex-1 h-px bg-paper-200 dark:bg-pitch-700" />
         </div>
 
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Contraseña
+            {t.auth.login.passwordLabel}
           </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input-base w-full"
-            placeholder="••••••••"
+            placeholder={t.auth.login.passwordPlaceholder}
             autoComplete="current-password"
           />
         </div>
@@ -197,21 +199,21 @@ function LoginInner() {
           disabled={loading || magicLoading || !password}
           className="btn-secondary w-full"
         >
-          {loading ? "Entrando..." : "Entrar con contraseña →"}
+          {loading ? t.auth.login.loggingIn : t.auth.login.loginWithPassword}
         </button>
 
-        <div className="flex items-center justify-between text-xs text-chalk-400">
+        <div className="flex items-center justify-between text-xs text-pitch-500 dark:text-chalk-400">
           <Link
             href={`/forgot-password${nextQuery}`}
             className="hover:text-flame-400 underline underline-offset-2"
           >
-            ¿Olvidaste tu contraseña?
+            {t.auth.login.forgotPassword}
           </Link>
           <Link
             href={`/register${nextQuery}`}
             className="hover:text-flame-400 underline underline-offset-2"
           >
-            Crear cuenta
+            {t.auth.login.createAccount}
           </Link>
         </div>
       </form>

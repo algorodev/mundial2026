@@ -117,13 +117,26 @@
       "missingToken": "Missing token",
       "invalidLink": "Invalid link",
       "invalidLinkHint": "It may have expired or already been used. Request a new one from the login screen.",
-      "requestNewLink": "Request a new link"
+      "requestNewLink": "Request a new link",
+      "title": "YOUR PASSWORD",
+      "description": "Choose a password to log in from now on. Minimum {min} characters.",
+      "newPasswordLabel": "New password",
+      "confirmPasswordLabel": "Confirm password",
+      "submit": "Save and log in →",
+      "submitting": "Saving...",
+      "errorMismatch": "Passwords do not match",
+      "errorDefault": "Could not save password"
     },
     "magicLogin": {
       "missingToken": "Missing token",
       "invalidLink": "Invalid link",
       "invalidLinkHint": "It may have expired or already been used. Request a new one from the login screen.",
-      "requestNewLink": "Request a new link"
+      "requestNewLink": "Request a new link",
+      "title": "LOG IN",
+      "description": "Click to log in as {email}. The link is consumed on click and expires after 15 minutes.",
+      "submit": "Log in →",
+      "submitting": "Logging in...",
+      "errorDefault": "Could not log in"
     }
   },
   "home": {

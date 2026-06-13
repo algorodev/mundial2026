@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useI18n } from "@/providers/I18nProvider";
 
 const PASSWORD_MIN = 8;
 
 function RegisterInner() {
   const router = useRouter();
   const params = useSearchParams();
+  const { t } = useI18n();
   const redirectTo = params.get("next");
   const nextQuery = redirectTo ? `?next=${encodeURIComponent(redirectTo)}` : "";
 
@@ -34,7 +36,7 @@ function RegisterInner() {
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "No se pudo crear la cuenta");
+        setError(data.error || t.auth.register.errorDefault);
         return;
       }
       router.push(redirectTo || "/groups");
@@ -47,28 +49,28 @@ function RegisterInner() {
   return (
     <div className="pt-12 sm:pt-20 max-w-md mx-auto">
       <div className="text-center mb-10">
-        <h1 className="font-display text-6xl sm:text-7xl text-chalk-50 leading-none">
-          CREAR CUENTA
+        <h1 className="font-display text-6xl sm:text-7xl text-pitch-900 dark:text-chalk-50 leading-none">
+          {t.auth.register.title}
         </h1>
         <p className="mt-5 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          Tres campos y dentro
+          {t.auth.register.tagline}
         </p>
       </div>
 
       <form
         onSubmit={submit}
-        className="cromo bg-pitch-900 p-6 sm:p-8 space-y-5"
+        className="cromo bg-white dark:bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Nombre
+            {t.auth.register.nameLabel}
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="input-base w-full"
-            placeholder="El que verán tus colegas en el ranking"
+            placeholder={t.auth.register.namePlaceholder}
             required
             maxLength={60}
             autoFocus
@@ -78,14 +80,14 @@ function RegisterInner() {
 
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Email
+            {t.auth.register.emailLabel}
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="input-base w-full"
-            placeholder="tu@email.com"
+            placeholder={t.auth.register.emailPlaceholder}
             required
             autoComplete="email"
           />
@@ -93,14 +95,14 @@ function RegisterInner() {
 
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Contraseña
+            {t.auth.register.passwordLabel}
           </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input-base w-full"
-            placeholder="Mínimo 8 caracteres"
+            placeholder={t.auth.register.passwordPlaceholder}
             required
             minLength={PASSWORD_MIN}
             autoComplete="new-password"
@@ -114,16 +116,16 @@ function RegisterInner() {
         )}
 
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Creando cuenta..." : "Crear cuenta →"}
+          {loading ? t.auth.register.submitting : t.auth.register.submit}
         </button>
 
-        <p className="text-xs text-chalk-400 text-center">
-          ¿Ya tienes cuenta?{" "}
+        <p className="text-xs text-pitch-500 dark:text-chalk-400 text-center">
+          {t.auth.register.alreadyHaveAccount}{" "}
           <Link
             href={`/login${nextQuery}`}
             className="hover:text-flame-400 underline underline-offset-2"
           >
-            Entrar
+            {t.auth.register.login}
           </Link>
         </p>
       </form>

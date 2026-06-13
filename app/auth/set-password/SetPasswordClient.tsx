@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/providers/I18nProvider";
 
 const PASSWORD_MIN = 8;
 
@@ -13,6 +14,7 @@ export default function SetPasswordClient({
   email: string;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export default function SetPasswordClient({
     e.preventDefault();
     setError(null);
     if (password !== confirm) {
-      setError("Las contraseñas no coinciden");
+      setError(t.auth.setPassword.errorMismatch);
       return;
     }
     setLoading(true);
@@ -34,7 +36,7 @@ export default function SetPasswordClient({
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "No se pudo guardar la contraseña");
+        setError(data.error || t.auth.setPassword.errorDefault);
         return;
       }
       const dest = typeof data.redirectTo === "string" ? data.redirectTo : "/groups";
@@ -48,8 +50,8 @@ export default function SetPasswordClient({
   return (
     <div className="pt-12 sm:pt-20 max-w-md mx-auto">
       <div className="text-center mb-10">
-        <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
-          TU CONTRASEÑA
+        <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
+          {t.auth.setPassword.title}
         </h1>
         <p className="mt-5 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
           {email}
@@ -58,15 +60,15 @@ export default function SetPasswordClient({
 
       <form
         onSubmit={submit}
-        className="cromo bg-pitch-900 p-6 sm:p-8 space-y-5"
+        className="cromo bg-white dark:bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
-        <p className="text-chalk-200 text-sm leading-relaxed">
-          Elige una contraseña para entrar a partir de ahora. Mínimo {PASSWORD_MIN} caracteres.
+        <p className="text-pitch-600 dark:text-chalk-200 text-sm leading-relaxed">
+          {t.auth.setPassword.description.replace("{min}", String(PASSWORD_MIN))}
         </p>
 
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Nueva contraseña
+            {t.auth.setPassword.newPasswordLabel}
           </label>
           <input
             type="password"
@@ -83,7 +85,7 @@ export default function SetPasswordClient({
 
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Confirmar contraseña
+            {t.auth.setPassword.confirmPasswordLabel}
           </label>
           <input
             type="password"
@@ -104,7 +106,7 @@ export default function SetPasswordClient({
         )}
 
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Guardando..." : "Guardar y entrar →"}
+          {loading ? t.auth.setPassword.submitting : t.auth.setPassword.submit}
         </button>
       </form>
     </div>
