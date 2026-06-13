@@ -402,7 +402,11 @@
     "homeLogoTitle": "El logo te lleva al inicio",
     "homeLogoDesc": "Ahora puedes volver al inicio desde cualquier página para descubrir nuevos torneos, aunque ya hayas iniciado sesión.",
     "hamburgerTitle": "Menú hamburguesa en móvil",
-    "hamburgerDesc": "En el móvil ya no se apretaban los enlaces del menú: pulsa el icono de la esquina y se despliega cómodamente."
+    "hamburgerDesc": "En el móvil ya no se apretaban los enlaces del menú: pulsa el icono de la esquina y se despliega cómodamente.",
+    "languagesTitle": "Idiomas",
+    "languagesDesc": "La plataforma ahora está disponible en Español e Inglés. Cambia el idioma desde el menú.",
+    "lightModeTitle": "Modo claro",
+    "lightModeDesc": "Nuevo tema claro disponible. Actívalo con el botón ☀ del menú."
   },
   "push": {
     "title": "🔔 Notificaciones push",

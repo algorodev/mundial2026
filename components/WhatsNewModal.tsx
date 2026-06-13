@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "@/providers/I18nProvider";
 
-const VERSION = "0.2.4";
+const VERSION = "0.3.0";
 const STORAGE_KEY = "porrabros_whats_new_seen";
 
 export default function WhatsNewModal() {
@@ -24,14 +24,14 @@ export default function WhatsNewModal() {
 
   const changes = [
     {
-      icon: "🏠",
-      title: t.whatsNew.homeLogoTitle,
-      desc: t.whatsNew.homeLogoDesc,
+      icon: "🌐",
+      title: t.whatsNew.languagesTitle,
+      desc: t.whatsNew.languagesDesc,
     },
     {
-      icon: "☰",
-      title: t.whatsNew.hamburgerTitle,
-      desc: t.whatsNew.hamburgerDesc,
+      icon: "☀",
+      title: t.whatsNew.lightModeTitle,
+      desc: t.whatsNew.lightModeDesc,
     },
   ];
 

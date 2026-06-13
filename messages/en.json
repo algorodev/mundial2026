@@ -402,7 +402,11 @@
     "homeLogoTitle": "Logo takes you home",
     "homeLogoDesc": "You can now return to the homepage from any page to discover new tournaments, even when logged in.",
     "hamburgerTitle": "Hamburger menu on mobile",
-    "hamburgerDesc": "Navigation links no longer felt cramped on mobile: tap the corner icon and it expands comfortably."
+    "hamburgerDesc": "Navigation links no longer felt cramped on mobile: tap the corner icon and it expands comfortably.",
+    "languagesTitle": "Languages",
+    "languagesDesc": "The platform is now available in Spanish and English. Change language from the menu.",
+    "lightModeTitle": "Light mode",
+    "lightModeDesc": "New light theme available. Activate it with the ☀ button in the menu."
   },
   "push": {
     "title": "🔔 Push notifications",
