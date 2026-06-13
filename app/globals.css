@@ -8,17 +8,25 @@
   --font-body: "Manrope", sans-serif;
   --font-mono: "Space Mono", monospace;
 
+  --color-pitch-100: #d0ddd8;
+  --color-pitch-200: #a8bdb5;
+  --color-pitch-400: #4d6760;
+  --color-pitch-500: #3a5048;
+  --color-pitch-600: #2e4038;
   --color-pitch-700: #2a3530;
   --color-pitch-800: #1b231e;
   --color-pitch-900: #111814;
   --color-pitch-950: #0a0e0c;
 
+  --color-grass-100: #d4f0d8;
   --color-grass-300: #9adfa0;
   --color-grass-400: #5fc07a;
   --color-grass-500: #34a259;
   --color-grass-600: #1f7d3f;
   --color-grass-700: #155a2c;
+  --color-grass-800: #0e4020;
 
+  --color-flame-100: #fff5cc;
   --color-flame-300: #ffe06a;
   --color-flame-400: #ffc83d;
   --color-flame-500: #f5b400;
@@ -31,11 +39,14 @@
   --color-paper-50: #fbf3dc;
   --color-paper-100: #f3e6c2;
   --color-paper-200: #e7d099;
+  --color-paper-300: #d9b96e;
 
   --color-chalk-50: #fbf6e7;
   --color-chalk-100: #f1ebd5;
   --color-chalk-200: #dcd5b6;
+  --color-chalk-300: #c5bda2;
   --color-chalk-400: #9b9479;
+  --color-chalk-500: #786e55;
 
   --shadow-brutal: 5px 5px 0 0 rgba(0, 0, 0, 0.95);
   --shadow-brutal-lg: 8px 8px 0 0 rgba(0, 0, 0, 0.95);
