@@ -4,6 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  Globe,
+  Sun,
+  Moon,
+  LogOut,
+  Shield,
+  LayoutGrid,
+  UserCircle,
+} from "lucide-react";
 import type { SessionPayload } from "@/lib/session";
 import { useI18n } from "@/providers/I18nProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -30,7 +39,6 @@ export default function NavBar({
   const nextLocale = locale === "es" ? "en" : "es";
   const switchLabel = locale === "es" ? t.nav.switchToEn : t.nav.switchToEs;
   const themeLabel = theme === "dark" ? t.nav.lightMode : t.nav.darkMode;
-  const themeIcon = theme === "dark" ? "☀" : "☾";
 
   return (
     <nav className="border-b-2 border-pitch-950 dark:bg-pitch-950/95 bg-paper-50/95 backdrop-blur-xs sticky top-0 z-30 relative">
@@ -73,16 +81,18 @@ export default function NavBar({
               {session.isGlobalAdmin && (
                 <Link
                   href="/admin"
-                  className="shrink-0 text-xs text-pitch-950 bg-flame-500 hover:bg-flame-400 px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest font-display"
+                  className="shrink-0 inline-flex items-center gap-1.5 text-xs text-pitch-950 bg-flame-500 hover:bg-flame-400 px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest font-display"
                 >
+                  <Shield size={12} strokeWidth={2.5} />
                   {t.nav.admin}
                 </Link>
               )}
               <button
                 onClick={logout}
-                className="shrink-0 text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors uppercase tracking-widest font-mono"
+                className="shrink-0 inline-flex items-center gap-1.5 text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors uppercase tracking-widest font-mono"
                 aria-label={t.nav.closeSession}
               >
+                <LogOut size={13} strokeWidth={2} />
                 {t.nav.logout}
               </button>
             </>
@@ -100,19 +110,20 @@ export default function NavBar({
           <span aria-hidden="true" className="text-xs dark:text-chalk-400 text-pitch-500 font-mono">|</span>
           <button
             onClick={() => setLocale(nextLocale)}
-            className="shrink-0 text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors uppercase tracking-widest font-mono"
+            className="shrink-0 inline-flex items-center gap-1 text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors uppercase tracking-widest font-mono"
             aria-label={switchLabel}
           >
+            <Globe size={13} strokeWidth={2} />
             {locale === "es" ? "EN" : "ES"}
           </button>
 
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="shrink-0 text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors font-mono"
+            className="shrink-0 dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
             aria-label={themeLabel}
           >
-            {themeIcon}
+            {theme === "dark" ? <Sun size={15} strokeWidth={2} /> : <Moon size={15} strokeWidth={2} />}
           </button>
         </div>
 
@@ -122,17 +133,17 @@ export default function NavBar({
             <>
               <button
                 onClick={() => setLocale(nextLocale)}
-                className="text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors uppercase tracking-widest font-mono px-1"
+                className="dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors p-1"
                 aria-label={switchLabel}
               >
-                {locale === "es" ? "EN" : "ES"}
+                <Globe size={16} strokeWidth={2} />
               </button>
               <button
                 onClick={toggleTheme}
-                className="text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors font-mono px-1"
+                className="dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors p-1"
                 aria-label={themeLabel}
               >
-                {themeIcon}
+                {theme === "dark" ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
               </button>
               <Link
                 href="/login"
@@ -177,23 +188,26 @@ export default function NavBar({
             <Link
               href="/groups"
               onClick={close}
-              className="px-6 py-4 font-display text-xl uppercase tracking-widest dark:text-chalk-50 text-pitch-900 dark:hover:bg-pitch-800 hover:bg-paper-100 hover:text-flame-400 transition-colors"
+              className="px-6 py-4 flex items-center gap-3 font-display text-xl uppercase tracking-widest dark:text-chalk-50 text-pitch-900 dark:hover:bg-pitch-800 hover:bg-paper-100 hover:text-flame-400 transition-colors"
             >
+              <LayoutGrid size={20} strokeWidth={2} />
               {t.nav.myPools}
             </Link>
             <Link
               href="/profile"
               onClick={close}
-              className="px-6 py-4 font-display text-xl uppercase tracking-widest dark:text-chalk-50 text-pitch-900 dark:hover:bg-pitch-800 hover:bg-paper-100 hover:text-flame-400 transition-colors"
+              className="px-6 py-4 flex items-center gap-3 font-display text-xl uppercase tracking-widest dark:text-chalk-50 text-pitch-900 dark:hover:bg-pitch-800 hover:bg-paper-100 hover:text-flame-400 transition-colors"
             >
+              <UserCircle size={20} strokeWidth={2} />
               {session.name ?? session.email.split("@")[0]}
             </Link>
             {session.isGlobalAdmin && (
               <Link
                 href="/admin"
                 onClick={close}
-                className="px-6 py-4 font-display text-xl uppercase tracking-widest text-pitch-600 dark:text-flame-400 dark:hover:bg-pitch-800 hover:bg-paper-100 transition-colors"
+                className="px-6 py-4 flex items-center gap-3 font-display text-xl uppercase tracking-widest text-pitch-600 dark:text-flame-400 dark:hover:bg-pitch-800 hover:bg-paper-100 transition-colors"
               >
+                <Shield size={20} strokeWidth={2} />
                 {t.nav.admin}
               </Link>
             )}
@@ -201,25 +215,28 @@ export default function NavBar({
             {/* Language toggle (mobile) */}
             <button
               onClick={() => { setLocale(nextLocale); close(); }}
-              className="w-full text-left px-6 py-4 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
+              className="w-full text-left px-6 py-4 flex items-center gap-3 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
               aria-label={switchLabel}
             >
+              <Globe size={18} strokeWidth={2} />
               {locale === "es" ? "English" : "Español"}
             </button>
 
             {/* Theme toggle (mobile) */}
             <button
               onClick={() => { toggleTheme(); close(); }}
-              className="w-full text-left px-6 py-4 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
+              className="w-full text-left px-6 py-4 flex items-center gap-3 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
               aria-label={themeLabel}
             >
-              {themeIcon} {themeLabel}
+              {theme === "dark" ? <Sun size={18} strokeWidth={2} /> : <Moon size={18} strokeWidth={2} />}
+              {themeLabel}
             </button>
 
             <button
               onClick={logout}
-              className="w-full text-left px-6 py-4 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
+              className="w-full text-left px-6 py-4 flex items-center gap-3 font-mono text-sm uppercase tracking-widest dark:text-chalk-400 text-pitch-500 dark:hover:bg-pitch-800 hover:bg-paper-100 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors"
             >
+              <LogOut size={18} strokeWidth={2} />
               {t.nav.closeSession}
             </button>
           </div>

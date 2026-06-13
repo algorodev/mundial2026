@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { Mail } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 
 function ForgotPasswordInner() {
@@ -80,7 +81,8 @@ function ForgotPasswordInner() {
         </p>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
+          <label className="flex items-center gap-1.5 text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
+            <Mail size={12} strokeWidth={2.5} />
             {t.auth.forgotPassword.emailLabel}
           </label>
           <input

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { User, Mail, KeyRound } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 
 const PASSWORD_MIN = 8;
@@ -62,7 +63,8 @@ function RegisterInner() {
         className="cromo bg-white dark:bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
+          <label className="flex items-center gap-1.5 text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
+            <User size={12} strokeWidth={2.5} />
             {t.auth.register.nameLabel}
           </label>
           <input
@@ -79,7 +81,8 @@ function RegisterInner() {
         </div>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
+          <label className="flex items-center gap-1.5 text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
+            <Mail size={12} strokeWidth={2.5} />
             {t.auth.register.emailLabel}
           </label>
           <input
@@ -94,7 +97,8 @@ function RegisterInner() {
         </div>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
+          <label className="flex items-center gap-1.5 text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
+            <KeyRound size={12} strokeWidth={2.5} />
             {t.auth.register.passwordLabel}
           </label>
           <input

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Trophy, Medal } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 
 type Row = {
@@ -198,9 +199,15 @@ function LeaderboardRow({
   const content = (
     <>
       <div
-        className={`font-display text-4xl sm:text-6xl w-12 sm:w-20 leading-none text-center ${accentPos}`}
+        className={`font-display text-4xl sm:text-6xl w-12 sm:w-20 leading-none text-center flex items-center justify-center ${accentPos}`}
       >
-        {row.position}
+        {row.position === 1 ? (
+          <Trophy size={36} strokeWidth={2.5} className="sm:size-[52px]" />
+        ) : row.position === 2 || row.position === 3 ? (
+          <Medal size={30} strokeWidth={2.5} className="sm:size-[42px]" />
+        ) : (
+          row.position
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2 min-w-0">
