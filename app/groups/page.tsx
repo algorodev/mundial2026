@@ -5,10 +5,15 @@ import { db } from "@/lib/db";
 import { groups, groupMembers, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import TournamentBadge from "@/components/TournamentBadge";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function GroupsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const myGroups = await db
     .select({
@@ -29,23 +34,26 @@ export default async function GroupsPage() {
     <div className="pt-8">
       <div className="flex items-start justify-between gap-4 mb-10 flex-wrap">
         <div>
-          <h1 className="font-display text-6xl sm:text-7xl text-chalk-50 leading-none">
-            MIS <span className="text-flame-500">PORRAS</span>
+          <h1 className="font-display text-6xl sm:text-7xl text-pitch-900 dark:text-chalk-50 leading-none">
+            {t.groups.title.split(" ")[0]}{" "}
+            <span className="text-flame-500">{t.groups.title.split(" ").slice(1).join(" ")}</span>
           </h1>
           <p className="mt-3 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
             {myGroups.length === 0
-              ? "Aún no estás en ninguna"
-              : `${myGroups.length} grupo${myGroups.length === 1 ? "" : "s"}`}
+              ? t.groups.empty
+              : myGroups.length === 1
+                ? t.groups.groupCount_one
+                : t.groups.groupCount_other.replace("{count}", String(myGroups.length))}
           </p>
         </div>
         <Link href="/groups/new" className="btn-primary">
-          + Crear grupo
+          {t.groups.createGroup}
         </Link>
       </div>
 
       {myGroups.length === 0 && (
         <div className="cromo bg-paper-50 text-pitch-700 p-8 text-center font-mono uppercase tracking-widest">
-          Crea tu primer grupo o pide a un amigo el enlace de invitación.
+          {t.groups.emptyState}
         </div>
       )}
 
@@ -72,7 +80,7 @@ export default async function GroupsPage() {
             </div>
             {g.ownerId === session.userId && (
               <span className="shrink-0 bg-flame-500 text-pitch-950 font-display text-[10px] px-2 py-1 border-2 border-pitch-950 uppercase tracking-widest">
-                Owner
+                {t.common.owner}
               </span>
             )}
           </Link>

@@ -8,19 +8,13 @@ import GroupSettingsFields, {
   settingsToPayload,
   type GroupSettingsValue,
 } from "@/components/GroupSettingsFields";
+import { useI18n } from "@/providers/I18nProvider";
 
 type Tournament = {
   slug: string;
   name: string;
   sport: string;
   status: string;
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  draft: "En construcción",
-  upcoming: "Inscripciones abiertas",
-  live: "En curso",
-  finished: "Terminado",
 };
 
 export default function NewGroupClient({
@@ -30,6 +24,7 @@ export default function NewGroupClient({
   tournaments: Tournament[];
   preselectSlug?: string | null;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [name, setName] = useState("");
   const [tournamentSlug, setTournamentSlug] = useState(
@@ -39,6 +34,13 @@ export default function NewGroupClient({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const STATUS_LABEL: Record<string, string> = {
+    draft: t.home.statusDraft,
+    upcoming: t.home.statusUpcoming,
+    live: t.home.statusLive,
+    finished: t.home.statusFinished,
+  };
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,7 +58,7 @@ export default function NewGroupClient({
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "Error creando el grupo");
+        setError(data.error || t.groups.errorCreating);
         return;
       }
       router.push(`/g/${data.group.slug}`);
@@ -67,16 +69,16 @@ export default function NewGroupClient({
   }
 
   return (
-    <form onSubmit={submit} className="cromo bg-pitch-900 p-6 sm:p-8 space-y-6">
+    <form onSubmit={submit} className="cromo bg-paper-50 dark:bg-pitch-900 p-6 sm:p-8 space-y-6">
       <div>
         <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-          Nombre del grupo
+          {t.groups.groupNameLabel}
         </label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="input-base w-full"
-          placeholder="Ej: La porra de la oficina"
+          placeholder={t.groups.groupNamePlaceholder}
           minLength={3}
           maxLength={80}
           required
@@ -86,16 +88,16 @@ export default function NewGroupClient({
 
       <div>
         <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-          Torneo
+          {t.groups.tournamentLabel}
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {tournaments.map((t) => {
-            const active = tournamentSlug === t.slug;
+          {tournaments.map((tournament) => {
+            const active = tournamentSlug === tournament.slug;
             return (
               <button
-                key={t.slug}
+                key={tournament.slug}
                 type="button"
-                onClick={() => setTournamentSlug(t.slug)}
+                onClick={() => setTournamentSlug(tournament.slug)}
                 className={`cromo flex items-center gap-4 p-4 text-left transition-all ${
                   active
                     ? "bg-flame-500 text-pitch-950 -translate-x-0.5 -translate-y-0.5"
@@ -103,21 +105,21 @@ export default function NewGroupClient({
                 }`}
               >
                 <TournamentBadge
-                  slug={t.slug}
-                  name={t.name}
+                  slug={tournament.slug}
+                  name={tournament.name}
                   size="lg"
                   className="shrink-0"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="font-display text-base sm:text-lg uppercase tracking-tight leading-tight">
-                    {t.name}
+                    {tournament.name}
                   </div>
                   <div
                     className={`mt-1 font-mono text-[10px] uppercase tracking-widest ${
                       active ? "text-pitch-950/70" : "text-pitch-700"
                     }`}
                   >
-                    {STATUS_LABEL[t.status] ?? t.status}
+                    {STATUS_LABEL[tournament.status] ?? tournament.status}
                   </div>
                 </div>
                 {active && (
@@ -127,19 +129,19 @@ export default function NewGroupClient({
             );
           })}
         </div>
-        <p className="mt-3 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-          Un grupo = un torneo. Si quieres dos porras, crea dos grupos.
+        <p className="mt-3 font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+          {t.groups.oneGroupOneTournament}
         </p>
       </div>
 
       {/* Configuración avanzada — colapsable para no abrumar */}
-      <div className="border-t-2 border-pitch-800 pt-5">
+      <div className="border-t-2 border-paper-200 dark:border-pitch-800 pt-5">
         <button
           type="button"
           onClick={() => setShowAdvanced((s) => !s)}
           className="w-full flex items-center justify-between text-left font-display text-sm uppercase tracking-widest text-flame-400 hover:text-flame-300"
         >
-          <span>⚙ Configuración avanzada</span>
+          <span>{t.groups.advancedSettings}</span>
           <span className="font-mono text-xs">{showAdvanced ? "▲" : "▼"}</span>
         </button>
         {showAdvanced && (
@@ -156,7 +158,7 @@ export default function NewGroupClient({
       )}
 
       <button type="submit" disabled={loading} className="btn-primary w-full">
-        {loading ? "Creando..." : "Crear grupo →"}
+        {loading ? t.groups.creating : t.groups.createSubmit}
       </button>
     </form>
   );

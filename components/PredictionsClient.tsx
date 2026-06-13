@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import TeamBadge from "@/components/TeamBadge";
+import { useI18n } from "@/providers/I18nProvider";
 
 type MatchRow = {
   id: number;
@@ -45,6 +46,7 @@ export default function PredictionsClient({
   predictionLockMode?: string;
   lockMinutesBefore?: number;
 }) {
+  const { t } = useI18n();
   const [preds, setPreds] = useState<PredMap>(initialPreds);
   const [filter, setFilter] = useState<Filter>("all");
   const [savingMatchId, setSavingMatchId] = useState<number | null>(null);
@@ -173,13 +175,13 @@ export default function PredictionsClient({
       });
       if (!r.ok) {
         const d = await r.json();
-        setErrorMsg(d.error || "Error al guardar");
+        setErrorMsg(d.error || t.predictions.errorSaving);
         return;
       }
       setSavedFlash(matchId);
       setTimeout(() => setSavedFlash(null), 1200);
     } catch {
-      setErrorMsg("Sin conexión");
+      setErrorMsg(t.common.noConnection);
     } finally {
       setSavingMatchId(null);
     }
@@ -190,36 +192,36 @@ export default function PredictionsClient({
       {/* Banner de cierre */}
       {tournamentLocked ? (
         <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
-          🔒 El torneo ha empezado · Las predicciones están cerradas
+          {t.predictions.locked}
         </div>
       ) : predictionLockMode === "tournament-start" ? (
-        <div className="cromo bg-pitch-900 text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
-          ⏱ Cierre con el primer partido · {tournamentStartLabel}
+        <div className="cromo bg-paper-100 dark:bg-pitch-900 text-pitch-700 dark:text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
+          {t.predictions.closesWithTournament.replace("{label}", tournamentStartLabel)}
         </div>
       ) : (
-        <div className="cromo bg-pitch-900 text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
-          ⏱ Cada partido se cierra en su pitido inicial
+        <div className="cromo bg-paper-100 dark:bg-pitch-900 text-pitch-700 dark:text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
+          {t.predictions.closesPerMatch}
         </div>
       )}
 
       {/* Stats + filtros */}
-      <div className="cromo bg-pitch-900 p-5 sm:p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+      <div className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex gap-8">
           <div>
             <div className="font-display text-5xl text-flame-500 leading-none">
               {stats.filled}
-              <span className="text-chalk-400 text-3xl">/{stats.total}</span>
+              <span className="text-pitch-500 dark:text-chalk-400 text-3xl">/{stats.total}</span>
             </div>
-            <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-2">
-              Pronosticados
+            <div className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest mt-2">
+              {t.predictions.predicted}
             </div>
           </div>
           <div>
             <div className="font-display text-5xl text-brick-400 leading-none">
               {stats.missing}
             </div>
-            <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-2">
-              Sin rellenar
+            <div className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest mt-2">
+              {t.predictions.missing}
             </div>
           </div>
         </div>
@@ -230,13 +232,13 @@ export default function PredictionsClient({
               active={filter === "all"}
               onClick={() => setFilter("all")}
             >
-              Todos
+              {t.predictions.all}
             </FilterChip>
             <FilterChip
               active={filter === "pending"}
               onClick={() => setFilter("pending")}
             >
-              Pendientes
+              {t.predictions.pending}
             </FilterChip>
           </div>
         )}
@@ -250,18 +252,18 @@ export default function PredictionsClient({
 
       <div className="space-y-12">
         {grouped.length === 0 && (
-          <div className="text-center py-16 text-chalk-400 font-mono uppercase tracking-widest text-sm">
-            No hay partidos en esta vista.
+          <div className="text-center py-16 text-pitch-500 dark:text-chalk-400 font-mono uppercase tracking-widest text-sm">
+            {t.predictions.noMatchesInView}
           </div>
         )}
         {grouped.map(([date, matchesOfDay]) => (
           <section key={date}>
             <h2 className="mb-5 flex items-center gap-3">
-              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
               <span className="bg-flame-500 text-pitch-950 font-display text-xl px-4 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block">
                 {date}
               </span>
-              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 px-1 py-2">
               {matchesOfDay.map((m, idx) => (
@@ -282,6 +284,16 @@ export default function PredictionsClient({
                   awayLogoUrl={
                     m.awayCode ? teamLogos[m.awayCode] ?? null : null
                   }
+                  labelSaving={t.predictions.saving}
+                  labelSaved={t.predictions.saved}
+                  labelLocked={t.predictions.locked_badge}
+                  labelExact={t.predictions.exactBadge}
+                  labelSign={t.predictions.signBadge}
+                  labelRealResult={t.predictions.realResult}
+                  labelMatchDetail={t.predictions.matchDetail}
+                  labelGoalsHome={t.predictions.goalsLabel.replace("{team}", m.homeTeam)}
+                  labelGoalsAway={t.predictions.goalsLabel.replace("{team}", m.awayTeam)}
+                  labelGroup={t.predictions.group}
                 />
               ))}
             </div>
@@ -327,6 +339,16 @@ function MatchCard({
   tilt,
   homeLogoUrl,
   awayLogoUrl,
+  labelSaving,
+  labelSaved,
+  labelLocked,
+  labelExact,
+  labelSign,
+  labelRealResult,
+  labelMatchDetail,
+  labelGoalsHome,
+  labelGoalsAway,
+  labelGroup,
 }: {
   match: MatchRow;
   groupSlug: string;
@@ -339,6 +361,16 @@ function MatchCard({
   tilt: "even" | "odd";
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
+  labelSaving: string;
+  labelSaved: string;
+  labelLocked: string;
+  labelExact: string;
+  labelSign: string;
+  labelRealResult: string;
+  labelMatchDetail: string;
+  labelGoalsHome: string;
+  labelGoalsAway: string;
+  labelGroup: string;
 }) {
   const hasResult = match.homeScore != null && match.awayScore != null;
 
@@ -353,7 +385,7 @@ function MatchCard({
       cromoBg = "bg-grass-300";
       pointsBadge = (
         <span className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
-          +3 EXACTO
+          {labelExact}
         </span>
       );
     } else {
@@ -363,7 +395,7 @@ function MatchCard({
         cromoBg = "bg-flame-300";
         pointsBadge = (
           <span className="font-display text-[10px] bg-flame-500 text-pitch-950 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
-            +1 SIGNO
+            {labelSign}
           </span>
         );
       } else {
@@ -391,7 +423,7 @@ function MatchCard({
             <span
               className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded-sm`}
             >
-              GRUPO {match.groupName}
+              {labelGroup.replace("{name}", match.groupName)}
             </span>
           )}
           {match.matchTime && (
@@ -408,18 +440,18 @@ function MatchCard({
         <div className="flex items-center gap-2 shrink-0">
           {saving && (
             <span className="font-mono text-[10px] text-pitch-700 animate-pulse uppercase tracking-wider">
-              guardando…
+              {labelSaving}
             </span>
           )}
           {saved && (
             <span className="font-mono text-[10px] text-grass-600 font-bold uppercase tracking-wider">
-              ✓ guardado
+              {labelSaved}
             </span>
           )}
           {pointsBadge}
           {locked && !hasResult && (
             <span className="font-display text-[10px] bg-pitch-950 text-flame-400 px-2 py-1 border-2 border-pitch-950 tracking-wider">
-              🔒 BLOQUEADO
+              {labelLocked}
             </span>
           )}
         </div>
@@ -457,7 +489,7 @@ function MatchCard({
             onBlur={() => onFlush(match.id)}
             disabled={locked}
             className="score-input"
-            aria-label={`Goles ${match.homeTeam}`}
+            aria-label={labelGoalsHome}
           />
           <span className="text-pitch-950 font-display text-3xl">·</span>
           <input
@@ -470,7 +502,7 @@ function MatchCard({
             onBlur={() => onFlush(match.id)}
             disabled={locked}
             className="score-input"
-            aria-label={`Goles ${match.awayTeam}`}
+            aria-label={labelGoalsAway}
           />
         </div>
 
@@ -494,7 +526,7 @@ function MatchCard({
       {hasResult && (
         <div className="mt-4 pt-3 border-t-2 border-dashed border-pitch-950/30 text-center">
           <span className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
-            Resultado real
+            {labelRealResult}
           </span>
           <div className="font-display text-3xl text-pitch-950 mt-1">
             {match.homeScore} <span className="text-brick-500">·</span>{" "}
@@ -508,7 +540,7 @@ function MatchCard({
           href={`/g/${groupSlug}/m/${match.matchNumber}`}
           className="inline-block font-mono text-[10px] uppercase tracking-widest text-pitch-700 hover:text-flame-600 whitespace-nowrap"
         >
-          Detalle del partido →
+          {labelMatchDetail}
         </Link>
       </div>
     </article>

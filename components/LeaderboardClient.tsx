@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/providers/I18nProvider";
 
 type Row = {
   position: number;
@@ -29,6 +30,7 @@ export default function LeaderboardClient({
   // 'hidden-until-lock' → solo cuando arranca el torneo (default)
   predictionsVisibility: "open" | "hidden-until-lock";
 }) {
+  const { t } = useI18n();
   const [rows, setRows] = useState<Row[] | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export default function LeaderboardClient({
       setUpdatedAt(new Date());
       setError(null);
     } catch {
-      setError("No se ha podido actualizar la clasificación");
+      setError(t.leaderboard.errorLoading);
     }
   }
 
@@ -63,8 +65,8 @@ export default function LeaderboardClient({
 
   if (rows === null) {
     return (
-      <div className="text-center py-16 text-chalk-400 font-mono text-sm uppercase tracking-widest animate-pulse">
-        Cargando…
+      <div className="text-center py-16 text-pitch-500 dark:text-chalk-400 font-mono text-sm uppercase tracking-widest animate-pulse">
+        {t.leaderboard.loading}
       </div>
     );
   }
@@ -72,9 +74,9 @@ export default function LeaderboardClient({
   if (rows.length === 0) {
     return (
       <div className="cromo bg-paper-50 text-pitch-950 max-w-xl mx-auto p-8 text-center">
-        <p className="font-display text-2xl mb-2">¡SIN PARTICIPANTES!</p>
+        <p className="font-display text-2xl mb-2">{t.leaderboard.noParticipants}</p>
         <p className="text-pitch-700">
-          Comparte el enlace de invitación para que se una más gente al grupo.
+          {t.leaderboard.noParticipantsDesc}
         </p>
       </div>
     );
@@ -93,15 +95,14 @@ export default function LeaderboardClient({
         className={`cromo px-4 py-3 mb-8 font-mono text-[11px] uppercase tracking-widest ${
           peersVisible
             ? "bg-grass-500 text-paper-50"
-            : "bg-pitch-900 text-chalk-300"
+            : "bg-paper-100 dark:bg-pitch-900 text-pitch-700 dark:text-chalk-300"
         }`}
       >
         {peersVisible ? (
-          <>👆 Pulsa en cualquier participante para ver sus pronósticos</>
+          <>{t.leaderboard.peersVisible}</>
         ) : (
           <>
-            🔒 Las predicciones del resto se podrán consultar cuando empiece el
-            torneo · {tournamentStartLabel}
+            {t.leaderboard.peersHidden.replace("{label}", tournamentStartLabel)}
           </>
         )}
       </div>
@@ -114,18 +115,21 @@ export default function LeaderboardClient({
             place={2}
             clickable={peersVisible}
             groupSlug={groupSlug}
+            labelPoints={t.leaderboard.puntos}
           />
           <PodiumCard
             row={rows[0]}
             place={1}
             clickable={peersVisible}
             groupSlug={groupSlug}
+            labelPoints={t.leaderboard.puntos}
           />
           <PodiumCard
             row={rows[2]}
             place={3}
             clickable={peersVisible}
             groupSlug={groupSlug}
+            labelPoints={t.leaderboard.puntos}
           />
         </div>
       )}
@@ -139,13 +143,19 @@ export default function LeaderboardClient({
             isMe={row.name === currentName}
             clickable={peersVisible}
             groupSlug={groupSlug}
+            labelYou={t.common.you}
+            labelEx={t.leaderboard.ex}
+            labelSg={t.leaderboard.sg}
+            labelFa={t.leaderboard.fa}
+            labelJug={t.leaderboard.jug}
+            labelPts={t.leaderboard.pts}
           />
         ))}
       </div>
 
       {updatedAt && (
-        <p className="mt-10 text-center font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-          Actualizado {updatedAt.toLocaleTimeString("es-ES")} · Auto-refresh 30s
+        <p className="mt-10 text-center font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+          {t.leaderboard.updatedAt.replace("{time}", updatedAt.toLocaleTimeString("es-ES"))}
         </p>
       )}
     </>
@@ -157,15 +167,27 @@ function LeaderboardRow({
   isMe,
   clickable,
   groupSlug,
+  labelYou,
+  labelEx,
+  labelSg,
+  labelFa,
+  labelJug,
+  labelPts,
 }: {
   row: Row;
   isMe: boolean;
   clickable: boolean;
   groupSlug: string;
+  labelYou: string;
+  labelEx: string;
+  labelSg: string;
+  labelFa: string;
+  labelJug: string;
+  labelPts: string;
 }) {
   const tone = isMe
     ? "bg-flame-500 text-pitch-950"
-    : "bg-pitch-900 text-chalk-50";
+    : "bg-paper-50 dark:bg-pitch-900 text-pitch-900 dark:text-chalk-50";
   const accentTotal = isMe ? "text-pitch-950" : "text-flame-500";
   const accentPos = isMe ? "text-pitch-950" : "text-flame-500";
 
@@ -187,7 +209,7 @@ function LeaderboardRow({
           </span>
           {isMe && (
             <span className="text-[10px] font-mono uppercase tracking-widest opacity-80 shrink-0">
-              ← TÚ
+              {labelYou}
             </span>
           )}
         </div>
@@ -196,18 +218,18 @@ function LeaderboardRow({
             <strong className={isMe ? "text-pitch-950" : "text-grass-400"}>
               {row.exact}
             </strong>{" "}
-            ex
+            {labelEx}
           </span>
           <span>
             <strong className={isMe ? "text-pitch-950" : "text-flame-400"}>
               {row.outcome}
             </strong>{" "}
-            sg
+            {labelSg}
           </span>
           <span>
-            <strong>{row.miss}</strong> fa
+            <strong>{row.miss}</strong> {labelFa}
           </span>
-          <span className="hidden sm:inline">· {row.played} jug.</span>
+          <span className="hidden sm:inline">· {row.played} {labelJug}</span>
         </div>
       </div>
       <div
@@ -215,13 +237,13 @@ function LeaderboardRow({
       >
         {row.total}
         <span className="font-mono text-[10px] uppercase tracking-widest opacity-70">
-          pts
+          {labelPts}
         </span>
       </div>
       {clickable && (
         <span
           className={`hidden sm:block font-display text-2xl ${
-            isMe ? "text-pitch-950/60" : "text-chalk-400"
+            isMe ? "text-pitch-950/60" : "text-pitch-500 dark:text-chalk-400"
           }`}
           aria-hidden
         >
@@ -248,11 +270,13 @@ function PodiumCard({
   place,
   clickable,
   groupSlug,
+  labelPoints,
 }: {
   row: Row;
   place: 1 | 2 | 3;
   clickable: boolean;
   groupSlug: string;
+  labelPoints: string;
 }) {
   // min-h en vez de h fija: la altura sigue marcando la jerarquía del
   // podio (1º más alto, 3º más bajo) pero deja crecer si un nombre es muy
@@ -293,7 +317,7 @@ function PodiumCard({
           {row.total}
         </div>
         <div className="font-mono text-[9px] uppercase tracking-widest opacity-70 mt-1">
-          puntos
+          {labelPoints}
         </div>
         <div className="font-display text-sm sm:text-base mt-3 text-center leading-tight tracking-tight uppercase wrap-break-word line-clamp-3 max-w-full text-balance">
           {row.name}

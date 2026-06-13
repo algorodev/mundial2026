@@ -14,6 +14,8 @@ import { getTournamentStart } from "@/lib/tournament";
 import { getGroupForMember } from "@/lib/group-access";
 import { calcPoints, type ScoreResult } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,9 @@ export default async function MemberPredictionsPage(
 
   const ctx = await getGroupForMember(params.slug, session.userId);
   if (!ctx) notFound();
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const start = await getTournamentStart(ctx.tournamentId);
   const startMs = start ? new Date(start.iso).getTime() : null;
@@ -88,8 +93,8 @@ export default async function MemberPredictionsPage(
   ]);
 
   const logoByCode: Record<string, string> = {};
-  for (const t of tournamentTeams) {
-    if (t.logoUrl) logoByCode[t.code] = t.logoUrl;
+  for (const tm of tournamentTeams) {
+    if (tm.logoUrl) logoByCode[tm.code] = tm.logoUrl;
   }
 
   const predMap = new Map<number, { homeScore: number; awayScore: number }>();
@@ -139,43 +144,43 @@ export default async function MemberPredictionsPage(
           href={`/g/${ctx.slug}/leaderboard`}
           className="back-link mb-4"
         >
-          ← Volver a la clasificación
+          {t.leaderboard.backToLeaderboard}
         </Link>
-        <p className="font-mono text-[11px] uppercase tracking-widest text-chalk-400 mb-1">
-          Pronósticos de
+        <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500 dark:text-chalk-400 mb-1">
+          {t.leaderboard.predictionsOf}
         </p>
-        <h1 className="font-display text-5xl sm:text-7xl text-chalk-50 leading-none uppercase wrap-break-word">
+        <h1 className="font-display text-5xl sm:text-7xl text-pitch-900 dark:text-chalk-50 leading-none uppercase wrap-break-word">
           {member.name}
           {isSelf && (
             <span className="ml-4 align-middle inline-block bg-flame-500 text-pitch-950 font-display text-xs px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-              ← Tú
+              ← {t.common.you.replace("← ", "")}
             </span>
           )}
         </h1>
-        <p className="mt-3 font-mono text-[10px] uppercase tracking-widest text-chalk-400">
+        <p className="mt-3 font-mono text-[10px] uppercase tracking-widest text-pitch-500 dark:text-chalk-400">
           {ctx.predictionsVisibility === "open"
-            ? "🔓 Pronósticos visibles desde la creación del grupo"
-            : `🔒 Bloqueadas desde el inicio del torneo · ${start?.label ?? ""}`}
+            ? t.leaderboard.visibilityOpen
+            : t.leaderboard.visibilityLocked.replace("{label}", start?.label ?? "")}
         </p>
       </div>
 
-      <div className="cromo bg-pitch-900 p-5 sm:p-6 mb-10 grid grid-cols-2 sm:grid-cols-5 gap-4">
-        <Stat label="Puntos" value={total} accent="text-flame-500" />
-        <Stat label="Exactos" value={exact} accent="text-grass-400" />
-        <Stat label="Signos" value={outcome} accent="text-flame-400" />
-        <Stat label="Fallos" value={miss} accent="text-brick-400" />
-        <Stat label="Jugados" value={played} accent="text-chalk-50" />
+      <div className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 mb-10 grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <Stat label={t.leaderboard.total} value={total} accent="text-flame-500" />
+        <Stat label={t.leaderboard.exact} value={exact} accent="text-grass-400" />
+        <Stat label={t.leaderboard.outcome} value={outcome} accent="text-flame-400" />
+        <Stat label={t.leaderboard.miss} value={miss} accent="text-brick-400" />
+        <Stat label={t.leaderboard.played} value={played} accent="text-pitch-900 dark:text-chalk-50" />
       </div>
 
       <div className="space-y-12">
         {Array.from(groupsByDate.entries()).map(([date, dayMatches]) => (
           <section key={date}>
             <h2 className="mb-5 flex items-center gap-3">
-              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
               <span className="bg-flame-500 text-pitch-950 font-display text-xl px-4 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block">
                 {date}
               </span>
-              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 px-1 py-2">
               {dayMatches.map((m, idx) => (
@@ -186,6 +191,11 @@ export default async function MemberPredictionsPage(
                   tilt={idx % 2 === 0 ? "even" : "odd"}
                   homeLogoUrl={m.homeCode ? logoByCode[m.homeCode] ?? null : null}
                   awayLogoUrl={m.awayCode ? logoByCode[m.awayCode] ?? null : null}
+                  labelExact={t.match.exactBadge}
+                  labelSign={t.match.signBadge}
+                  labelNoPred={t.match.noPrediction}
+                  labelRealResult={t.predictions.realResult}
+                  labelGroup={t.predictions.group}
                 />
               ))}
             </div>
@@ -210,7 +220,7 @@ function Stat({
       <div className={`font-display text-4xl sm:text-5xl leading-none ${accent}`}>
         {value}
       </div>
-      <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-2">
+      <div className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest mt-2">
         {label}
       </div>
     </div>
@@ -223,12 +233,22 @@ function ReadOnlyMatchCard({
   tilt,
   homeLogoUrl,
   awayLogoUrl,
+  labelExact,
+  labelSign,
+  labelNoPred,
+  labelRealResult,
+  labelGroup,
 }: {
   match: MatchRow;
   pred: { homeScore: number; awayScore: number } | undefined;
   tilt: "even" | "odd";
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
+  labelExact: string;
+  labelSign: string;
+  labelNoPred: string;
+  labelRealResult: string;
+  labelGroup: string;
 }) {
   const hasResult = match.homeScore != null && match.awayScore != null;
   const hasPred = pred !== undefined;
@@ -248,14 +268,14 @@ function ReadOnlyMatchCard({
       cromoBg = "bg-grass-300";
       pointsBadge = (
         <span className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
-          +3 EXACTO
+          {labelExact}
         </span>
       );
     } else if (result === "outcome") {
       cromoBg = "bg-flame-300";
       pointsBadge = (
         <span className="font-display text-[10px] bg-flame-500 text-pitch-950 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
-          +1 SIGNO
+          {labelSign}
         </span>
       );
     } else {
@@ -282,7 +302,7 @@ function ReadOnlyMatchCard({
             <span
               className={`group-${match.groupName} text-[10px] px-2 py-0.5 rounded-sm`}
             >
-              GRUPO {match.groupName}
+              {labelGroup.replace("{name}", match.groupName)}
             </span>
           )}
           {match.matchTime && (
@@ -300,7 +320,7 @@ function ReadOnlyMatchCard({
           {pointsBadge}
           {!hasPred && (
             <span className="font-display text-[10px] bg-pitch-950 text-brick-400 px-2 py-1 border-2 border-pitch-950 tracking-wider">
-              SIN PRONÓSTICO
+              {labelNoPred}
             </span>
           )}
         </div>
@@ -347,7 +367,7 @@ function ReadOnlyMatchCard({
       {hasResult && (
         <div className="mt-4 pt-3 border-t-2 border-dashed border-pitch-950/30 text-center">
           <span className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
-            Resultado real
+            {labelRealResult}
           </span>
           <div className="font-display text-3xl text-pitch-950 mt-1">
             {match.homeScore} <span className="text-brick-500">·</span>{" "}

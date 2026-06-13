@@ -11,6 +11,8 @@ import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import TournamentBadge from "@/components/TournamentBadge";
 import PushOptIn from "@/components/PushOptIn";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function GroupPredictionsPage(
   props: {
@@ -34,6 +36,9 @@ export default async function GroupPredictionsPage(
     if (pub) redirect(`/g/${params.slug}/leaderboard`);
     notFound();
   }
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const [tournament, group, allMatches, myPreds, tournamentTeams, start] =
     await Promise.all([
@@ -71,8 +76,8 @@ export default async function GroupPredictionsPage(
     ]);
 
   const teamLogos: Record<string, string> = {};
-  for (const t of tournamentTeams) {
-    if (t.logoUrl) teamLogos[t.code] = t.logoUrl;
+  for (const tm of tournamentTeams) {
+    if (tm.logoUrl) teamLogos[tm.code] = tm.logoUrl;
   }
 
   const matchesSerialized = allMatches.map((m) => ({
@@ -91,7 +96,7 @@ export default async function GroupPredictionsPage(
         href="/groups"
         className="back-link mb-3"
       >
-        ← Mis porras
+        {t.leaderboard.backToMyPools}
       </Link>
       <div className="mb-6 flex items-start gap-4">
         {tournament && (
@@ -104,14 +109,14 @@ export default async function GroupPredictionsPage(
           />
         )}
         <div className="min-w-0">
-          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+          <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
             {ctx.name}
           </h1>
           <p className="mt-3 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
             {tournament?.name}
           </p>
           {group?.description && (
-            <p className="mt-3 text-sm text-chalk-300 whitespace-pre-line max-w-2xl">
+            <p className="mt-3 text-sm text-pitch-700 dark:text-chalk-300 whitespace-pre-line max-w-2xl">
               {group.description}
             </p>
           )}
@@ -126,12 +131,18 @@ export default async function GroupPredictionsPage(
       {matchesSerialized.length === 0 ? (
         <div className="cromo bg-paper-50 text-pitch-950 p-8 sm:p-10 text-center">
           <div className="font-display text-3xl sm:text-4xl mb-3">
-            🗓 PRÓXIMAMENTE
+            {t.predictions.comingSoon}
           </div>
           <p className="font-mono text-xs sm:text-sm text-pitch-700 uppercase tracking-widest">
-            El calendario de {tournament?.name} aún no se ha publicado.
-            <br />
-            Vuelve cuando arranque el torneo para empezar a pronosticar.
+            {t.predictions.comingSoonDesc
+              .replace("{name}", tournament?.name ?? "")
+              .split("\n")
+              .map((line, i) => (
+                <span key={i}>
+                  {line}
+                  {i === 0 && <br />}
+                </span>
+              ))}
           </p>
         </div>
       ) : (

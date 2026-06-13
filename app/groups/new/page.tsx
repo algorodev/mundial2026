@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import NewGroupClient from "@/components/NewGroupClient";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function NewGroupPage({
   searchParams,
@@ -18,6 +20,9 @@ export default async function NewGroupPage({
       : "/groups/new";
     redirect(`/login?next=${encodeURIComponent(next)}`);
   }
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   // Solo torneos abiertos a inscripción — ni los que aún no tienen calendario
   // ni los que ya han terminado.
@@ -43,14 +48,15 @@ export default async function NewGroupPage({
         href="/groups"
         className="back-link mb-4"
       >
-        ← Mis porras
+        {t.groups.backToMyPools}
       </Link>
-      <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none mb-8">
-        NUEVO <span className="text-flame-500">GRUPO</span>
+      <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none mb-8">
+        {t.groups.newGroup.split(" ")[0]}{" "}
+        <span className="text-flame-500">{t.groups.newGroup.split(" ").slice(1).join(" ")}</span>
       </h1>
       {list.length === 0 ? (
         <div className="cromo bg-paper-50 text-pitch-700 p-8 text-center font-mono uppercase tracking-widest">
-          No hay torneos disponibles. Pide al admin que cree uno.
+          {t.groups.noTournaments}
         </div>
       ) : (
         <NewGroupClient tournaments={list} preselectSlug={preselectSlug} />

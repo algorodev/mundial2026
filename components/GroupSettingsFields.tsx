@@ -1,6 +1,7 @@
 "use client";
 
 import { useId } from "react";
+import { useI18n } from "@/providers/I18nProvider";
 
 export type GroupSettingsValue = {
   description: string;
@@ -49,6 +50,7 @@ export default function GroupSettingsFields({
   disabled?: boolean;
 }) {
   const id = useId();
+  const { t } = useI18n();
 
   function update<K extends keyof GroupSettingsValue>(
     key: K,
@@ -62,7 +64,7 @@ export default function GroupSettingsFields({
       {/* Descripción */}
       <div>
         <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-          Descripción / Reglas (opcional)
+          {t.groupSettings.descriptionLabel}
         </label>
         <textarea
           value={value.description}
@@ -71,17 +73,17 @@ export default function GroupSettingsFields({
           rows={3}
           disabled={disabled}
           className="input-base w-full resize-none"
-          placeholder='Ej: "Pago 5€ al ganador. Empate: comparte bote."'
+          placeholder={t.groupSettings.descriptionPlaceholder}
         />
-        <p className="mt-1 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-          {value.description.length}/500
+        <p className="mt-1 font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+          {t.groupSettings.descriptionCounter.replace("{count}", String(value.description.length))}
         </p>
       </div>
 
       {/* Cierre de predicciones */}
       <fieldset>
         <legend className="text-xs font-display uppercase tracking-widest text-flame-400 mb-3">
-          ¿Cuándo se cierran las predicciones?
+          {t.groupSettings.lockWhen}
         </legend>
         <div className="space-y-2">
           <Radio
@@ -89,13 +91,13 @@ export default function GroupSettingsFields({
             checked={value.predictionLockMode === "per-match"}
             onChange={() => update("predictionLockMode", "per-match")}
             disabled={disabled}
-            label="Por partido"
-            help="Cada partido se cierra individualmente al empezar."
+            label={t.groupSettings.lockPerMatch}
+            help={t.groupSettings.lockPerMatchHelp}
           />
           {value.predictionLockMode === "per-match" && (
             <div className="ml-7 mt-2 flex items-center gap-2">
-              <span className="font-mono text-[11px] text-chalk-300 uppercase tracking-widest">
-                Cerrar
+              <span className="font-mono text-[11px] text-pitch-700 dark:text-chalk-300 uppercase tracking-widest">
+                {t.groupSettings.lockCloseMinutes}
               </span>
               <input
                 type="number"
@@ -114,8 +116,8 @@ export default function GroupSettingsFields({
                 disabled={disabled}
                 className="input-base w-20 text-center"
               />
-              <span className="font-mono text-[11px] text-chalk-300 uppercase tracking-widest">
-                min antes del kickoff
+              <span className="font-mono text-[11px] text-pitch-700 dark:text-chalk-300 uppercase tracking-widest">
+                {t.groupSettings.lockMinutesBefore}
               </span>
             </div>
           )}
@@ -124,8 +126,8 @@ export default function GroupSettingsFields({
             checked={value.predictionLockMode === "tournament-start"}
             onChange={() => update("predictionLockMode", "tournament-start")}
             disabled={disabled}
-            label="Al empezar el torneo"
-            help="Modo quiniela: todo se cierra con el primer partido."
+            label={t.groupSettings.lockTournamentStart}
+            help={t.groupSettings.lockTournamentStartHelp}
           />
         </div>
       </fieldset>
@@ -133,7 +135,7 @@ export default function GroupSettingsFields({
       {/* Política de inscripción */}
       <fieldset>
         <legend className="text-xs font-display uppercase tracking-widest text-flame-400 mb-3">
-          ¿Quién puede entrar al grupo?
+          {t.groupSettings.joinPolicy}
         </legend>
         <div className="space-y-2">
           <Radio
@@ -141,29 +143,29 @@ export default function GroupSettingsFields({
             checked={value.joinPolicy === "open"}
             onChange={() => update("joinPolicy", "open")}
             disabled={disabled}
-            label="Abierto"
-            help="Cualquiera con el enlace de invitación puede unirse."
+            label={t.groupSettings.joinOpen}
+            help={t.groupSettings.joinOpenHelp}
           />
           <Radio
             name={`${id}-join`}
             checked={value.joinPolicy === "approval"}
             onChange={() => update("joinPolicy", "approval")}
             disabled={disabled}
-            label="Con aprobación"
-            help="El owner aprueba a cada solicitante manualmente."
+            label={t.groupSettings.joinApproval}
+            help={t.groupSettings.joinApprovalHelp}
           />
           <Radio
             name={`${id}-join`}
             checked={value.joinPolicy === "closed"}
             onChange={() => update("joinPolicy", "closed")}
             disabled={disabled}
-            label="Cerrado"
-            help="Nadie más puede unirse, ni con el enlace."
+            label={t.groupSettings.joinClosed}
+            help={t.groupSettings.joinClosedHelp}
           />
         </div>
         <div className="mt-4">
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Plazo límite de inscripción (opcional)
+            {t.groupSettings.joinDeadlineLabel}
           </label>
           <input
             type="datetime-local"
@@ -172,8 +174,8 @@ export default function GroupSettingsFields({
             disabled={disabled}
             className="input-base w-full"
           />
-          <p className="mt-1 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-            Después de esta fecha no se admitirán nuevas inscripciones.
+          <p className="mt-1 font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+            {t.groupSettings.joinDeadlineHelp}
           </p>
         </div>
 
@@ -190,12 +192,11 @@ export default function GroupSettingsFields({
             className="mt-1 w-4 h-4 accent-flame-500 cursor-pointer"
           />
           <div className="flex-1">
-            <div className="font-display text-sm uppercase tracking-tight text-chalk-50">
-              Permitir entradas después de que arranque el torneo
+            <div className="font-display text-sm uppercase tracking-tight text-pitch-900 dark:text-chalk-50">
+              {t.groupSettings.allowLateJoin}
             </div>
-            <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-0.5">
-              Por defecto, una vez empieza el torneo no se admiten más miembros.
-              Activa esto si quieres que la gente se pueda apuntar tarde.
+            <div className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest mt-0.5">
+              {t.groupSettings.allowLateJoinHelp}
             </div>
           </div>
         </label>
@@ -204,7 +205,7 @@ export default function GroupSettingsFields({
       {/* Visibilidad */}
       <fieldset>
         <legend className="text-xs font-display uppercase tracking-widest text-flame-400 mb-3">
-          ¿Cuándo se ven los pronósticos del resto?
+          {t.groupSettings.visibilityLabel}
         </legend>
         <div className="space-y-2">
           <Radio
@@ -212,16 +213,16 @@ export default function GroupSettingsFields({
             checked={value.predictionsVisibility === "hidden-until-lock"}
             onChange={() => update("predictionsVisibility", "hidden-until-lock")}
             disabled={disabled}
-            label="Ocultos hasta el cierre"
-            help="Solo se ven cuando el torneo arranca (por defecto)."
+            label={t.groupSettings.visibilityHidden}
+            help={t.groupSettings.visibilityHiddenHelp}
           />
           <Radio
             name={`${id}-vis`}
             checked={value.predictionsVisibility === "open"}
             onChange={() => update("predictionsVisibility", "open")}
             disabled={disabled}
-            label="Siempre visibles"
-            help="Cualquier miembro puede ver los pronósticos del resto en cualquier momento."
+            label={t.groupSettings.visibilityOpen}
+            help={t.groupSettings.visibilityOpenHelp}
           />
         </div>
       </fieldset>
@@ -259,11 +260,11 @@ function Radio({
         className="mt-1.5 w-4 h-4 accent-flame-500 cursor-pointer"
       />
       <div className="flex-1">
-        <div className="font-display text-sm uppercase tracking-tight text-chalk-50">
+        <div className="font-display text-sm uppercase tracking-tight text-pitch-900 dark:text-chalk-50">
           {label}
         </div>
         {help && (
-          <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-0.5">
+          <div className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest mt-0.5">
             {help}
           </div>
         )}

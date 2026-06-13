@@ -10,6 +10,8 @@ import LeaderboardClient from "@/components/LeaderboardClient";
 import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import TournamentBadge from "@/components/TournamentBadge";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,9 @@ export default async function GroupLeaderboardPage(props: {
     }
     notFound();
   }
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const groupName = memberCtx ? memberCtx.name : publicCtx!.name;
   const groupSlug = memberCtx ? memberCtx.slug : publicCtx!.slug;
@@ -62,7 +67,7 @@ export default async function GroupLeaderboardPage(props: {
         href={isMember ? "/groups" : "/"}
         className="back-link mb-3"
       >
-        ← {isMember ? "Mis porras" : "Volver"}
+        {isMember ? t.leaderboard.backToMyPools : t.leaderboard.backToHome}
       </Link>
       <div className="mb-6 flex items-start gap-4">
         {tournament && (
@@ -75,7 +80,7 @@ export default async function GroupLeaderboardPage(props: {
           />
         )}
         <div className="min-w-0">
-          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+          <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
             {groupName}
           </h1>
           <p className="mt-3 inline-block bg-grass-500 text-paper-50 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest rotate-1">
@@ -94,6 +99,9 @@ export default async function GroupLeaderboardPage(props: {
         <PublicJoinBanner
           inviteCode={inviteCode!}
           tournamentFinished={tournament?.status === "finished"}
+          labelOfficialPool={t.leaderboard.officialPool}
+          labelOfficialPoolDesc={t.leaderboard.officialPoolDesc}
+          labelJoin={t.leaderboard.join}
         />
       )}
 
@@ -112,23 +120,29 @@ export default async function GroupLeaderboardPage(props: {
 function PublicJoinBanner({
   inviteCode,
   tournamentFinished,
+  labelOfficialPool,
+  labelOfficialPoolDesc,
+  labelJoin,
 }: {
   inviteCode: string;
   tournamentFinished: boolean;
+  labelOfficialPool: string;
+  labelOfficialPoolDesc: string;
+  labelJoin: string;
 }) {
   if (tournamentFinished) return null;
   return (
     <div className="cromo bg-flame-500 text-pitch-950 p-5 sm:p-6 mb-6 flex items-center justify-between gap-4 flex-wrap">
       <div>
         <div className="font-display text-xl sm:text-2xl uppercase tracking-tight leading-tight">
-          Porra Oficial · entrada libre
+          {labelOfficialPool}
         </div>
         <p className="text-sm mt-1 opacity-80">
-          Únete para pronosticar y aparecer en este ranking.
+          {labelOfficialPoolDesc}
         </p>
       </div>
       <Link href={`/join/${inviteCode}`} className="btn-secondary shrink-0">
-        Unirse →
+        {labelJoin}
       </Link>
     </div>
   );

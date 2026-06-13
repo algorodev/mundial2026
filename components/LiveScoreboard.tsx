@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import TeamBadge from "@/components/TeamBadge";
+import { useI18n } from "@/providers/I18nProvider";
 
 type LiveMatch = {
   id: number;
@@ -28,16 +29,6 @@ type LiveMatch = {
   //   "P"                   → tanda de penaltis
   statusShort: string | null;
 };
-
-// Etiqueta corta para el reloj. Si la API marca HT/P y similares, mostramos
-// texto en vez de minuto; en el resto el minuto real (o heurístico).
-function liveLabel(m: LiveMatch): string {
-  if (m.statusShort === "HT") return "DESCANSO";
-  if (m.statusShort === "BT") return "DESCANSO";
-  if (m.statusShort === "P") return "PENALTIS";
-  if (m.statusShort === "ET") return `${m.minute}'·PRÓRR`;
-  return `${m.minute}'`;
-}
 
 // Subset del payload de /api/match/[matchId]/events que usamos aquí.
 type GoalEvent = {
@@ -71,6 +62,7 @@ export default function LiveScoreboard({
 }: {
   groupSlug: string;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(true);
   const [hydrated, setHydrated] = useState(false);
   const [live, setLive] = useState<LiveMatch[]>([]);
@@ -78,6 +70,16 @@ export default function LiveScoreboard({
   const [offset, setOffset] = useState(0);
   const [, setTick] = useState(0);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Etiqueta corta para el reloj. Si la API marca HT/P y similares, mostramos
+  // texto en vez de minuto; en el resto el minuto real (o heurístico).
+  function liveLabel(m: LiveMatch): string {
+    if (m.statusShort === "HT") return t.liveScoreboard.halfTime;
+    if (m.statusShort === "BT") return t.liveScoreboard.halfTime;
+    if (m.statusShort === "P") return t.liveScoreboard.penalties;
+    if (m.statusShort === "ET") return `${m.minute}'·${t.liveScoreboard.extraTime}`;
+    return `${m.minute}'`;
+  }
 
   // Restaurar estado abierto/cerrado tras hidratar
   useEffect(() => {
@@ -130,10 +132,10 @@ export default function LiveScoreboard({
   if (!open) {
     const badge =
       live.length > 0
-        ? `${live.length} EN VIVO`
+        ? t.liveScoreboard.live.replace("{count}", String(live.length))
         : next
-          ? "PRÓXIMO"
-          : "MARCADOR";
+          ? t.liveScoreboard.next_badge
+          : t.liveScoreboard.scoreboard_badge;
     const pulsing = live.length > 0;
     return (
       <button
@@ -141,7 +143,7 @@ export default function LiveScoreboard({
         className={`fixed bottom-4 right-4 z-40 cromo bg-flame-500 text-pitch-950 px-4 py-3 font-display uppercase tracking-widest text-xs hover:-translate-y-0.5 transition-transform ${
           pulsing ? "ring-2 ring-grass-400 ring-offset-2 ring-offset-pitch-950" : ""
         }`}
-        aria-label="Mostrar marcador en vivo"
+        aria-label={t.liveScoreboard.show}
       >
         ⚽ {badge}
       </button>
@@ -150,26 +152,26 @@ export default function LiveScoreboard({
 
   return (
     <aside
-      className="fixed z-40 bottom-4 right-4 left-4 sm:left-auto sm:w-88 cromo bg-pitch-900 text-chalk-50 max-h-[70vh] flex flex-col overflow-hidden"
-      aria-label="Marcador en vivo"
+      className="fixed z-40 bottom-4 right-4 left-4 sm:left-auto sm:w-88 cromo bg-white dark:bg-pitch-900 text-pitch-900 dark:text-chalk-50 max-h-[70vh] flex flex-col overflow-hidden"
+      aria-label={t.liveScoreboard.scoreboard_badge}
     >
-      <header className="flex items-center justify-between px-4 py-3 border-b-2 border-pitch-700 bg-pitch-950 shrink-0">
+      <header className="flex items-center justify-between px-4 py-3 border-b-2 border-paper-200 dark:border-pitch-700 bg-paper-50 dark:bg-pitch-950 shrink-0">
         <span className="font-display text-sm uppercase tracking-widest flex items-center gap-2">
           {live.length > 0 ? (
             <>
               <span className="inline-block w-2 h-2 rounded-full bg-grass-400 animate-pulse" />
-              EN VIVO · {live.length}
+              {t.liveScoreboard.live.replace("{count}", String(live.length))}
             </>
           ) : next ? (
-            <>⏱ PRÓXIMO PARTIDO</>
+            <>{t.liveScoreboard.next}</>
           ) : (
-            <>⚽ MARCADOR</>
+            <>{t.liveScoreboard.scoreboard}</>
           )}
         </span>
         <button
           onClick={() => setOpen(false)}
-          className="text-chalk-400 hover:text-flame-400 transition-colors font-display text-lg leading-none px-2"
-          aria-label="Ocultar marcador"
+          className="text-pitch-500 dark:text-chalk-400 hover:text-flame-400 transition-colors font-display text-lg leading-none px-2"
+          aria-label={t.liveScoreboard.hide}
         >
           ✕
         </button>
@@ -177,12 +179,12 @@ export default function LiveScoreboard({
 
       <div className="overflow-y-auto p-3 space-y-3">
         {live.length > 0 ? (
-          live.map((m) => <LiveRow key={m.id} match={m} />)
+          live.map((m) => <LiveRow key={m.id} match={m} liveLabel={liveLabel} />)
         ) : next ? (
-          <Countdown next={next} realNow={realNow} />
+          <Countdown next={next} realNow={realNow} labelNext={t.liveScoreboard.nextNoGroup} labelNextGroup={t.liveScoreboard.nextGroup} labelCountdown={t.liveScoreboard.countdown} labelGroupInline={t.liveScoreboard.groupLabel} />
         ) : (
-          <p className="font-mono text-[11px] text-chalk-400 uppercase tracking-widest text-center py-6">
-            No hay partidos pendientes
+          <p className="font-mono text-[11px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest text-center py-6">
+            {t.liveScoreboard.noPending}
           </p>
         )}
       </div>
@@ -191,9 +193,9 @@ export default function LiveScoreboard({
 }
 
 // Formatea minuto del gol (con tiempo añadido si existe).
-function fmtMinute(t: GoalEvent["time"]): string {
-  if (t.extra && t.extra > 0) return `${t.elapsed}+${t.extra}'`;
-  return `${t.elapsed}'`;
+function fmtMinute(time: GoalEvent["time"]): string {
+  if (time.extra && time.extra > 0) return `${time.elapsed}+${time.extra}'`;
+  return `${time.elapsed}'`;
 }
 
 // Etiqueta corta para el tipo de gol. Null si es un gol normal (no añadimos texto).
@@ -203,7 +205,7 @@ function goalTag(detail: string): string | null {
   return null;
 }
 
-function LiveRow({ match }: { match: LiveMatch }) {
+function LiveRow({ match, liveLabel }: { match: LiveMatch; liveLabel: (m: LiveMatch) => string }) {
   // Los goleadores los pedimos al endpoint /api/match/[id]/events (server cachea
   // 30s en directo, así que aunque el poll vaya cada 12s sólo gastamos cuota
   // cada 30s real). Fallo silencioso: si la API se cae, sigue mostrándose el
@@ -244,6 +246,8 @@ function LiveRow({ match }: { match: LiveMatch }) {
     };
   }, [match.id]);
 
+  const { t } = useI18n();
+
   const homeGoals = goals?.filter((g) => g.team.name === match.homeTeam) ?? [];
   const awayGoals = goals?.filter((g) => g.team.name === match.awayTeam) ?? [];
 
@@ -254,7 +258,7 @@ function LiveRow({ match }: { match: LiveMatch }) {
           <span
             className={`group-${match.groupName} text-[9px] px-2 py-0.5 rounded-sm shrink-0`}
           >
-            GRUPO {match.groupName}
+            {t.liveScoreboard.groupLabel.replace("{name}", match.groupName)}
           </span>
         ) : (
           <span className="shrink-0" />
@@ -334,7 +338,21 @@ function LiveRow({ match }: { match: LiveMatch }) {
   );
 }
 
-function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
+function Countdown({
+  next,
+  realNow,
+  labelNext,
+  labelNextGroup,
+  labelCountdown,
+  labelGroupInline,
+}: {
+  next: NextMatch;
+  realNow: number;
+  labelNext: string;
+  labelNextGroup: string;
+  labelCountdown: string;
+  labelGroupInline: string;
+}) {
   const remainingMs = Math.max(0, new Date(next.kickoffAt).getTime() - realNow);
   const totalSec = Math.floor(remainingMs / 1000);
   const days = Math.floor(totalSec / 86400);
@@ -342,10 +360,14 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
   const mins = Math.floor((totalSec % 3600) / 60);
   const secs = totalSec % 60;
 
+  const proximoLabel = next.groupName
+    ? labelNextGroup.replace("{group}", next.groupName)
+    : labelNext;
+
   return (
     <div className="cromo-sm bg-paper-50 text-pitch-950 p-4 text-center">
       <p className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest mb-2">
-        Próximo {next.groupName ? `· Grupo ${next.groupName}` : ""}
+        {proximoLabel}
       </p>
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-center mb-3">
         <div className="flex flex-col items-center min-w-0">
@@ -379,7 +401,7 @@ function Countdown({ next, realNow }: { next: NextMatch; realNow: number }) {
         {pad(hours)}:{pad(mins)}:{pad(secs)}
       </div>
       <p className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest mt-2">
-        Hasta el pitido inicial
+        {labelCountdown}
       </p>
     </div>
   );
