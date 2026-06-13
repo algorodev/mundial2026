@@ -1,57 +1,61 @@
+"use client";
+
 import Link from "next/link";
+import { useI18n } from "@/providers/I18nProvider";
 
 type Cell = { v: boolean | string; note?: string };
-type Row = { feature: string; porra: Cell; excel: Cell; biwenger: Cell };
-
-const ROWS: Row[] = [
-  {
-    feature: "Ranking en directo",
-    porra: { v: true, note: "se actualiza solo" },
-    excel: { v: false, note: "fórmulas a mano" },
-    biwenger: { v: true },
-  },
-  {
-    feature: "Invitas por enlace",
-    porra: { v: true, note: "WhatsApp en 5s" },
-    excel: { v: false, note: "mandar el archivo" },
-    biwenger: { v: true },
-  },
-  {
-    feature: "Varias porras a la vez",
-    porra: { v: true, note: "oficina, familia, panda" },
-    excel: { v: "parcial", note: "un archivo por porra" },
-    biwenger: { v: "parcial" },
-  },
-  {
-    feature: "Hecho para móvil",
-    porra: { v: true },
-    excel: { v: false, note: "celdas de 4px" },
-    biwenger: { v: true },
-  },
-  {
-    feature: "Tus reglas (3-1-0, lock, etc.)",
-    porra: { v: true },
-    excel: { v: true, note: "si sabes fórmulas" },
-    biwenger: { v: false, note: "reglas fijas" },
-  },
-  {
-    feature: "Gratis y sin instalar",
-    porra: { v: true },
-    excel: { v: "parcial", note: "necesitas Excel" },
-    biwenger: { v: "parcial", note: "freemium + app" },
-  },
-];
+type Row = { featureKey: string; porra: Cell; excel: Cell; biwenger: Cell };
 
 export default function HomeCompare() {
+  const { t } = useI18n();
+
+  const ROWS: Row[] = [
+    {
+      featureKey: "featureLiveRanking",
+      porra: { v: true, note: t.homeCompare.porraLiveNote },
+      excel: { v: false, note: t.homeCompare.excelLiveNote },
+      biwenger: { v: true },
+    },
+    {
+      featureKey: "featureInviteLink",
+      porra: { v: true, note: t.homeCompare.porraInviteNote },
+      excel: { v: false, note: t.homeCompare.excelInviteNote },
+      biwenger: { v: true },
+    },
+    {
+      featureKey: "featureMultiplePools",
+      porra: { v: true, note: t.homeCompare.porraMultipleNote },
+      excel: { v: "parcial", note: t.homeCompare.excelMultipleNote },
+      biwenger: { v: "parcial", note: t.homeCompare.biwengerMultipleNote },
+    },
+    {
+      featureKey: "featureMobile",
+      porra: { v: true },
+      excel: { v: false, note: t.homeCompare.excelMobileNote },
+      biwenger: { v: true },
+    },
+    {
+      featureKey: "featureCustomRules",
+      porra: { v: true },
+      excel: { v: true, note: t.homeCompare.excelRulesNote },
+      biwenger: { v: false, note: t.homeCompare.biwengerRulesNote },
+    },
+    {
+      featureKey: "featureFree",
+      porra: { v: true },
+      excel: { v: "parcial", note: t.homeCompare.excelFreeNote },
+      biwenger: { v: "parcial", note: t.homeCompare.biwengerFreeNote },
+    },
+  ];
+
   return (
     <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
       <div className="text-center mb-10">
         <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal -rotate-1">
-          🤷 ¿POR QUÉ NO EXCEL?
+          {t.homeCompare.title}
         </span>
-        <p className="mt-5 text-chalk-200 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-          Por la misma razón que ya no quedas por SMS. Cuesta lo mismo y
-          funciona mejor.
+        <p className="mt-5 text-chalk-200 dark:text-chalk-200 text-pitch-700 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
+          {t.homeCompare.subtitle}
         </p>
       </div>
 
@@ -74,15 +78,15 @@ export default function HomeCompare() {
           <tbody>
             {ROWS.map((row, i) => (
               <tr
-                key={row.feature}
+                key={row.featureKey}
                 className={i % 2 === 0 ? "bg-paper-200" : ""}
               >
                 <td className="py-2.5 px-2 sm:px-3 font-display uppercase text-xs sm:text-sm tracking-tight">
-                  {row.feature}
+                  {t.homeCompare[row.featureKey as keyof typeof t.homeCompare] as string}
                 </td>
-                <CellEl c={row.porra} highlight />
-                <CellEl c={row.excel} />
-                <CellEl c={row.biwenger} />
+                <CellEl c={row.porra} highlight partial={t.homeCompare.partial} />
+                <CellEl c={row.excel} partial={t.homeCompare.partial} />
+                <CellEl c={row.biwenger} partial={t.homeCompare.partial} />
               </tr>
             ))}
           </tbody>
@@ -94,17 +98,17 @@ export default function HomeCompare() {
           href="/login"
           className="btn-primary inline-block"
         >
-          Crear mi porra gratis →
+          {t.homeCompare.cta}
         </Link>
-        <p className="mt-3 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-          30 segundos · sin tarjeta · sin descargas
+        <p className="mt-3 font-mono text-[10px] text-chalk-400 dark:text-chalk-400 text-pitch-500 uppercase tracking-widest">
+          {t.homeCompare.ctaNote}
         </p>
       </div>
     </section>
   );
 }
 
-function CellEl({ c, highlight = false }: { c: Cell; highlight?: boolean }) {
+function CellEl({ c, highlight = false, partial }: { c: Cell; highlight?: boolean; partial: string }) {
   const baseClass = `text-center py-2.5 px-2 sm:px-3 ${
     highlight ? "bg-flame-500/20" : ""
   }`;
@@ -120,7 +124,7 @@ function CellEl({ c, highlight = false }: { c: Cell; highlight?: boolean }) {
       </span>
     ) : (
       <span className="text-flame-600 font-display text-xs leading-none uppercase">
-        a medias
+        {partial}
       </span>
     );
 

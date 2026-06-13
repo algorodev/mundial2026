@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/providers/I18nProvider";
 
 type Props = {
   tournamentSlug: string;
@@ -31,6 +32,7 @@ export default function MundialHero({
   kickoffLabel,
   status,
 }: Props) {
+  const { t } = useI18n();
   const toMs = new Date(kickoffIso).getTime();
   const [now, setNow] = useState<number | null>(null);
 
@@ -46,37 +48,37 @@ export default function MundialHero({
 
   return (
     <section className="mt-16 sm:mt-20 max-w-3xl mx-auto relative">
-      <div className="cromo bg-pitch-900 border-flame-500 p-6 sm:p-8 text-center rotate-[-0.6deg]">
+      <div className="cromo bg-pitch-900 dark:bg-pitch-900 bg-white border-flame-500 p-6 sm:p-8 text-center rotate-[-0.6deg]">
         <span className="inline-block bg-flame-500 text-pitch-950 font-display text-xs sm:text-sm px-3 py-1 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-          {isLive ? "🔴 En directo" : "🏆 Próxima edición"}
+          {isLive ? t.mundialHero.live : t.mundialHero.upcoming}
         </span>
-        <h2 className="mt-5 font-display text-4xl sm:text-6xl text-chalk-50 leading-none uppercase">
+        <h2 className="mt-5 font-display text-4xl sm:text-6xl text-chalk-50 dark:text-chalk-50 text-pitch-900 leading-none uppercase">
           {tournamentName}
         </h2>
 
         {showCountdown && c && (
           <>
-            <p className="mt-5 font-mono text-[11px] text-chalk-300 uppercase tracking-widest">
-              Arranca {kickoffLabel}
+            <p className="mt-5 font-mono text-[11px] text-chalk-300 dark:text-chalk-300 text-pitch-700 uppercase tracking-widest">
+              {t.mundialHero.startsAt.replace("{label}", kickoffLabel)}
             </p>
             <div className="mt-5 grid grid-cols-4 gap-2 sm:gap-3 max-w-md mx-auto">
-              <CountBox label="Días" value={c.days} />
-              <CountBox label="Horas" value={pad(c.hours)} />
-              <CountBox label="Min" value={pad(c.mins)} />
-              <CountBox label="Seg" value={pad(c.secs)} />
+              <CountBox label={t.mundialHero.days} value={c.days} />
+              <CountBox label={t.mundialHero.hours} value={pad(c.hours)} />
+              <CountBox label={t.mundialHero.minutes} value={pad(c.mins)} />
+              <CountBox label={t.mundialHero.seconds} value={pad(c.secs)} />
             </div>
           </>
         )}
 
         {isLive && (
           <p className="mt-5 font-mono text-sm text-grass-400 uppercase tracking-widest">
-            ¡El torneo ya ha empezado! Inscripciones aún abiertas para los próximos partidos.
+            {t.mundialHero.liveMessage}
           </p>
         )}
 
         {now != null && !showCountdown && !isLive && (
           <p className="mt-5 font-mono text-sm text-flame-400 uppercase tracking-widest">
-            ¡El balón ya rueda!
+            {t.mundialHero.ballRolling}
           </p>
         )}
 
@@ -84,10 +86,10 @@ export default function MundialHero({
           href={`/groups/new?preselect=${encodeURIComponent(tournamentSlug)}`}
           className="btn-primary mt-7 inline-block"
         >
-          Crea tu porra del {tournamentName.split(" ")[0]} →
+          {t.mundialHero.createPool.replace("{tournament}", tournamentName.split(" ")[0])}
         </Link>
-        <p className="mt-3 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-          Gratis · sin descargas · invitas por WhatsApp
+        <p className="mt-3 font-mono text-[10px] text-chalk-400 dark:text-chalk-400 text-pitch-500 uppercase tracking-widest">
+          {t.mundialHero.freeNote}
         </p>
       </div>
     </section>

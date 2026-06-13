@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
 
@@ -39,7 +41,10 @@ const STRUCTURED_DATA = {
   },
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const locale = await getLocale();
+  const t = getDictionary(locale);
+
   return (
     <div className="pt-12 sm:pt-20 max-w-3xl mx-auto">
       <script
@@ -51,18 +56,18 @@ export default function AboutPage() {
         <span className="inline-block bg-flame-500 text-pitch-950 font-display text-xs px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
           Quiénes somos
         </span>
-        <h1 className="mt-6 font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+        <h1 className="mt-6 font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
           UN PUÑADO DE CHAVALES
           <br />
           <span className="text-flame-400">DE VALENCIA</span>
         </h1>
-        <p className="mt-6 text-chalk-300 text-lg leading-relaxed">
+        <p className="mt-6 text-pitch-700 dark:text-chalk-300 text-lg leading-relaxed">
           Y una idea muy simple: que hacer la porra con la pandilla sea tan
           fácil como mandar un enlace por WhatsApp.
         </p>
       </header>
 
-      <section className="cromo bg-pitch-900 p-6 sm:p-8 space-y-5 text-chalk-200 leading-relaxed">
+      <section className="cromo bg-paper-50 dark:bg-pitch-900 p-6 sm:p-8 space-y-5 text-pitch-800 dark:text-chalk-200 leading-relaxed">
         <p>
           PorraBros nació en una sobremesa de Valencia, hablando de cómo
           íbamos a montar la <strong className="text-flame-400">porra del
@@ -105,7 +110,7 @@ export default function AboutPage() {
         />
       </section>
 
-      <section className="mt-14 cromo bg-paper-50 text-pitch-950 p-6 sm:p-8">
+      <section className="mt-14 cromo bg-paper-50 dark:bg-paper-50 text-pitch-950 p-6 sm:p-8">
         <h2 className="font-display text-3xl sm:text-4xl uppercase leading-tight">
           ¿De dónde venimos?
         </h2>
@@ -125,10 +130,10 @@ export default function AboutPage() {
       </section>
 
       <section className="mt-14 text-center">
-        <p className="font-mono text-[11px] text-chalk-400 uppercase tracking-widest mb-5">
+        <p className="font-mono text-[11px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest mb-5">
           ¿Nos echas una mano?
         </p>
-        <p className="text-chalk-200 max-w-xl mx-auto leading-relaxed">
+        <p className="text-pitch-700 dark:text-chalk-200 max-w-xl mx-auto leading-relaxed">
           La mejor manera de ayudarnos es montar tu porra con tu pandilla y
           contarnos qué falla. Cualquier sugerencia, bug o idea, escríbenos
           a{" "}
@@ -142,10 +147,10 @@ export default function AboutPage() {
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link href="/register" className="btn-primary">
-            Crear mi porra →
+            {t.tournamentLanding.createPoolFree}
           </Link>
           <Link href="/" className="btn-secondary">
-            Volver al inicio
+            {t.common.back}
           </Link>
         </div>
       </section>

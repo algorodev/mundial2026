@@ -7,6 +7,8 @@ import StandingsView, { type StandingRow } from "@/components/StandingsView";
 import { getStandings } from "@/lib/api-football";
 import { calcPoints } from "@/lib/scoring";
 import type { LandingConfig } from "@/lib/landings";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 const APP_URL = process.env.APP_URL || "https://porrabros.com";
 
@@ -28,6 +30,9 @@ export default async function TournamentLanding({
 }: {
   cfg: LandingConfig;
 }) {
+  const locale = await getLocale();
+  const t = getDictionary(locale);
+
   // Cargamos el torneo y los primeros partidos de la DB. Si el torneo aún
   // no existe (p.ej. LaLiga sin seedear), seguimos rindiendo la landing
   // con los datos hardcodeados — la SEO sigue siendo válida.
@@ -213,31 +218,31 @@ export default async function TournamentLanding({
             className="mx-auto mb-6"
           />
         )}
-        <h1 className="font-display text-5xl sm:text-7xl text-chalk-50 leading-none">
+        <h1 className="font-display text-5xl sm:text-7xl text-chalk-50 dark:text-chalk-50 text-pitch-900 leading-none">
           {cfg.h1}
         </h1>
         <p className="mt-5 inline-block bg-flame-500 text-pitch-950 font-display text-xs sm:text-sm px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
           {cfg.tagline}
         </p>
 
-        <p className="mt-8 text-chalk-200 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+        <p className="mt-8 text-chalk-200 dark:text-chalk-200 text-pitch-700 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
           {cfg.intro}
         </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           {(tournament?.status === "upcoming" || tournament?.status === "live") && (
             <Link href={preselectHref} className="btn-primary">
-              Crea tu porra gratis →
+              {t.tournamentLanding.createPoolFree}
             </Link>
           )}
           {tournament?.status === "finished" && officialSlug && (
             <Link href={`/g/${officialSlug}/leaderboard`} className="btn-primary">
-              Ver resultados →
+              {t.tournamentLanding.seeResults}
             </Link>
           )}
           {tournament?.status === "draft" && (
             <span className="btn-secondary opacity-50 cursor-not-allowed select-none">
-              Próximamente
+              {t.common.soon}
             </span>
           )}
           {upcomingMatches.length > 0 && (
@@ -252,27 +257,26 @@ export default async function TournamentLanding({
         <section className="mt-16 max-w-3xl mx-auto">
           <div className="cromo bg-flame-500 text-pitch-950 p-6 sm:p-7 text-center -rotate-1">
             <div className="font-mono text-[10px] uppercase tracking-widest opacity-80">
-              🏆 Sin amigos a mano, juega solo
+              {t.tournamentLanding.officialPoolTagline}
             </div>
             <h2 className="font-display text-3xl sm:text-4xl mt-2 uppercase leading-none">
-              Porra oficial pública
+              {t.tournamentLanding.officialPoolTitle}
             </h2>
             <p className="mt-3 text-sm sm:text-base leading-relaxed max-w-xl mx-auto">
-              Únete a la porra abierta del torneo. Leaderboard en directo,
-              visible para todos.
+              {t.tournamentLanding.officialPoolDesc}
             </p>
             <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href={`/g/${officialSlug}/leaderboard`}
                 className="btn-secondary"
               >
-                Ver leaderboard →
+                {t.tournamentLanding.seeLeaderboard}
               </Link>
               <Link
                 href={`/g/${officialSlug}/leaderboard`}
                 className="font-mono text-[10px] uppercase tracking-widest underline underline-offset-4 hover:opacity-70"
               >
-                (público, sin login)
+                {t.tournamentLanding.publicNoLogin}
               </Link>
             </div>
           </div>
@@ -283,10 +287,10 @@ export default async function TournamentLanding({
         <section className="mt-16 max-w-3xl mx-auto">
           <div className="cromo bg-grass-500 text-pitch-950 p-6 sm:p-8 text-center rotate-1">
             <div className="font-mono text-[10px] uppercase tracking-widest opacity-80">
-              Porra oficial · {tournament.name}
+              {t.tournamentLanding.officialPoolPublic.replace("{tournament}", tournament.name)}
             </div>
             <h2 className="font-display text-4xl sm:text-5xl mt-2 uppercase leading-none">
-              {winners.length === 1 ? "🥇 GANADOR" : "🥇 EMPATE EN EL PODIO"}
+              {winners.length === 1 ? t.tournamentLanding.winnerTitle : t.tournamentLanding.tieTitle}
             </h2>
             <div className="mt-5 space-y-2">
               {winners.map((w) => (
@@ -300,7 +304,7 @@ export default async function TournamentLanding({
             </p>
             <div className="mt-5">
               <Link href={`/g/${officialSlug}/leaderboard`} className="btn-secondary">
-                Ver clasificación completa →
+                {t.tournamentLanding.seeFullStandings}
               </Link>
             </div>
           </div>
@@ -311,7 +315,7 @@ export default async function TournamentLanding({
         <section className="mt-16 max-w-3xl mx-auto">
           <div className="cromo bg-paper-100 text-pitch-700 p-6 text-center">
             <p className="font-mono text-xs uppercase tracking-widest">
-              Este torneo ha finalizado.
+              {t.tournamentLanding.tournamentFinished}
             </p>
           </div>
         </section>
@@ -321,7 +325,7 @@ export default async function TournamentLanding({
       <section className="mt-24 sm:mt-32 max-w-3xl mx-auto">
         <div className="text-center mb-10">
           <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal rotate-1">
-            🏆 FORMATO
+            {t.tournamentLanding.formatSection}
           </span>
         </div>
         <ul className="space-y-3">
@@ -344,7 +348,7 @@ export default async function TournamentLanding({
         <section className="mt-24 sm:mt-32 max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal -rotate-1">
-              📅 PRIMEROS PARTIDOS
+              {t.tournamentLanding.matchesSection}
             </span>
           </div>
           <div className="cromo bg-paper-50 text-pitch-950 p-4 sm:p-6 overflow-x-auto">
@@ -369,8 +373,8 @@ export default async function TournamentLanding({
               </tbody>
             </table>
           </div>
-          <p className="mt-4 text-center font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-            {tournament ? `Y ${tournament ? "muchos más" : ""}…` : ""} Descarga el calendario completo para añadirlo a tu móvil.
+          <p className="mt-4 text-center font-mono text-[10px] text-chalk-400 dark:text-chalk-400 text-pitch-500 uppercase tracking-widest">
+            {t.tournamentLanding.calendarNote}
           </p>
         </section>
       )}
@@ -380,12 +384,12 @@ export default async function TournamentLanding({
         <section className="mt-24 sm:mt-32 max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal rotate-1">
-              📊 CLASIFICACIÓN
+              {t.tournamentLanding.standingsSection}
             </span>
           </div>
           <StandingsView groups={standingsGroups} />
-          <p className="mt-4 text-center font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-            Datos oficiales · actualizado cada hora
+          <p className="mt-4 text-center font-mono text-[10px] text-chalk-400 dark:text-chalk-400 text-pitch-500 uppercase tracking-widest">
+            {t.tournamentLanding.standingsUpdated}
           </p>
         </section>
       )}
@@ -393,18 +397,17 @@ export default async function TournamentLanding({
       {/* CTA FINAL — solo si el torneo está abierto a inscripciones */}
       {(tournament?.status === "upcoming" || tournament?.status === "live") && (
         <section className="mt-24 sm:mt-32 max-w-3xl mx-auto text-center">
-          <h2 className="font-display text-4xl sm:text-5xl text-chalk-50 leading-none mb-5 uppercase">
-            ¿Listo?
+          <h2 className="font-display text-4xl sm:text-5xl text-chalk-50 dark:text-chalk-50 text-pitch-900 leading-none mb-5 uppercase">
+            {t.tournamentLanding.readyTitle}
           </h2>
-          <p className="text-chalk-200 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
-            Crear tu porra es gratis y tarda 30 segundos. Invitas por WhatsApp,
-            tus amigos se unen con un toque y el ranking se actualiza solo.
+          <p className="text-chalk-200 dark:text-chalk-200 text-pitch-700 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
+            {t.tournamentLanding.readyDesc}
           </p>
           <Link href={preselectHref} className="btn-primary inline-block">
-            Crear porra ahora →
+            {t.tournamentLanding.createNow}
           </Link>
-          <p className="mt-3 font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-            Sin tarjeta · sin instalar · sin Excel
+          <p className="mt-3 font-mono text-[10px] text-chalk-400 dark:text-chalk-400 text-pitch-500 uppercase tracking-widest">
+            {t.tournamentLanding.noCardNote}
           </p>
         </section>
       )}

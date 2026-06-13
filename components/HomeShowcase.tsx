@@ -2,27 +2,32 @@
 // capturas. Para sustituir uno por una captura real:
 //   - Coloca el PNG en /public/screenshots/<nombre>.png
 //   - Reemplaza el <MockX> correspondiente por <Image src="/screenshots/..." />
-export default function HomeShowcase() {
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
+
+export default async function HomeShowcase() {
+  const locale = await getLocale();
+  const t = getDictionary(locale);
+
   return (
     <section className="mt-24 sm:mt-32 max-w-6xl mx-auto">
       <div className="text-center mb-10">
         <span className="inline-block bg-flame-500 text-pitch-950 font-display text-3xl sm:text-4xl px-5 py-2 border-2 border-pitch-950 shadow-brutal rotate-1">
-          📸 ASÍ SE VE
+          {t.homeShowcase.sectionTitle}
         </span>
-        <p className="mt-5 text-chalk-200 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-          Pronostica, comparte, gana. Sin instalar nada, en el móvil o en el
-          ordenador.
+        <p className="mt-5 text-chalk-200 dark:text-chalk-200 text-pitch-700 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
+          {t.homeShowcase.sectionDesc}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <MockupCard title="PRONOSTICAS" tilt="-rotate-1">
+        <MockupCard title={t.homeShowcase.predictCard} tilt="-rotate-1">
           <MockPredictions />
         </MockupCard>
-        <MockupCard title="VES EL RANKING" tilt="rotate-1">
+        <MockupCard title={t.homeShowcase.leaderboardCard} tilt="rotate-1">
           <MockLeaderboard />
         </MockupCard>
-        <MockupCard title="EN DIRECTO" tilt="-rotate-1">
+        <MockupCard title={t.homeShowcase.liveCard} tilt="-rotate-1">
           <MockLive />
         </MockupCard>
       </div>
