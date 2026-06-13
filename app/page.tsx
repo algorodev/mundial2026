@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { tournaments } from "@/lib/db/schema";
@@ -64,10 +63,6 @@ const STRUCTURED_DATA = {
 
 export default async function HomePage() {
   const session = await getSession();
-  if (session) {
-    // Si estás logado, te llevamos a tus porras directamente.
-    redirect("/groups");
-  }
 
   const tournamentList = await db
     .select({
@@ -122,9 +117,15 @@ export default async function HomePage() {
 
           {!featured && (
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link href="/login" className="btn-primary">
-                Empezar →
-              </Link>
+              {session ? (
+                <Link href="/groups" className="btn-primary">
+                  Mis porras →
+                </Link>
+              ) : (
+                <Link href="/login" className="btn-primary">
+                  Empezar →
+                </Link>
+              )}
             </div>
           )}
         </div>

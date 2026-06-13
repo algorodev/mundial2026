@@ -22,7 +22,7 @@ export default function NavBar({
     <nav className="border-b-2 border-pitch-950 bg-pitch-950/85 backdrop-blur-xs sticky top-0 z-30">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         <Link
-          href={session ? "/groups" : "/"}
+          href="/"
           className="group inline-flex items-center"
           aria-label="PorraBros"
         >
@@ -41,11 +41,9 @@ export default function NavBar({
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           {session && (
             <>
-              {/* En mobile el logo ya lleva a /groups → "Mis porras" sería
-                  redundante. Lo escondemos para liberar espacio. */}
               <Link
                 href="/groups"
-                className="hidden sm:inline text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display"
+                className="text-xs text-chalk-100 hover:text-flame-400 transition-colors uppercase tracking-widest font-display"
               >
                 Mis porras
               </Link>
