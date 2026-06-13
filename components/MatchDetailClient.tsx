@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import TeamBadge from "@/components/TeamBadge";
+import { useI18n } from "@/providers/I18nProvider";
 
 // ─── Tipos del subset de la API que renderizamos ────────────────────────
 
@@ -209,10 +210,11 @@ export default function MatchDetailClient({
 // ─── Subsecciones ────────────────────────────────────────────────────────
 
 function GroupPredictionsSection({ preds }: { preds: GroupPred[] }) {
+  const { t } = useI18n();
   return (
     <section className="cromo bg-paper-50 text-pitch-950 p-5 sm:p-6">
       <h2 className="font-display text-2xl sm:text-3xl mb-4 uppercase tracking-tight">
-        Pronósticos del grupo
+        {t.match.groupPredictions}
       </h2>
       <ul className="divide-y divide-pitch-100">
         {preds.map((p) => {
@@ -227,11 +229,11 @@ function GroupPredictionsSection({ preds }: { preds: GroupPred[] }) {
           const badge =
             p.result === "exact" ? (
               <span className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-0.5 border border-pitch-950 tracking-wider shrink-0">
-                +3 EXACTO
+                {t.match.exactBadge}
               </span>
             ) : p.result === "outcome" ? (
               <span className="font-display text-[10px] bg-flame-500 text-pitch-950 px-2 py-0.5 border border-pitch-950 tracking-wider shrink-0">
-                +1 SIGNO
+                {t.match.signBadge}
               </span>
             ) : p.result === "miss" ? (
               <span className="font-display text-[10px] bg-pitch-950 text-chalk-400 px-2 py-0.5 border border-pitch-950 tracking-wider shrink-0">
@@ -248,7 +250,7 @@ function GroupPredictionsSection({ preds }: { preds: GroupPred[] }) {
                 {p.name ?? "—"}
                 {p.isMe && (
                   <span className="ml-2 font-mono text-[10px] text-pitch-500 normal-case tracking-widest">
-                    ← tú
+                    {t.common.me}
                   </span>
                 )}
               </span>
@@ -275,6 +277,7 @@ function SectionShell({
   children: React.ReactNode;
   empty?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <section className="cromo bg-paper-50 text-pitch-950 p-5 sm:p-6">
       <h2 className="font-display text-2xl sm:text-3xl mb-4 uppercase tracking-tight">
@@ -282,7 +285,7 @@ function SectionShell({
       </h2>
       {empty ? (
         <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500 text-center py-6">
-          Sin datos disponibles
+          {t.match.noDataAvailable}
         </p>
       ) : (
         children
@@ -292,30 +295,30 @@ function SectionShell({
 }
 
 function StateMessage({ s }: { s: LoadState<unknown> }) {
+  const { t } = useI18n();
   if (s.status === "loading")
     return (
       <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500 text-center py-6">
-        Cargando…
+        {t.match.loading}
       </p>
     );
   if (s.status === "error")
     return (
       <p className="font-mono text-[11px] uppercase tracking-widest text-brick-500 text-center py-6">
-        Error: {s.error}
+        {t.common.error}: {s.error}
       </p>
     );
   return null;
 }
 
 function NoApiBanner({ kickoffAtIso }: { kickoffAtIso: string }) {
+  const { t } = useI18n();
   const ko = new Date(kickoffAtIso);
   const inFuture = ko.getTime() > Date.now();
   return (
     <div className="cromo bg-paper-50 text-pitch-950 p-6 text-center">
       <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-700">
-        {inFuture
-          ? "Este partido todavía no está sincronizado con la API. Vuelve cerca del kickoff para ver alineaciones, eventos y H2H."
-          : "Sin datos sincronizados para este partido."}
+        {inFuture ? t.match.noApiSynced : t.match.noApiData}
       </p>
     </div>
   );
@@ -342,9 +345,10 @@ function LineupsSection({
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
 }) {
+  const { t } = useI18n();
   return (
     <SectionShell
-      title="Alineaciones"
+      title={t.match.lineups}
       empty={state.status === "ok" && state.data.length === 0}
     >
       {state.status !== "ok" ? (
@@ -380,14 +384,14 @@ function LineupsSection({
                     </div>
                     {lu.formation && (
                       <div className="font-mono text-[10px] uppercase tracking-widest text-pitch-600">
-                        Formación {lu.formation}
+                        {t.match.formation.replace("{formation}", lu.formation)}
                       </div>
                     )}
                   </div>
                 </div>
                 <div>
                   <h3 className="font-mono text-[10px] uppercase tracking-widest text-pitch-500 mb-1">
-                    XI titular
+                    {t.match.startXI}
                   </h3>
                   <ul className="text-sm font-mono space-y-0.5">
                     {lu.startXI.map((p, i) => (
@@ -413,7 +417,7 @@ function LineupsSection({
                 {lu.substitutes.length > 0 && (
                   <div>
                     <h3 className="font-mono text-[10px] uppercase tracking-widest text-pitch-500 mb-1">
-                      Suplentes
+                      {t.match.substitutes}
                     </h3>
                     <ul className="text-sm font-mono space-y-0.5 text-pitch-700">
                       {lu.substitutes.map((p, i) => (
@@ -439,7 +443,7 @@ function LineupsSection({
                 )}
                 {lu.coach.name && (
                   <p className="font-mono text-[10px] uppercase tracking-widest text-pitch-500">
-                    Entrenador · {lu.coach.name}
+                    {t.match.coach.replace("{name}", lu.coach.name)}
                   </p>
                 )}
               </div>
@@ -460,9 +464,10 @@ function EventsSection({
   homeName: string;
   awayName: string;
 }) {
+  const { t } = useI18n();
   return (
     <SectionShell
-      title="Eventos"
+      title={t.match.events}
       empty={state.status === "ok" && state.data.length === 0}
     >
       {state.status !== "ok" ? (
@@ -553,6 +558,7 @@ function H2HSection({
   homeApiTeamId: number | null;
   awayApiTeamId: number | null;
 }) {
+  const { t } = useI18n();
   // Stats simples sobre los últimos N.
   const stats =
     state.status === "ok"
@@ -585,7 +591,7 @@ function H2HSection({
 
   return (
     <SectionShell
-      title="Historial (H2H)"
+      title={t.match.h2h}
       empty={state.status === "ok" && state.data.length === 0}
     >
       {state.status !== "ok" ? (
@@ -599,7 +605,7 @@ function H2HSection({
                   {stats.homeWins}
                 </div>
                 <div className="text-[10px] uppercase tracking-widest mt-0.5 truncate">
-                  {homeName} gana
+                  {t.match.homeWins.replace("{name}", homeName)}
                 </div>
               </div>
               <div className="bg-pitch-100 text-pitch-700 py-2 px-1 cromo-sm">
@@ -607,7 +613,7 @@ function H2HSection({
                   {stats.draws}
                 </div>
                 <div className="text-[10px] uppercase tracking-widest mt-0.5">
-                  Empates
+                  {t.match.draws}
                 </div>
               </div>
               <div className="bg-grass-100 text-grass-800 py-2 px-1 cromo-sm">
@@ -615,7 +621,7 @@ function H2HSection({
                   {stats.awayWins}
                 </div>
                 <div className="text-[10px] uppercase tracking-widest mt-0.5 truncate">
-                  {awayName} gana
+                  {t.match.awayWins.replace("{name}", awayName)}
                 </div>
               </div>
             </div>

@@ -6,6 +6,8 @@ import { tournaments, matches, teams } from "@/lib/db/schema";
 import { asc, eq } from "drizzle-orm";
 import AdminResultsClient from "@/components/AdminResultsClient";
 import TournamentBadge from "@/components/TournamentBadge";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function AdminTournamentPage(
   props: {
@@ -16,6 +18,9 @@ export default async function AdminTournamentPage(
   const session = await getSession();
   if (!session) redirect("/login");
   if (!session.isGlobalAdmin) redirect("/groups");
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const [tournament] = await db
     .select()
@@ -43,8 +48,8 @@ export default async function AdminTournamentPage(
   }));
 
   const teamLogos: Record<string, string> = {};
-  for (const t of tournamentTeams) {
-    if (t.logoUrl) teamLogos[t.code] = t.logoUrl;
+  for (const tm of tournamentTeams) {
+    if (tm.logoUrl) teamLogos[tm.code] = tm.logoUrl;
   }
 
   return (
@@ -53,7 +58,7 @@ export default async function AdminTournamentPage(
         href="/admin"
         className="back-link mb-4"
       >
-        ← Torneos
+        {t.admin.backToTournaments}
       </Link>
       <div className="mb-10 flex items-start gap-4">
         <TournamentBadge
@@ -64,11 +69,11 @@ export default async function AdminTournamentPage(
           className="shrink-0 mt-1"
         />
         <div className="min-w-0">
-          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+          <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
             {tournament.name}
           </h1>
           <p className="mt-3 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-            Resultados
+            {t.admin.results}
           </p>
         </div>
       </div>

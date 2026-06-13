@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import TeamBadge from "@/components/TeamBadge";
+import { useI18n } from "@/providers/I18nProvider";
 
 type MatchRow = {
   id: number;
@@ -31,6 +32,7 @@ export default function AdminResultsClient({
   matches: MatchRow[];
   teamLogos: Record<string, string>;
 }) {
+  const { t } = useI18n();
   const [list, setList] = useState(matches);
   const [filter, setFilter] = useState<"all" | "pending" | "done">("all");
   const [savingId, setSavingId] = useState<number | null>(null);
@@ -78,23 +80,26 @@ export default function AdminResultsClient({
     }
   }
 
+  const pendingCount = list.filter((m) => m.homeScore == null).length;
+  const doneCount = list.filter((m) => m.homeScore != null).length;
+
   return (
     <div>
       <div className="flex gap-2 mb-6 flex-wrap">
         <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-          Todos ({list.length})
+          {t.admin.allFilterCount.replace("{count}", String(list.length))}
         </FilterChip>
         <FilterChip
           active={filter === "pending"}
           onClick={() => setFilter("pending")}
         >
-          Sin resultado ({list.filter((m) => m.homeScore == null).length})
+          {t.admin.pendingFilterCount.replace("{count}", String(pendingCount))}
         </FilterChip>
         <FilterChip
           active={filter === "done"}
           onClick={() => setFilter("done")}
         >
-          Con resultado ({list.filter((m) => m.homeScore != null).length})
+          {t.admin.doneFilterCount.replace("{count}", String(doneCount))}
         </FilterChip>
       </div>
 
@@ -102,11 +107,11 @@ export default function AdminResultsClient({
         {grouped.map(([date, items]) => (
           <section key={date}>
             <h3 className="mb-4 flex items-center gap-3">
-              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
               <span className="bg-flame-500 text-pitch-950 font-display text-lg px-4 py-1 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block">
                 {date}
               </span>
-              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
             </h3>
             <div className="space-y-2 px-1">
               {items.map((m) => (
@@ -166,6 +171,7 @@ function ResultRow({
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
 }) {
+  const { t } = useI18n();
   const [home, setHome] = useState(
     match.homeScore != null ? String(match.homeScore) : ""
   );
@@ -270,7 +276,7 @@ function ResultRow({
             }}
             className="font-mono text-[10px] text-pitch-700 hover:text-brick-500 uppercase tracking-widest font-bold"
           >
-            borrar
+            {t.admin.deleteResult}
           </button>
         )}
       </div>

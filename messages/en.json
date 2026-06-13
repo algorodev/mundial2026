@@ -308,7 +308,9 @@
     "confirmDelete": "Delete \"{name}\"? All their picks will be lost.",
     "resultsTab": "⚽ Results ({done}/{total})",
     "participantsTab": "👥 Participants ({count})",
-    "tournamentResults": "Tournaments and results"
+    "tournamentResults": "Tournaments and results",
+    "backToTournaments": "← Tournaments",
+    "results": "Results"
   },
   "match": {
     "groupPredictions": "Group picks",

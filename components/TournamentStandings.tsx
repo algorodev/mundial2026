@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import StandingsView, { type StandingRow } from "@/components/StandingsView";
+import { useI18n } from "@/providers/I18nProvider";
 
 type StandingsLeague = {
   league: {
@@ -22,6 +23,7 @@ export default function TournamentStandings({
 }: {
   tournamentSlug: string;
 }) {
+  const { t } = useI18n();
   const [state, setState] = useState<LoadState>({ status: "loading" });
 
   useEffect(() => {
@@ -48,8 +50,8 @@ export default function TournamentStandings({
 
   if (state.status === "loading") {
     return (
-      <p className="font-mono text-[11px] uppercase tracking-widest text-chalk-400 text-center py-10">
-        Cargando clasificación…
+      <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500 dark:text-chalk-400 text-center py-10">
+        {t.standings.loading}
       </p>
     );
   }
@@ -57,12 +59,30 @@ export default function TournamentStandings({
     return (
       <div className="cromo bg-paper-50 text-pitch-950 p-6 text-center">
         <p className="font-mono text-[11px] uppercase tracking-widest text-brick-500">
-          Error: {state.error}
+          {t.common.error}: {state.error}
         </p>
       </div>
     );
   }
 
   const groups = state.data[0]?.league.standings ?? [];
-  return <StandingsView groups={groups} />;
+  return (
+    <StandingsView
+      groups={groups}
+      translations={{
+        noData: t.standings.noData,
+        rank: t.standings.rank,
+        team: t.standings.team,
+        played: t.standings.played,
+        wins: t.standings.wins,
+        draws: t.standings.draws,
+        losses: t.standings.losses,
+        goalsFor: t.standings.goalsFor,
+        goalsAgainst: t.standings.goalsAgainst,
+        goalDiff: t.standings.goalDiff,
+        points: t.standings.points,
+        group: t.standings.group,
+      }}
+    />
+  );
 }

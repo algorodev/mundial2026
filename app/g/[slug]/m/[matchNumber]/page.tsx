@@ -9,6 +9,8 @@ import { calcPoints } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
 import MatchDetailClient from "@/components/MatchDetailClient";
 import { getTournamentStart } from "@/lib/tournament";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function MatchDetailPage(props: {
   params: Promise<{ slug: string; matchNumber: string }>;
@@ -21,6 +23,9 @@ export default async function MatchDetailPage(props: {
   if (!session) {
     redirect(`/login?next=${encodeURIComponent(`/g/${slug}/m/${matchNumber}`)}`);
   }
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const ctx = await getGroupForMember(slug, session.userId);
   if (!ctx) notFound();
@@ -130,7 +135,7 @@ export default async function MatchDetailPage(props: {
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-mono uppercase tracking-widest text-pitch-700 mb-5">
           {match.groupName && (
             <span className={`group-${match.groupName} px-2 py-0.5 rounded-sm`}>
-              GRUPO {match.groupName}
+              {t.predictions.group.replace("{name}", match.groupName)}
             </span>
           )}
           <span>{dateLabel}</span>

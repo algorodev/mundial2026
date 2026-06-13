@@ -308,7 +308,9 @@
     "confirmDelete": "¿Borrar a \"{name}\"? Se perderán todas sus predicciones.",
     "resultsTab": "⚽ Resultados ({done}/{total})",
     "participantsTab": "👥 Participantes ({count})",
-    "tournamentResults": "Torneos y resultados"
+    "tournamentResults": "Torneos y resultados",
+    "backToTournaments": "← Torneos",
+    "results": "Resultados"
   },
   "match": {
     "groupPredictions": "Pronósticos del grupo",

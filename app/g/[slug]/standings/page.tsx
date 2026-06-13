@@ -8,6 +8,8 @@ import { getGroupForMember } from "@/lib/group-access";
 import GroupTabs from "@/components/GroupTabs";
 import TournamentBadge from "@/components/TournamentBadge";
 import TournamentStandings from "@/components/TournamentStandings";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 
 export default async function GroupStandingsPage(props: {
   params: Promise<{ slug: string }>;
@@ -17,6 +19,9 @@ export default async function GroupStandingsPage(props: {
   if (!session) {
     redirect(`/login?next=${encodeURIComponent(`/g/${params.slug}/standings`)}`);
   }
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const ctx = await getGroupForMember(params.slug, session.userId);
   if (!ctx) notFound();
@@ -34,7 +39,7 @@ export default async function GroupStandingsPage(props: {
         href="/groups"
         className="back-link mb-3"
       >
-        ← Mis porras
+        {t.leaderboard.backToMyPools}
       </Link>
       <div className="mb-6 flex items-start gap-4">
         <TournamentBadge
@@ -45,7 +50,7 @@ export default async function GroupStandingsPage(props: {
           className="shrink-0 mt-1"
         />
         <div className="min-w-0">
-          <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
+          <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
             {ctx.name}
           </h1>
           <p className="mt-3 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
@@ -62,7 +67,7 @@ export default async function GroupStandingsPage(props: {
       {!tournament.apiLeagueId || !tournament.apiSeason ? (
         <div className="cromo bg-paper-50 text-pitch-950 p-6 text-center">
           <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500">
-            Este torneo no tiene clasificación sincronizada.
+            {t.standings.noSync}
           </p>
         </div>
       ) : (

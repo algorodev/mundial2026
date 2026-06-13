@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useI18n } from "@/providers/I18nProvider";
 
 type MatchRow = {
   id: number;
@@ -31,17 +32,21 @@ export default function AdminClient({
   matches: MatchRow[];
   participants: Participant[];
 }) {
+  const { t } = useI18n();
   const [tab, setTab] = useState<"results" | "users">("results");
+
+  const doneCount = matches.filter((m) => m.homeScore != null).length;
 
   return (
     <div>
       <div className="flex gap-3 mb-8 flex-wrap">
         <TabButton active={tab === "results"} onClick={() => setTab("results")}>
-          ⚽ Resultados ({matches.filter((m) => m.homeScore != null).length}/
-          {matches.length})
+          {t.admin.resultsTab
+            .replace("{done}", String(doneCount))
+            .replace("{total}", String(matches.length))}
         </TabButton>
         <TabButton active={tab === "users"} onClick={() => setTab("users")}>
-          👥 Participantes ({participants.length})
+          {t.admin.participantsTab.replace("{count}", String(participants.length))}
         </TabButton>
       </div>
 
@@ -75,6 +80,7 @@ function TabButton({
 }
 
 function ResultsTab({ initial }: { initial: MatchRow[] }) {
+  const { t } = useI18n();
   const [matches, setMatches] = useState(initial);
   const [filter, setFilter] = useState<"all" | "pending" | "done">("all");
   const [savingId, setSavingId] = useState<number | null>(null);
@@ -125,19 +131,19 @@ function ResultsTab({ initial }: { initial: MatchRow[] }) {
     <div>
       <div className="flex gap-2 mb-6 flex-wrap">
         <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-          Todos
+          {t.admin.allFilter}
         </FilterChip>
         <FilterChip
           active={filter === "pending"}
           onClick={() => setFilter("pending")}
         >
-          Sin resultado
+          {t.admin.pendingFilter}
         </FilterChip>
         <FilterChip
           active={filter === "done"}
           onClick={() => setFilter("done")}
         >
-          Con resultado
+          {t.admin.doneFilter}
         </FilterChip>
       </div>
 
@@ -145,11 +151,11 @@ function ResultsTab({ initial }: { initial: MatchRow[] }) {
         {grouped.map(([date, list]) => (
           <section key={date}>
             <h3 className="mb-4 flex items-center gap-3">
-              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
               <span className="bg-flame-500 text-pitch-950 font-display text-lg px-4 py-1 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block">
                 {date}
               </span>
-              <span className="h-1 flex-1 bg-pitch-800" />
+              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
             </h3>
             <div className="space-y-2 px-1">
               {list.map((m) => (
@@ -203,6 +209,7 @@ function ResultRow({
   saved: boolean;
   onSave: (id: number, h: number | null, a: number | null) => void;
 }) {
+  const { t } = useI18n();
   const [home, setHome] = useState(
     match.homeScore != null ? String(match.homeScore) : ""
   );
@@ -287,7 +294,7 @@ function ResultRow({
             }}
             className="font-mono text-[10px] text-pitch-700 hover:text-brick-500 uppercase tracking-widest font-bold"
           >
-            borrar
+            {t.admin.deleteResult}
           </button>
         )}
       </div>
@@ -296,6 +303,7 @@ function ResultRow({
 }
 
 function UsersTab({ initial }: { initial: Participant[] }) {
+  const { t } = useI18n();
   const [participants, setParticipants] = useState(initial);
   const [name, setName] = useState("");
   const [pin, setPin] = useState("");
@@ -319,7 +327,7 @@ function UsersTab({ initial }: { initial: Participant[] }) {
       });
       const d = await r.json();
       if (!r.ok) {
-        setError(d.error || "Error");
+        setError(d.error || t.common.error);
         return;
       }
       setCreated({ name: d.name, pin: d.pin });
@@ -333,8 +341,7 @@ function UsersTab({ initial }: { initial: Participant[] }) {
   }
 
   async function remove(id: number, n: string) {
-    if (!confirm(`¿Borrar a "${n}"? Se perderán todas sus predicciones.`))
-      return;
+    if (!confirm(t.admin.confirmDelete.replace("{name}", n))) return;
     await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
     setParticipants((p) => p.filter((x) => x.id !== id));
   }
@@ -343,31 +350,31 @@ function UsersTab({ initial }: { initial: Participant[] }) {
     <div className="grid lg:grid-cols-[1fr_1fr] gap-8">
       {/* Crear */}
       <div>
-        <h3 className="font-display text-2xl sm:text-3xl text-chalk-50 mb-4 uppercase">
-          ➕ Añadir
+        <h3 className="font-display text-2xl sm:text-3xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+          {t.admin.addParticipant}
         </h3>
-        <form onSubmit={create} className="cromo bg-pitch-900 p-6 space-y-5">
+        <form onSubmit={create} className="cromo bg-white dark:bg-pitch-900 p-6 space-y-5">
           <div>
             <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-              Nombre
+              {t.admin.nameLabel}
             </label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="input-base w-full"
-              placeholder="Ej: Lucía"
+              placeholder={t.admin.namePlaceholder}
               required
             />
           </div>
           <div>
             <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-              PIN (opcional, mín. 4 dígitos)
+              {t.admin.pinLabel}
             </label>
             <input
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               className="input-base w-full font-mono tracking-widest"
-              placeholder="auto si lo dejas vacío"
+              placeholder={t.admin.pinPlaceholder}
               minLength={4}
             />
           </div>
@@ -379,14 +386,14 @@ function UsersTab({ initial }: { initial: Participant[] }) {
           {created && (
             <div className="cromo bg-grass-300 text-pitch-950 p-4">
               <div className="text-xs font-display uppercase tracking-widest mb-2">
-                ✅ CREADO · Comparte UNA vez
+                {t.admin.createdTitle}
               </div>
               <div className="font-mono text-sm">
                 <div>
-                  Nombre: <strong>{created.name}</strong>
+                  {t.admin.createdName} <strong>{created.name}</strong>
                 </div>
                 <div className="mt-2 flex items-baseline gap-2">
-                  PIN:{" "}
+                  {t.admin.createdPin}{" "}
                   <span className="font-display text-3xl sm:text-4xl text-brick-500 tracking-widest">
                     {created.pin}
                   </span>
@@ -399,20 +406,20 @@ function UsersTab({ initial }: { initial: Participant[] }) {
             disabled={creating}
             className="btn-primary w-full"
           >
-            {creating ? "Creando..." : "Crear participante →"}
+            {creating ? t.admin.creating : t.admin.createParticipant}
           </button>
         </form>
       </div>
 
       {/* Lista */}
       <div>
-        <h3 className="font-display text-2xl sm:text-3xl text-chalk-50 mb-4 uppercase">
-          👥 Lista ({participants.length})
+        <h3 className="font-display text-2xl sm:text-3xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+          {t.admin.participantList.replace("{count}", String(participants.length))}
         </h3>
         <div className="space-y-2">
           {participants.length === 0 && (
             <div className="cromo bg-paper-50 text-pitch-700 p-6 text-sm text-center font-mono uppercase tracking-widest">
-              Aún no hay participantes
+              {t.admin.noParticipants}
             </div>
           )}
           {participants.map((p) => (
@@ -427,7 +434,7 @@ function UsersTab({ initial }: { initial: Participant[] }) {
                 onClick={() => remove(p.id, p.name)}
                 className="font-mono text-[10px] text-pitch-700 hover:text-brick-500 uppercase tracking-widest font-bold"
               >
-                Borrar
+                {t.common.delete_action}
               </button>
             </div>
           ))}

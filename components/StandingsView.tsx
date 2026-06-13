@@ -23,23 +23,57 @@ export type StandingRow = {
   description: string | null;
 };
 
+export type StandingsTranslations = {
+  noData: string;
+  rank: string;
+  team: string;
+  played: string;
+  wins: string;
+  draws: string;
+  losses: string;
+  goalsFor: string;
+  goalsAgainst: string;
+  goalDiff: string;
+  points: string;
+  group: string;
+};
+
+const defaultTranslations: StandingsTranslations = {
+  noData: "Sin datos de clasificación todavía",
+  rank: "#",
+  team: "Equipo",
+  played: "PJ",
+  wins: "G",
+  draws: "E",
+  losses: "P",
+  goalsFor: "GF",
+  goalsAgainst: "GC",
+  goalDiff: "DG",
+  points: "PTS",
+  group: "Grupo {name}",
+};
+
 export default function StandingsView({
   groups,
+  translations,
 }: {
   groups: StandingRow[][];
+  translations?: Partial<StandingsTranslations>;
 }) {
+  const tx: StandingsTranslations = { ...defaultTranslations, ...translations };
+
   if (groups.length === 0) {
     return (
       <div className="cromo bg-paper-50 text-pitch-950 p-6 text-center">
         <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500">
-          Sin datos de clasificación todavía
+          {tx.noData}
         </p>
       </div>
     );
   }
 
   if (groups.length === 1) {
-    return <StandingsTable rows={groups[0]} />;
+    return <StandingsTable rows={groups[0]} tx={tx} />;
   }
 
   return (
@@ -47,47 +81,50 @@ export default function StandingsView({
       {groups.map((rows, i) => (
         <div key={i} className="cromo bg-paper-50 text-pitch-950 p-4">
           <h3 className="font-display text-xl uppercase mb-3 text-center">
-            {extractGroupLabel(rows[0]?.group) ?? `Grupo ${i + 1}`}
+            {extractGroupLabel(rows[0]?.group, tx.group) ?? tx.group.replace("{name}", String(i + 1))}
           </h3>
-          <StandingsTable rows={rows} compact />
+          <StandingsTable rows={rows} compact tx={tx} />
         </div>
       ))}
     </div>
   );
 }
 
-function extractGroupLabel(raw: string | undefined): string | null {
+function extractGroupLabel(raw: string | undefined, groupTemplate: string): string | null {
   if (!raw) return null;
-  const m = raw.match(/group\s+[A-Z0-9]+/i);
-  return m ? m[0].toUpperCase() : raw;
+  const m = raw.match(/group\s+([A-Z0-9]+)/i);
+  if (!m) return raw;
+  return groupTemplate.replace("{name}", m[1].toUpperCase());
 }
 
 function StandingsTable({
   rows,
   compact = false,
+  tx,
 }: {
   rows: StandingRow[];
   compact?: boolean;
+  tx: StandingsTranslations;
 }) {
   return (
     <div className={compact ? "" : "cromo bg-paper-50 text-pitch-950 p-3 sm:p-5"}>
       <table className="w-full text-sm">
         <thead>
           <tr className="text-[10px] font-mono uppercase tracking-widest text-pitch-500 border-b-2 border-pitch-200">
-            <th className="text-left py-1.5 pl-1 w-6">#</th>
-            <th className="text-left py-1.5">Equipo</th>
-            <th className="text-center py-1.5 w-8 tabular-nums border-l border-pitch-200 px-1">PJ</th>
+            <th className="text-left py-1.5 pl-1 w-6">{tx.rank}</th>
+            <th className="text-left py-1.5">{tx.team}</th>
+            <th className="text-center py-1.5 w-8 tabular-nums border-l border-pitch-200 px-1">{tx.played}</th>
             {!compact && (
               <>
-                <th className="text-center py-1.5 w-7 tabular-nums">G</th>
-                <th className="text-center py-1.5 w-7 tabular-nums">E</th>
-                <th className="text-center py-1.5 w-7 tabular-nums">P</th>
-                <th className="text-center py-1.5 w-10 tabular-nums">GF</th>
-                <th className="text-center py-1.5 w-10 tabular-nums">GC</th>
+                <th className="text-center py-1.5 w-7 tabular-nums">{tx.wins}</th>
+                <th className="text-center py-1.5 w-7 tabular-nums">{tx.draws}</th>
+                <th className="text-center py-1.5 w-7 tabular-nums">{tx.losses}</th>
+                <th className="text-center py-1.5 w-10 tabular-nums">{tx.goalsFor}</th>
+                <th className="text-center py-1.5 w-10 tabular-nums">{tx.goalsAgainst}</th>
               </>
             )}
-            <th className="text-center py-1.5 w-9 tabular-nums border-l border-pitch-200 px-1">DG</th>
-            <th className="text-right py-1.5 pr-2 w-10 tabular-nums border-l border-pitch-200 pl-1">PTS</th>
+            <th className="text-center py-1.5 w-9 tabular-nums border-l border-pitch-200 px-1">{tx.goalDiff}</th>
+            <th className="text-right py-1.5 pr-2 w-10 tabular-nums border-l border-pitch-200 pl-1">{tx.points}</th>
           </tr>
         </thead>
         <tbody>
