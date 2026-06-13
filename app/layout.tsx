@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import NavBar from "@/components/NavBar";
+import WhatsNewModal from "@/components/WhatsNewModal";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import CookieBanner from "@/components/CookieBanner";
 
@@ -111,6 +112,7 @@ export default async function RootLayout({
     <html lang="es">
       <body className="min-h-screen">
         <NavBar session={session} />
+        {session && <WhatsNewModal />}
         <main className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">{children}</main>
         <footer className="text-center text-chalk-400 text-xs py-10 font-mono uppercase tracking-widest space-y-3">
           <div>⚽ PorraBros · Hecho con ☕</div>
