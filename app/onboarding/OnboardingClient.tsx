@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/providers/I18nProvider";
 
 export default function OnboardingClient({
   next,
@@ -9,6 +10,7 @@ export default function OnboardingClient({
   next: string;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +29,7 @@ export default function OnboardingClient({
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "No se pudo guardar el perfil");
+        setError(data.error || t.onboarding.errorDefault);
         return;
       }
       router.push(next);
@@ -40,28 +42,28 @@ export default function OnboardingClient({
   return (
     <div className="pt-12 sm:pt-20 max-w-md mx-auto">
       <div className="text-center mb-10">
-        <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
-          BIENVENIDO
+        <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
+          {t.onboarding.title}
         </h1>
-        <p className="mt-4 text-chalk-300">
-          Solo necesitamos tu nombre para empezar.
+        <p className="mt-4 text-pitch-700 dark:text-chalk-300">
+          {t.onboarding.description}
         </p>
       </div>
 
       <form
         onSubmit={submit}
-        className="cromo bg-pitch-900 p-6 sm:p-8 space-y-5"
+        className="cromo bg-paper-50 dark:bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
         <div>
           <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-            Tu nombre
+            {t.onboarding.nameLabel}
           </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="input-base w-full"
-            placeholder="Como quieres que te vean en el ranking"
+            placeholder={t.onboarding.namePlaceholder}
             maxLength={60}
             required
             autoFocus
@@ -73,29 +75,32 @@ export default function OnboardingClient({
           <button
             type="button"
             onClick={() => setShowPassword(true)}
-            className="text-xs text-chalk-400 hover:text-flame-400 underline underline-offset-2 transition-colors"
+            className="text-xs text-pitch-500 dark:text-chalk-400 hover:text-flame-400 underline underline-offset-2 transition-colors"
           >
-            Añadir contraseña para entrar sin magic link →
+            {t.onboarding.addPassword}
           </button>
         ) : (
           <div>
             <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-              Contraseña <span className="text-chalk-500 normal-case font-sans font-normal">(opcional)</span>
+              {t.onboarding.passwordLabel}{" "}
+              <span className="text-pitch-500 dark:text-chalk-500 normal-case font-sans font-normal">
+                {t.onboarding.passwordOptional}
+              </span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input-base w-full"
-              placeholder="Mínimo 8 caracteres"
+              placeholder={t.onboarding.passwordPlaceholder}
               autoComplete="new-password"
             />
             <button
               type="button"
               onClick={() => { setShowPassword(false); setPassword(""); }}
-              className="mt-2 text-xs text-chalk-500 hover:text-chalk-300 underline underline-offset-2 transition-colors"
+              className="mt-2 text-xs text-pitch-500 dark:text-chalk-500 hover:text-pitch-700 dark:hover:text-chalk-300 underline underline-offset-2 transition-colors"
             >
-              Cancelar, no quiero contraseña
+              {t.onboarding.cancelPassword}
             </button>
           </div>
         )}
@@ -111,7 +116,7 @@ export default function OnboardingClient({
           disabled={loading || !name.trim()}
           className="btn-primary w-full"
         >
-          {loading ? "Guardando..." : "Entrar →"}
+          {loading ? t.onboarding.submitting : t.onboarding.submit}
         </button>
       </form>
     </div>

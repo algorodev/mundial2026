@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useI18n } from "@/providers/I18nProvider";
 
 export default function JoinClient({
   code,
@@ -14,6 +15,7 @@ export default function JoinClient({
   deadlineLabel: string | null;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -25,7 +27,7 @@ export default function JoinClient({
       const r = await fetch(`/api/join/${code}`, { method: "POST" });
       const d = await r.json();
       if (!r.ok) {
-        setError(d.error || "Error");
+        setError(d.error || t.join.errorDefault);
         return;
       }
       if (d.status === "pending") {
@@ -44,18 +46,17 @@ export default function JoinClient({
       <div className="space-y-4">
         <div className="cromo bg-grass-500 text-paper-50 p-5 text-center">
           <div className="font-display text-2xl uppercase mb-1">
-            ✓ Solicitud enviada
+            {t.join.requestSent}
           </div>
           <p className="text-sm">
-            El owner del grupo recibirá tu solicitud y decidirá si te admite.
-            Te avisaremos en cuanto haya respuesta.
+            {t.join.requestSentDesc}
           </p>
         </div>
         <Link
           href="/groups"
           className="btn-secondary w-full block text-center"
         >
-          Volver a mis porras
+          {t.join.backToMyPools}
         </Link>
       </div>
     );
@@ -66,22 +67,22 @@ export default function JoinClient({
       <button onClick={join} disabled={loading} className="btn-primary w-full">
         {loading
           ? requiresApproval
-            ? "Enviando solicitud..."
-            : "Uniéndome..."
+            ? t.join.requestingButton
+            : t.join.joiningButton
           : requiresApproval
-            ? "Solicitar entrada →"
-            : "Unirme al grupo →"}
+            ? t.join.requestButton
+            : t.join.joinButton}
       </button>
       {deadlineLabel && (
-        <p className="text-center font-mono text-[11px] text-chalk-400 uppercase tracking-widest">
-          ⏱ Plazo de inscripción hasta {deadlineLabel}
+        <p className="text-center font-mono text-[11px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+          {t.join.deadline.replace("{date}", deadlineLabel)}
         </p>
       )}
       <Link
         href="/groups"
-        className="block text-center font-mono text-[11px] uppercase tracking-widest text-chalk-400 hover:text-flame-400"
+        className="block text-center font-mono text-[11px] uppercase tracking-widest text-pitch-500 dark:text-chalk-400 hover:text-flame-400"
       >
-        Cancelar
+        {t.join.cancel}
       </Link>
       {error && (
         <div className="cromo bg-brick-500 text-paper-50 px-4 py-3 font-semibold text-sm">

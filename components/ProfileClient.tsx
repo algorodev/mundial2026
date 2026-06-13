@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/providers/I18nProvider";
 
 export default function ProfileClient({
   initialName,
@@ -9,6 +10,7 @@ export default function ProfileClient({
   initialName: string | null;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [name, setName] = useState(initialName ?? "");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -29,7 +31,7 @@ export default function ProfileClient({
       });
       const data = await r.json();
       if (!r.ok) {
-        setError(data.error || "Error guardando");
+        setError(data.error || t.profile.errorSaving);
         return;
       }
       setSaved(true);
@@ -43,16 +45,16 @@ export default function ProfileClient({
   }
 
   return (
-    <form onSubmit={submit} className="cromo bg-pitch-900 p-5 sm:p-6 space-y-4">
+    <form onSubmit={submit} className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 space-y-4">
       <div>
         <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-          Nombre que ven los demás
+          {t.profile.nameLabel}
         </label>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="input-base w-full"
-          placeholder="Tu nombre"
+          placeholder={t.profile.namePlaceholder}
           minLength={2}
           maxLength={60}
           required
@@ -71,11 +73,11 @@ export default function ProfileClient({
           disabled={!dirty || saving}
           className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? "Guardando..." : "Guardar"}
+          {saving ? t.profile.savingButton : t.profile.saveButton}
         </button>
         {saved && (
           <span className="font-mono text-[11px] text-grass-400 uppercase tracking-widest font-bold">
-            ✓ Guardado
+            {t.profile.savedConfirm}
           </span>
         )}
       </div>

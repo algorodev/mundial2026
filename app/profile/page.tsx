@@ -11,6 +11,8 @@ import {
   predictions,
 } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 import { calcPoints } from "@/lib/scoring";
 import ProfileClient from "@/components/ProfileClient";
 import TournamentBadge from "@/components/TournamentBadge";
@@ -20,6 +22,9 @@ export const dynamic = "force-dynamic";
 export default async function ProfilePage() {
   const session = await getSession();
   if (!session) redirect("/login?next=/profile");
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   // Datos básicos del user
   const [me] = await db
@@ -160,18 +165,23 @@ export default async function ProfilePage() {
     { points: 0, exact: 0, outcome: 0, miss: 0, played: 0, groups: 0, wins: 0 }
   );
 
+  const players = t.groups.players;
+
   return (
     <div className="pt-8">
       <Link
         href="/groups"
         className="back-link mb-3"
       >
-        ← Mis porras
+        {t.profile.backToMyPools}
       </Link>
 
       <div className="mb-10">
-        <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none">
-          MI <span className="text-flame-500">PERFIL</span>
+        <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
+          {t.profile.title.split(" ")[0]}{" "}
+          <span className="text-flame-500">
+            {t.profile.title.split(" ").slice(1).join(" ")}
+          </span>
         </h1>
         <p className="mt-3 inline-block bg-paper-50 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
           {me.email}
@@ -180,27 +190,27 @@ export default async function ProfilePage() {
 
       {/* Form de cambiar nombre */}
       <section className="mb-12 max-w-xl">
-        <h2 className="font-display text-2xl text-chalk-50 mb-4 uppercase">
-          Tu nombre
+        <h2 className="font-display text-2xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+          {t.profile.yourName}
         </h2>
         <ProfileClient initialName={me.name} />
       </section>
 
       {/* Stats globales */}
       <section className="mb-12">
-        <h2 className="font-display text-2xl text-chalk-50 mb-4 uppercase">
-          Stats globales
+        <h2 className="font-display text-2xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+          {t.profile.globalStats}
         </h2>
-        <div className="cromo bg-pitch-900 p-5 sm:p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-          <Stat label="Puntos" value={totals.points} accent="text-flame-500" big />
-          <Stat label="Victorias" value={totals.wins} accent="text-grass-400" big />
-          <Stat label="Porras" value={totals.groups} accent="text-chalk-50" />
-          <Stat label="Jugadas" value={totals.played} accent="text-chalk-50" />
-          <Stat label="Exactos" value={totals.exact} accent="text-grass-400" />
-          <Stat label="Signos" value={totals.outcome} accent="text-flame-400" />
-          <Stat label="Fallos" value={totals.miss} accent="text-brick-400" />
+        <div className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+          <Stat label={t.profile.statPoints} value={totals.points} accent="text-flame-500" big />
+          <Stat label={t.profile.statWins} value={totals.wins} accent="text-grass-400" big />
+          <Stat label={t.profile.statPools} value={totals.groups} accent="text-pitch-900 dark:text-chalk-50" />
+          <Stat label={t.profile.statPlayed} value={totals.played} accent="text-pitch-900 dark:text-chalk-50" />
+          <Stat label={t.profile.statExact} value={totals.exact} accent="text-grass-400" />
+          <Stat label={t.profile.statOutcome} value={totals.outcome} accent="text-flame-400" />
+          <Stat label={t.profile.statMiss} value={totals.miss} accent="text-brick-400" />
           <Stat
-            label="Acierto"
+            label={t.profile.statAccuracy}
             value={
               totals.played > 0
                 ? `${Math.round(
@@ -208,20 +218,19 @@ export default async function ProfilePage() {
                   )}%`
                 : "—"
             }
-            accent="text-chalk-50"
+            accent="text-pitch-900 dark:text-chalk-50"
           />
         </div>
       </section>
 
       {/* Lista de porras con mi posición */}
       <section>
-        <h2 className="font-display text-2xl text-chalk-50 mb-4 uppercase">
-          Mis porras ({groupCards.length})
+        <h2 className="font-display text-2xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+          {t.profile.myPools.replace("{count}", String(groupCards.length))}
         </h2>
         {groupCards.length === 0 ? (
           <div className="cromo bg-paper-50 text-pitch-700 p-6 text-center font-mono uppercase tracking-widest">
-            Aún no estás en ninguna porra. Crea o únete a una desde "Mis
-            porras".
+            {t.profile.emptyPools}
           </div>
         ) : (
           <div className="space-y-3">
@@ -229,7 +238,7 @@ export default async function ProfilePage() {
               <Link
                 key={g.slug}
                 href={`/g/${g.slug}/leaderboard`}
-                className="cromo bg-paper-50 text-pitch-950 p-4 sm:p-5 flex items-center gap-4 hover:-translate-y-0.5 transition-transform"
+                className="cromo bg-paper-50 dark:bg-pitch-800 text-pitch-950 dark:text-chalk-50 p-4 sm:p-5 flex items-center gap-4 hover:-translate-y-0.5 transition-transform"
               >
                 <TournamentBadge
                   slug={g.tournamentSlug}
@@ -244,19 +253,19 @@ export default async function ProfilePage() {
                       <span className="ml-2 text-base">🏆</span>
                     )}
                   </div>
-                  <div className="mt-1 font-mono text-[10px] text-pitch-700 uppercase tracking-widest truncate">
-                    {g.tournamentName} · {g.memberCount} jugadores
+                  <div className="mt-1 font-mono text-[10px] text-pitch-700 dark:text-chalk-400 uppercase tracking-widest truncate">
+                    {g.tournamentName} · {g.memberCount} {players}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="font-display text-lg text-flame-500">
                     {g.myPosition != null ? `#${g.myPosition}` : "—"}
-                    <span className="font-mono text-[11px] text-pitch-700 ml-1">
+                    <span className="font-mono text-[11px] text-pitch-700 dark:text-chalk-400 ml-1">
                       / {g.memberCount}
                     </span>
                   </div>
-                  <div className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
-                    {g.myTotal} pts
+                  <div className="font-mono text-[10px] text-pitch-700 dark:text-chalk-400 uppercase tracking-widest">
+                    {g.myTotal} {t.common.pts}
                   </div>
                 </div>
               </Link>
@@ -288,7 +297,7 @@ function Stat({
       >
         {value}
       </div>
-      <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-2">
+      <div className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest mt-2">
         {label}
       </div>
     </div>

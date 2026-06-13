@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { groups, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
+import { getLocale } from "@/lib/locale";
+import { getDictionary } from "@/lib/i18n";
 import JoinClient from "@/components/JoinClient";
 
 export default async function JoinPage(
@@ -19,6 +21,9 @@ export default async function JoinPage(
   if (!session) {
     redirect(`/login?next=${encodeURIComponent(`/join/${code}`)}`);
   }
+
+  const locale = await getLocale();
+  const t = getDictionary(locale);
 
   const [group] = await db
     .select({
@@ -38,12 +43,14 @@ export default async function JoinPage(
   if (!group) {
     return (
       <div className="pt-12 max-w-md mx-auto text-center">
-        <h1 className="font-display text-5xl text-chalk-50 mb-4">CÓDIGO NO VÁLIDO</h1>
-        <p className="text-chalk-300 mb-6">
-          El enlace no es correcto o el grupo ya no existe.
+        <h1 className="font-display text-5xl text-pitch-900 dark:text-chalk-50 mb-4">
+          {t.join.invalidCode}
+        </h1>
+        <p className="text-pitch-500 dark:text-chalk-400 mb-6">
+          {t.join.invalidCodeDesc}
         </p>
         <Link href="/groups" className="btn-primary">
-          Ir a mis porras
+          {t.join.goToMyPools}
         </Link>
       </div>
     );
@@ -59,15 +66,15 @@ export default async function JoinPage(
 
   return (
     <div className="pt-12 max-w-md mx-auto">
-      <h1 className="font-display text-5xl sm:text-6xl text-chalk-50 leading-none mb-3 text-center">
-        UNIRTE
+      <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none mb-3 text-center">
+        {t.join.title}
       </h1>
-      <p className="text-center text-chalk-300 mb-8">
+      <p className="text-center text-pitch-500 dark:text-chalk-400 mb-8">
         {closed
-          ? "Este grupo ya no acepta inscripciones."
+          ? t.join.closed
           : requiresApproval
-            ? "Vas a solicitar entrar al grupo:"
-            : "Vas a unirte al grupo:"}
+            ? t.join.requestEntry
+            : t.join.joinGroup}
       </p>
       <div className="cromo bg-paper-50 text-pitch-950 p-5 mb-8 text-center">
         <div className="font-display text-3xl uppercase tracking-tight">
@@ -84,7 +91,7 @@ export default async function JoinPage(
       </div>
       {closed ? (
         <Link href="/groups" className="btn-secondary w-full block text-center">
-          Volver a mis porras
+          {t.join.backToMyPools}
         </Link>
       ) : (
         <JoinClient
@@ -92,7 +99,7 @@ export default async function JoinPage(
           requiresApproval={requiresApproval}
           deadlineLabel={
             group.joinDeadline
-              ? new Intl.DateTimeFormat("es-ES", {
+              ? new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "es-ES", {
                   day: "numeric",
                   month: "short",
                   hour: "2-digit",

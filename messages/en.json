@@ -374,8 +374,18 @@
     "errorSaving": "Error saving"
   },
   "onboarding": {
-    "title": "Welcome!",
-    "description": "Choose a name your rivals will see in the ranking."
+    "title": "WELCOME",
+    "description": "We just need your name to get started.",
+    "nameLabel": "Your name",
+    "namePlaceholder": "How you want to appear in the ranking",
+    "addPassword": "Add a password to log in without a magic link →",
+    "passwordLabel": "Password",
+    "passwordOptional": "(optional)",
+    "passwordPlaceholder": "Minimum 8 characters",
+    "cancelPassword": "Cancel, I don't want a password",
+    "submit": "Let's go →",
+    "submitting": "Saving...",
+    "errorDefault": "Could not save profile"
   },
   "cookieBanner": {
     "title": "🍪 Cookies",

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useI18n } from "@/providers/I18nProvider";
 
 export const COOKIE_CONSENT_KEY = "porrabros-cookie-consent";
 export const COOKIE_CONSENT_EVENT = "porrabros:cookie-consent";
@@ -22,6 +23,7 @@ function writeConsent(value: ConsentValue) {
 }
 
 export default function CookieBanner() {
+  const { t } = useI18n();
   const [decided, setDecided] = useState<boolean>(true);
 
   useEffect(() => {
@@ -39,21 +41,20 @@ export default function CookieBanner() {
     <div
       role="dialog"
       aria-live="polite"
-      aria-label="Aviso de cookies"
+      aria-label={t.cookieBanner.ariaLabel}
       className="fixed inset-x-2 bottom-2 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:max-w-sm z-50"
     >
-      <div className="cromo bg-paper-50 text-pitch-950 p-4 sm:p-5">
+      <div className="cromo bg-paper-50 dark:bg-pitch-800 text-pitch-950 dark:text-chalk-50 p-4 sm:p-5">
         <p className="font-display text-base sm:text-lg uppercase leading-tight">
-          🍪 Cookies
+          {t.cookieBanner.title}
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-pitch-800">
-          Usamos cookies necesarias para que la porra funcione. Si nos das
-          permiso, también unas analíticas anónimas para mejorar la web.{" "}
+        <p className="mt-2 text-sm leading-relaxed text-pitch-800 dark:text-chalk-200">
+          {t.cookieBanner.description}{" "}
           <Link
             href="/cookies"
             className="text-brick-500 hover:text-brick-600 underline underline-offset-2"
           >
-            Más info
+            {t.cookieBanner.moreInfo}
           </Link>
           .
         </p>
@@ -67,18 +68,18 @@ export default function CookieBanner() {
               transition-all hover:-translate-x-0.5 hover:-translate-y-0.5
               active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
           >
-            Aceptar
+            {t.cookieBanner.accept}
           </button>
           <button
             type="button"
             onClick={() => decide("rejected")}
-            className="bg-paper-100 hover:bg-paper-200 text-pitch-950 font-display
+            className="bg-paper-100 hover:bg-paper-200 dark:bg-pitch-700 dark:hover:bg-pitch-600 text-pitch-950 dark:text-chalk-50 font-display
               px-4 py-2 rounded-md uppercase tracking-wide text-xs
               border-2 border-pitch-950 shadow-brutal-sm
               transition-all hover:-translate-x-0.5 hover:-translate-y-0.5
               active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
           >
-            Rechazar
+            {t.cookieBanner.reject}
           </button>
         </div>
       </div>

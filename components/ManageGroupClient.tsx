@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/providers/I18nProvider";
 import GroupSettingsFields, {
   settingsToPayload,
   type GroupSettingsValue,
@@ -59,6 +60,7 @@ export default function ManageGroupClient({
   initialRequests: Request[];
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [list, setList] = useState(members);
   const [requests, setRequests] = useState(initialRequests);
   const [copied, setCopied] = useState(false);
@@ -84,7 +86,9 @@ export default function ManageGroupClient({
       ? `${window.location.origin}/join/${inviteCode}`
       : `/join/${inviteCode}`;
 
-  const waMessage = `¡Te uno a la porra "${groupName}" en PorraBros! Únete aquí: ${inviteUrl}`;
+  const waMessage = t.manage.waMessage
+    .replace("{name}", groupName)
+    .replace("{url}", inviteUrl);
   const waUrl = `https://wa.me/?text=${encodeURIComponent(waMessage)}`;
 
   async function copyInvite() {
@@ -98,7 +102,7 @@ export default function ManageGroupClient({
   }
 
   async function remove(userId: number, n: string | null) {
-    if (!confirm(`¿Expulsar a "${n ?? "este miembro"}" del grupo?`)) return;
+    if (!confirm(t.manage.confirmRemove.replace("{name}", n ?? t.common.remove))) return;
     setRemovingId(userId);
     try {
       const r = await fetch(`/api/groups/${slug}/members/${userId}`, {
@@ -108,7 +112,7 @@ export default function ManageGroupClient({
         setList((prev) => prev.filter((m) => m.userId !== userId));
       } else {
         const d = await r.json();
-        alert(d.error || "Error");
+        alert(d.error || t.common.error);
       }
     } finally {
       setRemovingId(null);
@@ -116,19 +120,14 @@ export default function ManageGroupClient({
   }
 
   async function deleteGroup() {
-    if (
-      !confirm(
-        "¿Borrar el grupo entero? Se perderán todas las predicciones y miembros."
-      )
-    )
-      return;
+    if (!confirm(t.manage.confirmDelete)) return;
     const r = await fetch(`/api/groups/${slug}`, { method: "DELETE" });
     if (r.ok) {
       router.push("/groups");
       router.refresh();
     } else {
       const d = await r.json();
-      alert(d.error || "Error");
+      alert(d.error || t.common.error);
     }
   }
 
@@ -155,7 +154,7 @@ export default function ManageGroupClient({
         }
       } else {
         const d = await r.json();
-        alert(d.error || "Error");
+        alert(d.error || t.common.error);
       }
     } finally {
       setRequestActionId(null);
@@ -163,7 +162,7 @@ export default function ManageGroupClient({
   }
 
   async function rejectRequest(userId: number, n: string | null) {
-    if (!confirm(`¿Rechazar la solicitud de "${n}"?`)) return;
+    if (!confirm(t.manage.confirmRemove.replace("{name}", n ?? ""))) return;
     setRequestActionId(userId);
     try {
       const r = await fetch(`/api/groups/${slug}/requests/${userId}`, {
@@ -173,7 +172,7 @@ export default function ManageGroupClient({
         setRequests((prev) => prev.filter((x) => x.userId !== userId));
       } else {
         const d = await r.json();
-        alert(d.error || "Error");
+        alert(d.error || t.common.error);
       }
     } finally {
       setRequestActionId(null);
@@ -199,7 +198,7 @@ export default function ManageGroupClient({
         router.refresh();
       } else {
         const d = await r.json();
-        setSettingsError(d.error || "Error guardando");
+        setSettingsError(d.error || t.common.error);
       }
     } finally {
       setSavingSettings(false);
@@ -211,20 +210,20 @@ export default function ManageGroupClient({
       {/* Solicitudes pendientes (sólo si las hay) */}
       {requests.length > 0 && (
         <section>
-          <h3 className="font-display text-2xl sm:text-3xl text-chalk-50 mb-4 uppercase">
-            ⏳ Solicitudes pendientes ({requests.length})
+          <h3 className="font-display text-2xl sm:text-3xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+            {t.manage.pendingRequests.replace("{count}", String(requests.length))}
           </h3>
           <div className="space-y-2">
             {requests.map((r) => (
               <div
                 key={r.userId}
-                className="cromo bg-paper-50 text-pitch-950 px-4 py-3 flex items-center justify-between gap-3"
+                className="cromo bg-paper-50 dark:bg-pitch-800 text-pitch-950 dark:text-chalk-50 px-4 py-3 flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
                   <div className="font-display text-lg uppercase tracking-tight truncate">
                     {r.name}
                   </div>
-                  <div className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest truncate">
+                  <div className="font-mono text-[10px] text-pitch-700 dark:text-chalk-400 uppercase tracking-widest truncate">
                     {r.email}
                   </div>
                 </div>
@@ -234,14 +233,14 @@ export default function ManageGroupClient({
                     disabled={requestActionId === r.userId}
                     className="bg-grass-500 text-paper-50 px-3 py-1.5 font-display text-xs uppercase tracking-widest border-2 border-pitch-950 shadow-brutal-sm hover:-translate-y-0.5 transition-all disabled:opacity-50"
                   >
-                    Aprobar
+                    {t.common.approve}
                   </button>
                   <button
                     onClick={() => rejectRequest(r.userId, r.name)}
                     disabled={requestActionId === r.userId}
-                    className="font-mono text-[10px] text-pitch-700 hover:text-brick-500 uppercase tracking-widest font-bold disabled:opacity-50"
+                    className="font-mono text-[10px] text-pitch-700 dark:text-chalk-400 hover:text-brick-500 uppercase tracking-widest font-bold disabled:opacity-50"
                   >
-                    Rechazar
+                    {t.common.reject}
                   </button>
                 </div>
               </div>
@@ -252,11 +251,11 @@ export default function ManageGroupClient({
 
       {/* Invitación */}
       <section>
-        <h3 className="font-display text-2xl sm:text-3xl text-chalk-50 mb-4 uppercase">
-          🔗 Enlace de invitación
+        <h3 className="font-display text-2xl sm:text-3xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+          {t.manage.inviteLink}
         </h3>
-        <div className="cromo bg-pitch-900 p-5 sm:p-6 space-y-4">
-          <div className="font-mono text-sm text-chalk-50 break-all bg-pitch-950 px-4 py-3 rounded-sm">
+        <div className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 space-y-4">
+          <div className="font-mono text-sm text-pitch-900 dark:text-chalk-50 break-all bg-paper-100 dark:bg-pitch-950 px-4 py-3 rounded-sm">
             {inviteUrl}
           </div>
           <div className="flex gap-3 flex-wrap">
@@ -270,37 +269,37 @@ export default function ManageGroupClient({
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.978-.607z"/>
               </svg>
-              Compartir por WhatsApp
+              {t.manage.shareWhatsApp}
             </a>
             <button onClick={copyInvite} className="btn-secondary">
-              {copied ? "✓ Copiado" : "Copiar enlace"}
+              {copied ? t.manage.copied : t.manage.copyLink}
             </button>
-            <span className="font-mono text-[11px] text-chalk-400 self-center uppercase tracking-widest">
-              Código: <strong className="text-flame-400">{inviteCode}</strong>
+            <span className="font-mono text-[11px] text-pitch-500 dark:text-chalk-400 self-center uppercase tracking-widest">
+              {t.manage.inviteCode} <strong className="text-flame-400">{inviteCode}</strong>
             </span>
           </div>
-          <p className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-            Cualquiera con este enlace {settings.joinPolicy === "approval"
-              ? "podrá solicitar entrar."
+          <p className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+            {settings.joinPolicy === "approval"
+              ? t.manage.linkPolicyApproval
               : settings.joinPolicy === "closed"
-                ? "verá un mensaje indicando que el grupo está cerrado."
-                : "podrá unirse directamente."}
+                ? t.manage.linkPolicyClosed
+                : t.manage.linkPolicyOpen}
           </p>
         </div>
       </section>
 
       {/* Configuración */}
       <section>
-        <h3 className="font-display text-2xl sm:text-3xl text-chalk-50 mb-4 uppercase">
-          ⚙ Configuración
+        <h3 className="font-display text-2xl sm:text-3xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+          {t.manage.settings}
         </h3>
         <form
           onSubmit={saveSettings}
-          className="cromo bg-pitch-900 p-5 sm:p-6 space-y-6"
+          className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 space-y-6"
         >
           <div>
             <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
-              Nombre del grupo
+              {t.manage.groupNameLabel}
             </label>
             <input
               value={name}
@@ -326,11 +325,11 @@ export default function ManageGroupClient({
               disabled={savingSettings}
               className="btn-primary"
             >
-              {savingSettings ? "Guardando..." : "Guardar cambios"}
+              {savingSettings ? t.manage.saving : t.common.saveChanges}
             </button>
             {savedSettings && (
               <span className="font-mono text-[11px] text-grass-400 uppercase tracking-widest font-bold">
-                ✓ Guardado
+                {t.manage.saved}
               </span>
             )}
           </div>
@@ -339,8 +338,8 @@ export default function ManageGroupClient({
 
       {/* Miembros */}
       <section>
-        <h3 className="font-display text-2xl sm:text-3xl text-chalk-50 mb-4 uppercase">
-          👥 Miembros ({list.length})
+        <h3 className="font-display text-2xl sm:text-3xl text-pitch-900 dark:text-chalk-50 mb-4 uppercase">
+          {t.manage.members.replace("{count}", String(list.length))}
         </h3>
         <div className="space-y-2">
           {list.map((m) => {
@@ -349,33 +348,33 @@ export default function ManageGroupClient({
             return (
               <div
                 key={m.userId}
-                className="cromo bg-paper-50 text-pitch-950 px-4 py-3 flex items-center justify-between gap-3"
+                className="cromo bg-paper-50 dark:bg-pitch-800 text-pitch-950 dark:text-chalk-50 px-4 py-3 flex items-center justify-between gap-3"
               >
                 <div>
                   <div className="font-display text-lg uppercase tracking-tight">
                     {m.name}
                     {isMe && (
                       <span className="ml-2 text-[10px] font-mono uppercase tracking-widest opacity-70">
-                        ← TÚ
+                        {t.common.you}
                       </span>
                     )}
                   </div>
-                  <div className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
+                  <div className="font-mono text-[10px] text-pitch-700 dark:text-chalk-400 uppercase tracking-widest">
                     {m.email}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   {isOwner ? (
                     <span className="bg-flame-500 text-pitch-950 font-display text-[10px] px-2 py-1 border-2 border-pitch-950 uppercase tracking-widest">
-                      Owner
+                      {t.common.owner}
                     </span>
                   ) : (
                     <button
                       onClick={() => remove(m.userId, m.name)}
                       disabled={removingId === m.userId}
-                      className="font-mono text-[10px] text-pitch-700 hover:text-brick-500 uppercase tracking-widest font-bold disabled:opacity-50"
+                      className="font-mono text-[10px] text-pitch-700 dark:text-chalk-400 hover:text-brick-500 uppercase tracking-widest font-bold disabled:opacity-50"
                     >
-                      {removingId === m.userId ? "…" : "Expulsar"}
+                      {removingId === m.userId ? t.manage.expelling : t.manage.expel}
                     </button>
                   )}
                 </div>
@@ -388,22 +387,22 @@ export default function ManageGroupClient({
       {/* Zona peligrosa */}
       <section>
         <h3 className="font-display text-2xl sm:text-3xl text-brick-400 mb-4 uppercase">
-          ⚠️ Zona peligrosa
+          {t.manage.dangerZone}
         </h3>
-        <div className="cromo bg-pitch-900 p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap">
+        <div className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <div className="font-display text-lg text-chalk-50 uppercase">
-              Borrar grupo
+            <div className="font-display text-lg text-pitch-900 dark:text-chalk-50 uppercase">
+              {t.manage.deleteGroup}
             </div>
-            <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-              Se perderán predicciones y miembros. No se puede deshacer.
+            <div className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+              {t.manage.deleteGroupDesc}
             </div>
           </div>
           <button
             onClick={deleteGroup}
             className="bg-brick-500 text-paper-50 px-5 py-3 font-display text-xs uppercase tracking-widest border-2 border-pitch-950 shadow-brutal-sm hover:-translate-y-0.5 transition-all"
           >
-            Borrar grupo
+            {t.manage.deleteGroup}
           </button>
         </div>
       </section>

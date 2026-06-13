@@ -1,24 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/providers/I18nProvider";
 
 const VERSION = "0.2.4";
 const STORAGE_KEY = "porrabros_whats_new_seen";
 
-const CHANGES = [
-  {
-    icon: "🏠",
-    title: "El logo te lleva al inicio",
-    desc: "Ahora puedes volver al inicio desde cualquier página para descubrir nuevos torneos, aunque ya hayas iniciado sesión.",
-  },
-  {
-    icon: "☰",
-    title: "Menú hamburguesa en móvil",
-    desc: "En el móvil ya no se apretaban los enlaces del menú: pulsa el icono de la esquina y se despliega cómodamente.",
-  },
-];
-
 export default function WhatsNewModal() {
+  const { t } = useI18n();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -33,6 +22,19 @@ export default function WhatsNewModal() {
 
   if (!visible) return null;
 
+  const changes = [
+    {
+      icon: "🏠",
+      title: t.whatsNew.homeLogoTitle,
+      desc: t.whatsNew.homeLogoDesc,
+    },
+    {
+      icon: "☰",
+      title: t.whatsNew.hamburgerTitle,
+      desc: t.whatsNew.hamburgerDesc,
+    },
+  ];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-pitch-950/80 backdrop-blur-sm"
@@ -45,16 +47,16 @@ export default function WhatsNewModal() {
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>
             <span className="inline-block bg-flame-500 text-pitch-950 font-display text-[10px] px-2.5 py-1 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest">
-              Novedades {VERSION}
+              {t.whatsNew.badge.replace("{version}", VERSION)}
             </span>
             <h2 className="mt-3 font-display text-3xl uppercase leading-none">
-              ¿Qué hay de nuevo?
+              {t.whatsNew.title}
             </h2>
           </div>
         </div>
 
         <ul className="space-y-5">
-          {CHANGES.map((c) => (
+          {changes.map((c) => (
             <li key={c.title} className="flex gap-3">
               <span className="text-2xl leading-none mt-0.5 shrink-0">{c.icon}</span>
               <div>
@@ -71,7 +73,7 @@ export default function WhatsNewModal() {
           onClick={dismiss}
           className="btn-primary w-full mt-8 text-center"
         >
-          Entendido ✓
+          {t.whatsNew.dismiss}
         </button>
       </div>
     </div>

@@ -374,8 +374,18 @@
     "errorSaving": "Error guardando"
   },
   "onboarding": {
-    "title": "¡Bienvenido!",
-    "description": "Elige un nombre que verán tus rivales en el ranking."
+    "title": "BIENVENIDO",
+    "description": "Solo necesitamos tu nombre para empezar.",
+    "nameLabel": "Tu nombre",
+    "namePlaceholder": "Como quieres que te vean en el ranking",
+    "addPassword": "Añadir contraseña para entrar sin magic link →",
+    "passwordLabel": "Contraseña",
+    "passwordOptional": "(opcional)",
+    "passwordPlaceholder": "Mínimo 8 caracteres",
+    "cancelPassword": "Cancelar, no quiero contraseña",
+    "submit": "Entrar →",
+    "submitting": "Guardando...",
+    "errorDefault": "No se pudo guardar el perfil"
   },
   "cookieBanner": {
     "title": "🍪 Cookies",

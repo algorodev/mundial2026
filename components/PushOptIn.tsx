@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/providers/I18nProvider";
 
 // Botón de "activar/desactivar notificaciones" para el grupo. Se ocupa de:
 //  - registrar el service worker
@@ -38,6 +39,7 @@ function isIOSWithoutPWA(): boolean {
 }
 
 export default function PushOptIn() {
+  const { t } = useI18n();
   const [status, setStatus] = useState<Status>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export default function PushOptIn() {
         }
       }
       const r = await fetch("/api/push/vapid-public-key");
-      if (!r.ok) throw new Error("VAPID public key no disponible");
+      if (!r.ok) throw new Error(t.push.vapidNotAvailable);
       const { publicKey } = await r.json();
 
       const reg = await navigator.serviceWorker.ready;
@@ -114,7 +116,7 @@ export default function PushOptIn() {
       });
       if (!post.ok) {
         const d = await post.json().catch(() => ({}));
-        throw new Error(d.error ?? "No se pudo guardar la suscripción");
+        throw new Error(d.error ?? t.push.couldNotSave);
       }
       setStatus({ kind: "active", endpoint: sub.endpoint });
     } catch (e) {
@@ -152,35 +154,32 @@ export default function PushOptIn() {
   // iOS sin PWA: banner especial con instrucción "Añadir a inicio".
   if (status.kind === "ios-needs-pwa") {
     return (
-      <div className="cromo bg-pitch-900 text-chalk-50 px-4 py-3 mb-4">
+      <div className="cromo bg-paper-50 dark:bg-pitch-900 text-pitch-900 dark:text-chalk-50 px-4 py-3 mb-4">
         <div className="font-display text-sm uppercase tracking-widest mb-1">
-          🔔 Notificaciones push
+          {t.push.title}
         </div>
-        <p className="font-mono text-[10px] text-chalk-400 uppercase tracking-wider leading-relaxed">
-          En iPhone necesitas instalar PorraBros para recibirlas. Toca el
-          icono de Compartir
+        <p className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-wider leading-relaxed">
+          {t.push.iosNeedsPwa}{" "}
           <span className="mx-1 inline-block bg-paper-50 text-pitch-950 px-1.5 py-0.5 rounded-sm font-display text-[10px]">
             ⬆️
           </span>
-          en Safari y elige <strong>Añadir a pantalla de inicio</strong>.
-          Luego abre la app desde el icono y vuelve aquí.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="cromo bg-pitch-900 text-chalk-50 px-4 py-3 flex flex-wrap items-center justify-between gap-3 mb-4">
+    <div className="cromo bg-paper-50 dark:bg-pitch-900 text-pitch-900 dark:text-chalk-50 px-4 py-3 flex flex-wrap items-center justify-between gap-3 mb-4">
       <div className="min-w-0">
         <div className="font-display text-sm uppercase tracking-widest">
-          🔔 Notificaciones push
+          {t.push.title}
         </div>
-        <div className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest mt-0.5">
+        <div className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest mt-0.5">
           {status.kind === "active"
-            ? "Activas en este dispositivo"
+            ? t.push.active
             : status.kind === "denied"
-              ? "Bloqueadas en tu navegador"
-              : "Avisos de goles, finales y arranque de partido"}
+              ? t.push.denied
+              : t.push.idle}
         </div>
         {err && (
           <div className="font-mono text-[10px] text-brick-400 uppercase tracking-widest mt-1">
@@ -189,16 +188,16 @@ export default function PushOptIn() {
         )}
       </div>
       {status.kind === "denied" ? (
-        <span className="font-mono text-[10px] text-chalk-400 uppercase tracking-widest">
-          Cámbialo en ajustes del sitio
+        <span className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+          {t.push.changeInSettings}
         </span>
       ) : status.kind === "active" ? (
         <button
           onClick={deactivate}
           disabled={busy}
-          className="font-display text-xs uppercase tracking-widest px-3 py-2 bg-paper-50 text-pitch-950 border-2 border-pitch-950 shadow-brutal-sm hover:-translate-y-0.5 transition-transform disabled:opacity-50"
+          className="font-display text-xs uppercase tracking-widest px-3 py-2 bg-paper-100 dark:bg-paper-50 text-pitch-950 border-2 border-pitch-950 shadow-brutal-sm hover:-translate-y-0.5 transition-transform disabled:opacity-50"
         >
-          {busy ? "…" : "Desactivar"}
+          {busy ? "…" : t.push.deactivate}
         </button>
       ) : (
         <button
@@ -206,7 +205,7 @@ export default function PushOptIn() {
           disabled={busy}
           className="font-display text-xs uppercase tracking-widest px-3 py-2 bg-flame-500 text-pitch-950 border-2 border-pitch-950 shadow-brutal-sm hover:-translate-y-0.5 transition-transform disabled:opacity-50"
         >
-          {busy ? "…" : "Activar"}
+          {busy ? "…" : t.push.activate}
         </button>
       )}
     </div>
