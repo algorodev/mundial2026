@@ -36,7 +36,7 @@ export default async function GroupsPage() {
         <div>
           <h1 className="font-display text-6xl sm:text-7xl text-pitch-900 dark:text-chalk-50 leading-none">
             {t.groups.title.split(" ")[0]}{" "}
-            <span className="text-flame-500">{t.groups.title.split(" ").slice(1).join(" ")}</span>
+            <span className="text-pitch-600 dark:text-flame-500">{t.groups.title.split(" ").slice(1).join(" ")}</span>
           </h1>
           <p className="mt-3 inline-block bg-flame-500 text-pitch-950 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
             {myGroups.length === 0

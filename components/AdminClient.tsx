@@ -355,7 +355,7 @@ function UsersTab({ initial }: { initial: Participant[] }) {
         </h3>
         <form onSubmit={create} className="cromo bg-white dark:bg-pitch-900 p-6 space-y-5">
           <div>
-            <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+            <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
               {t.admin.nameLabel}
             </label>
             <input
@@ -367,7 +367,7 @@ function UsersTab({ initial }: { initial: Participant[] }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+            <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
               {t.admin.pinLabel}
             </label>
             <input

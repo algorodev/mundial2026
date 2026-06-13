@@ -188,8 +188,8 @@ function LeaderboardRow({
   const tone = isMe
     ? "bg-flame-500 text-pitch-950"
     : "bg-paper-50 dark:bg-pitch-900 text-pitch-900 dark:text-chalk-50";
-  const accentTotal = isMe ? "text-pitch-950" : "text-flame-500";
-  const accentPos = isMe ? "text-pitch-950" : "text-flame-500";
+  const accentTotal = isMe ? "text-pitch-950" : "text-pitch-700 dark:text-flame-500";
+  const accentPos = isMe ? "text-pitch-950" : "text-pitch-700 dark:text-flame-500";
 
   const interactive = clickable
     ? "hover:-translate-y-0.5 hover:shadow-brutal-lg transition-all cursor-pointer"
@@ -221,7 +221,7 @@ function LeaderboardRow({
             {labelEx}
           </span>
           <span>
-            <strong className={isMe ? "text-pitch-950" : "text-flame-400"}>
+            <strong className={isMe ? "text-pitch-950" : "text-pitch-700 dark:text-flame-400"}>
               {row.outcome}
             </strong>{" "}
             {labelSg}

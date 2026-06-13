@@ -59,7 +59,7 @@ export default async function AboutPage() {
         <h1 className="mt-6 font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
           UN PUÑADO DE CHAVALES
           <br />
-          <span className="text-flame-400">DE VALENCIA</span>
+          <span className="text-pitch-600 dark:text-flame-400">DE VALENCIA</span>
         </h1>
         <p className="mt-6 text-pitch-700 dark:text-chalk-300 text-lg leading-relaxed">
           Y una idea muy simple: que hacer la porra con la pandilla sea tan
@@ -70,7 +70,7 @@ export default async function AboutPage() {
       <section className="cromo bg-paper-50 dark:bg-pitch-900 p-6 sm:p-8 space-y-5 text-pitch-800 dark:text-chalk-200 leading-relaxed">
         <p>
           PorraBros nació en una sobremesa de Valencia, hablando de cómo
-          íbamos a montar la <strong className="text-flame-400">porra del
+          íbamos a montar la <strong className="text-pitch-700 dark:text-flame-400">porra del
           Mundial 2026</strong>. La opción habitual era la de siempre: un
           Excel compartido, un grupo de WhatsApp con cien mensajes de
           pronósticos perdidos por arriba, y alguien con paciencia infinita

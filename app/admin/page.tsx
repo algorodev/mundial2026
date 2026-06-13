@@ -34,7 +34,7 @@ export default async function AdminPage() {
     <div className="pt-8">
       <div className="mb-10">
         <h1 className="font-display text-6xl sm:text-7xl text-pitch-900 dark:text-chalk-50 leading-none">
-          PANEL <span className="text-flame-500">ADMIN</span>
+          PANEL <span className="text-pitch-600 dark:text-flame-500">ADMIN</span>
         </h1>
         <p className="mt-4 inline-block bg-brick-500 text-paper-50 font-display text-[11px] px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
           {t.admin.tagline}
@@ -73,7 +73,7 @@ export default async function AdminPage() {
                 </div>
               </div>
               <div className="text-right shrink-0">
-                <div className="font-display text-xl text-flame-500">
+                <div className="font-display text-xl text-pitch-700 dark:text-flame-500">
                   {done}/{total}
                 </div>
                 <div className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest">

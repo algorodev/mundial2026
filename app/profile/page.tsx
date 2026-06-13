@@ -179,7 +179,7 @@ export default async function ProfilePage() {
       <div className="mb-10">
         <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">
           {t.profile.title.split(" ")[0]}{" "}
-          <span className="text-flame-500">
+          <span className="text-pitch-600 dark:text-flame-500">
             {t.profile.title.split(" ").slice(1).join(" ")}
           </span>
         </h1>
@@ -202,12 +202,12 @@ export default async function ProfilePage() {
           {t.profile.globalStats}
         </h2>
         <div className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-          <Stat label={t.profile.statPoints} value={totals.points} accent="text-flame-500" big />
+          <Stat label={t.profile.statPoints} value={totals.points} accent="text-pitch-700 dark:text-flame-500" big />
           <Stat label={t.profile.statWins} value={totals.wins} accent="text-grass-400" big />
           <Stat label={t.profile.statPools} value={totals.groups} accent="text-pitch-900 dark:text-chalk-50" />
           <Stat label={t.profile.statPlayed} value={totals.played} accent="text-pitch-900 dark:text-chalk-50" />
           <Stat label={t.profile.statExact} value={totals.exact} accent="text-grass-400" />
-          <Stat label={t.profile.statOutcome} value={totals.outcome} accent="text-flame-400" />
+          <Stat label={t.profile.statOutcome} value={totals.outcome} accent="text-pitch-700 dark:text-flame-400" />
           <Stat label={t.profile.statMiss} value={totals.miss} accent="text-brick-400" />
           <Stat
             label={t.profile.statAccuracy}
@@ -258,7 +258,7 @@ export default async function ProfilePage() {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="font-display text-lg text-flame-500">
+                  <div className="font-display text-lg text-pitch-700 dark:text-flame-500">
                     {g.myPosition != null ? `#${g.myPosition}` : "—"}
                     <span className="font-mono text-[11px] text-pitch-700 dark:text-chalk-400 ml-1">
                       / {g.memberCount}

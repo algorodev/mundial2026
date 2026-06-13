@@ -63,7 +63,7 @@ export default function GroupSettingsFields({
     <div className="space-y-6">
       {/* Descripción */}
       <div>
-        <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+        <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
           {t.groupSettings.descriptionLabel}
         </label>
         <textarea
@@ -82,7 +82,7 @@ export default function GroupSettingsFields({
 
       {/* Cierre de predicciones */}
       <fieldset>
-        <legend className="text-xs font-display uppercase tracking-widest text-flame-400 mb-3">
+        <legend className="text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-3">
           {t.groupSettings.lockWhen}
         </legend>
         <div className="space-y-2">
@@ -134,7 +134,7 @@ export default function GroupSettingsFields({
 
       {/* Política de inscripción */}
       <fieldset>
-        <legend className="text-xs font-display uppercase tracking-widest text-flame-400 mb-3">
+        <legend className="text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-3">
           {t.groupSettings.joinPolicy}
         </legend>
         <div className="space-y-2">
@@ -164,7 +164,7 @@ export default function GroupSettingsFields({
           />
         </div>
         <div className="mt-4">
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.groupSettings.joinDeadlineLabel}
           </label>
           <input
@@ -204,7 +204,7 @@ export default function GroupSettingsFields({
 
       {/* Visibilidad */}
       <fieldset>
-        <legend className="text-xs font-display uppercase tracking-widest text-flame-400 mb-3">
+        <legend className="text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-3">
           {t.groupSettings.visibilityLabel}
         </legend>
         <div className="space-y-2">

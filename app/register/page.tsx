@@ -62,7 +62,7 @@ function RegisterInner() {
         className="cromo bg-white dark:bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.auth.register.nameLabel}
           </label>
           <input
@@ -79,7 +79,7 @@ function RegisterInner() {
         </div>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.auth.register.emailLabel}
           </label>
           <input
@@ -94,7 +94,7 @@ function RegisterInner() {
         </div>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.auth.register.passwordLabel}
           </label>
           <input

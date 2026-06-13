@@ -71,7 +71,7 @@ export default function NewGroupClient({
   return (
     <form onSubmit={submit} className="cromo bg-paper-50 dark:bg-pitch-900 p-6 sm:p-8 space-y-6">
       <div>
-        <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+        <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
           {t.groups.groupNameLabel}
         </label>
         <input
@@ -87,7 +87,7 @@ export default function NewGroupClient({
       </div>
 
       <div>
-        <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+        <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
           {t.groups.tournamentLabel}
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

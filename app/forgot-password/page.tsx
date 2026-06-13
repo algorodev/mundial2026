@@ -80,7 +80,7 @@ function ForgotPasswordInner() {
         </p>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.auth.forgotPassword.emailLabel}
           </label>
           <input

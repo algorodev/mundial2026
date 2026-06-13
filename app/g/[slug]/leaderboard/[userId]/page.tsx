@@ -165,9 +165,9 @@ export default async function MemberPredictionsPage(
       </div>
 
       <div className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 mb-10 grid grid-cols-2 sm:grid-cols-5 gap-4">
-        <Stat label={t.leaderboard.total} value={total} accent="text-flame-500" />
+        <Stat label={t.leaderboard.total} value={total} accent="text-pitch-700 dark:text-flame-500" />
         <Stat label={t.leaderboard.exact} value={exact} accent="text-grass-400" />
-        <Stat label={t.leaderboard.outcome} value={outcome} accent="text-flame-400" />
+        <Stat label={t.leaderboard.outcome} value={outcome} accent="text-pitch-700 dark:text-flame-400" />
         <Stat label={t.leaderboard.miss} value={miss} accent="text-brick-400" />
         <Stat label={t.leaderboard.played} value={played} accent="text-pitch-900 dark:text-chalk-50" />
       </div>

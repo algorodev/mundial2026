@@ -47,7 +47,7 @@ export default function ProfileClient({
   return (
     <form onSubmit={submit} className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 space-y-4">
       <div>
-        <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+        <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
           {t.profile.nameLabel}
         </label>
         <input

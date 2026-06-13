@@ -144,7 +144,7 @@ function LoginInner() {
         className="cromo bg-white dark:bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.auth.login.emailLabel}
           </label>
           <input
@@ -175,7 +175,7 @@ function LoginInner() {
         </div>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.auth.login.passwordLabel}
           </label>
           <input

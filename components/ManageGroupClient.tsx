@@ -275,7 +275,7 @@ export default function ManageGroupClient({
               {copied ? t.manage.copied : t.manage.copyLink}
             </button>
             <span className="font-mono text-[11px] text-pitch-500 dark:text-chalk-400 self-center uppercase tracking-widest">
-              {t.manage.inviteCode} <strong className="text-flame-400">{inviteCode}</strong>
+              {t.manage.inviteCode} <strong className="text-pitch-700 dark:text-flame-400">{inviteCode}</strong>
             </span>
           </div>
           <p className="font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
@@ -298,7 +298,7 @@ export default function ManageGroupClient({
           className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 space-y-6"
         >
           <div>
-            <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+            <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
               {t.manage.groupNameLabel}
             </label>
             <input

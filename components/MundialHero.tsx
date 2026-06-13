@@ -77,7 +77,7 @@ export default function MundialHero({
         )}
 
         {now != null && !showCountdown && !isLive && (
-          <p className="mt-5 font-mono text-sm text-flame-400 uppercase tracking-widest">
+          <p className="mt-5 font-mono text-sm text-pitch-600 dark:text-flame-400 uppercase tracking-widest">
             {t.mundialHero.ballRolling}
           </p>
         )}

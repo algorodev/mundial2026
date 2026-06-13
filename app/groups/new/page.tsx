@@ -52,7 +52,7 @@ export default async function NewGroupPage({
       </Link>
       <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none mb-8">
         {t.groups.newGroup.split(" ")[0]}{" "}
-        <span className="text-flame-500">{t.groups.newGroup.split(" ").slice(1).join(" ")}</span>
+        <span className="text-pitch-600 dark:text-flame-500">{t.groups.newGroup.split(" ").slice(1).join(" ")}</span>
       </h1>
       {list.length === 0 ? (
         <div className="cromo bg-paper-50 text-pitch-700 p-8 text-center font-mono uppercase tracking-widest">

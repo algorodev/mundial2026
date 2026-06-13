@@ -192,7 +192,7 @@ export default function NavBar({
               <Link
                 href="/admin"
                 onClick={close}
-                className="px-6 py-4 font-display text-xl uppercase tracking-widest text-flame-400 dark:hover:bg-pitch-800 hover:bg-paper-100 transition-colors"
+                className="px-6 py-4 font-display text-xl uppercase tracking-widest text-pitch-600 dark:text-flame-400 dark:hover:bg-pitch-800 hover:bg-paper-100 transition-colors"
               >
                 {t.nav.admin}
               </Link>

@@ -55,7 +55,7 @@ export default function OnboardingClient({
         className="cromo bg-paper-50 dark:bg-pitch-900 p-6 sm:p-8 space-y-5"
       >
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.onboarding.nameLabel}
           </label>
           <input
@@ -81,7 +81,7 @@ export default function OnboardingClient({
           </button>
         ) : (
           <div>
-            <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+            <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
               {t.onboarding.passwordLabel}{" "}
               <span className="text-pitch-500 dark:text-chalk-500 normal-case font-sans font-normal">
                 {t.onboarding.passwordOptional}

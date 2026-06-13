@@ -67,7 +67,7 @@ export default function SetPasswordClient({
         </p>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.auth.setPassword.newPasswordLabel}
           </label>
           <input
@@ -84,7 +84,7 @@ export default function SetPasswordClient({
         </div>
 
         <div>
-          <label className="block text-xs font-display uppercase tracking-widest text-flame-400 mb-2">
+          <label className="block text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-2">
             {t.auth.setPassword.confirmPasswordLabel}
           </label>
           <input

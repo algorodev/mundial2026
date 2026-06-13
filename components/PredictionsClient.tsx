@@ -208,7 +208,7 @@ export default function PredictionsClient({
       <div className="cromo bg-paper-50 dark:bg-pitch-900 p-5 sm:p-6 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div className="flex gap-8">
           <div>
-            <div className="font-display text-5xl text-flame-500 leading-none">
+            <div className="font-display text-5xl text-pitch-700 dark:text-flame-500 leading-none">
               {stats.filled}
               <span className="text-pitch-500 dark:text-chalk-400 text-3xl">/{stats.total}</span>
             </div>
