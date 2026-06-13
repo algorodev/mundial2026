@@ -117,14 +117,30 @@ export default function NavBar({
         </div>
 
         {/* Mobile: botón entrar (sin sesión) o hamburger (con sesión) */}
-        <div className="sm:hidden flex items-center">
+        <div className="sm:hidden flex items-center gap-2">
           {!session && (
-            <Link
-              href="/login"
-              className="text-xs bg-flame-500 hover:bg-flame-400 text-pitch-950 font-display px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest"
-            >
-              {t.nav.enter}
-            </Link>
+            <>
+              <button
+                onClick={() => setLocale(nextLocale)}
+                className="text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors uppercase tracking-widest font-mono px-1"
+                aria-label={switchLabel}
+              >
+                {locale === "es" ? "EN" : "ES"}
+              </button>
+              <button
+                onClick={toggleTheme}
+                className="text-xs dark:text-chalk-400 text-pitch-500 dark:hover:text-chalk-50 hover:text-pitch-900 transition-colors font-mono px-1"
+                aria-label={themeLabel}
+              >
+                {themeIcon}
+              </button>
+              <Link
+                href="/login"
+                className="text-xs bg-flame-500 hover:bg-flame-400 text-pitch-950 font-display px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest"
+              >
+                {t.nav.enter}
+              </Link>
+            </>
           )}
           {session && (
             <button
