@@ -406,7 +406,9 @@
     "languagesTitle": "Languages",
     "languagesDesc": "The platform is now available in Spanish and English. Change language from the menu.",
     "lightModeTitle": "Light mode",
-    "lightModeDesc": "New light theme available. Activate it with the ☀ button in the menu."
+    "lightModeDesc": "New light theme available. Activate it with the ☀ button in the menu.",
+    "iconsTitle": "Icons",
+    "iconsDesc": "New icon library throughout the interface: arrow buttons, Mail/Key/User labels and leaderboard positions with trophies."
   },
   "push": {
     "title": "🔔 Push notifications",

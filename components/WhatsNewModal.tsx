@@ -33,6 +33,11 @@ export default function WhatsNewModal() {
       title: t.whatsNew.lightModeTitle,
       desc: t.whatsNew.lightModeDesc,
     },
+    {
+      icon: "✦",
+      title: t.whatsNew.iconsTitle,
+      desc: t.whatsNew.iconsDesc,
+    },
   ];
 
   return (

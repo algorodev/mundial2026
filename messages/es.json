@@ -406,7 +406,9 @@
     "languagesTitle": "Idiomas",
     "languagesDesc": "La plataforma ahora está disponible en Español e Inglés. Cambia el idioma desde el menú.",
     "lightModeTitle": "Modo claro",
-    "lightModeDesc": "Nuevo tema claro disponible. Actívalo con el botón ☀ del menú."
+    "lightModeDesc": "Nuevo tema claro disponible. Actívalo con el botón ☀ del menú.",
+    "iconsTitle": "Iconos",
+    "iconsDesc": "Nueva librería de iconos en toda la interfaz: botones con flechas, labels con Mail/Key/User y posiciones del leaderboard con trofeos."
   },
   "push": {
     "title": "🔔 Notificaciones push",
