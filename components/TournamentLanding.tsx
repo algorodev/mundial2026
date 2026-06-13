@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, tournaments, groups, users, predictions, groupMembers } from "@/lib/db/schema";
@@ -231,13 +232,15 @@ export default async function TournamentLanding({
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           {(tournament?.status === "upcoming" || tournament?.status === "live") && (
-            <Link href={preselectHref} className="btn-primary">
+            <Link href={preselectHref} className="btn-primary inline-flex items-center gap-2">
               {t.tournamentLanding.createPoolFree}
+              <ArrowRight size={16} strokeWidth={2.5} />
             </Link>
           )}
           {tournament?.status === "finished" && officialSlug && (
-            <Link href={`/g/${officialSlug}/leaderboard`} className="btn-primary">
+            <Link href={`/g/${officialSlug}/leaderboard`} className="btn-primary inline-flex items-center gap-2">
               {t.tournamentLanding.seeResults}
+              <ArrowRight size={16} strokeWidth={2.5} />
             </Link>
           )}
           {tournament?.status === "draft" && (
@@ -403,8 +406,9 @@ export default async function TournamentLanding({
           <p className="text-chalk-200 dark:text-chalk-200 text-pitch-700 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8">
             {t.tournamentLanding.readyDesc}
           </p>
-          <Link href={preselectHref} className="btn-primary inline-block">
+          <Link href={preselectHref} className="btn-primary inline-flex items-center gap-2">
             {t.tournamentLanding.createNow}
+            <ArrowRight size={16} strokeWidth={2.5} />
           </Link>
           <p className="mt-3 font-mono text-[10px] text-chalk-400 dark:text-chalk-400 text-pitch-500 uppercase tracking-widest">
             {t.tournamentLanding.noCardNote}

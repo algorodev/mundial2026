@@ -6,6 +6,7 @@ import { matches, predictions, teams, tournaments, groups } from "@/lib/db/schem
 import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
+import BackLink from "@/components/BackLink";
 import PredictionsClient from "@/components/PredictionsClient";
 import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
@@ -92,12 +93,9 @@ export default async function GroupPredictionsPage(
 
   return (
     <div className="pt-8">
-      <Link
-        href="/groups"
-        className="back-link mb-3"
-      >
+      <BackLink href="/groups" className="mb-3">
         {t.leaderboard.backToMyPools}
-      </Link>
+      </BackLink>
       <div className="mb-6 flex items-start gap-4">
         {tournament && (
           <TournamentBadge

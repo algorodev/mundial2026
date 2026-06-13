@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import TournamentBadge from "@/components/TournamentBadge";
 import GroupSettingsFields, {
   DEFAULT_SETTINGS,
@@ -157,8 +158,9 @@ export default function NewGroupClient({
         </div>
       )}
 
-      <button type="submit" disabled={loading} className="btn-primary w-full">
+      <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
         {loading ? t.groups.creating : t.groups.createSubmit}
+        {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
       </button>
     </form>
   );

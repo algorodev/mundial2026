@@ -6,6 +6,7 @@ import { groups, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
+import { ArrowRight } from "lucide-react";
 import JoinClient from "@/components/JoinClient";
 
 export default async function JoinPage(
@@ -49,8 +50,9 @@ export default async function JoinPage(
         <p className="text-pitch-500 dark:text-chalk-400 mb-6">
           {t.join.invalidCodeDesc}
         </p>
-        <Link href="/groups" className="btn-primary">
+        <Link href="/groups" className="btn-primary inline-flex items-center gap-2">
           {t.join.goToMyPools}
+          <ArrowRight size={16} strokeWidth={2.5} />
         </Link>
       </div>
     );

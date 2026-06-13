@@ -6,6 +6,7 @@ import { tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
 import GroupTabs from "@/components/GroupTabs";
+import BackLink from "@/components/BackLink";
 import TournamentBadge from "@/components/TournamentBadge";
 import TournamentStandings from "@/components/TournamentStandings";
 import { getLocale } from "@/lib/locale";
@@ -35,12 +36,9 @@ export default async function GroupStandingsPage(props: {
 
   return (
     <div className="pt-8">
-      <Link
-        href="/groups"
-        className="back-link mb-3"
-      >
+      <BackLink href="/groups" className="mb-3">
         {t.leaderboard.backToMyPools}
-      </Link>
+      </BackLink>
       <div className="mb-6 flex items-start gap-4">
         <TournamentBadge
           slug={tournament.slug}

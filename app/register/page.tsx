@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User, Mail, KeyRound } from "lucide-react";
+import { User, Mail, KeyRound, ArrowRight } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 
 const PASSWORD_MIN = 8;
@@ -119,8 +119,9 @@ function RegisterInner() {
           </div>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full">
+        <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
           {loading ? t.auth.register.submitting : t.auth.register.submit}
+          {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
         </button>
 
         <p className="text-xs text-pitch-500 dark:text-chalk-400 text-center">

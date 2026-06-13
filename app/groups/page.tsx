@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { eq, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { groups, groupMembers, tournaments } from "@/lib/db/schema";
@@ -46,8 +47,9 @@ export default async function GroupsPage() {
                 : t.groups.groupCount_other.replace("{count}", String(myGroups.length))}
           </p>
         </div>
-        <Link href="/groups/new" className="btn-primary">
+        <Link href="/groups/new" className="btn-primary inline-flex items-center gap-2">
           {t.groups.createGroup}
+          <ArrowRight size={16} strokeWidth={2.5} />
         </Link>
       </div>
 

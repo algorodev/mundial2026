@@ -16,6 +16,7 @@ import { getDictionary } from "@/lib/i18n";
 import { calcPoints } from "@/lib/scoring";
 import ProfileClient from "@/components/ProfileClient";
 import TournamentBadge from "@/components/TournamentBadge";
+import BackLink from "@/components/BackLink";
 
 export const dynamic = "force-dynamic";
 
@@ -169,12 +170,9 @@ export default async function ProfilePage() {
 
   return (
     <div className="pt-8">
-      <Link
-        href="/groups"
-        className="back-link mb-3"
-      >
+      <BackLink href="/groups" className="mb-3">
         {t.profile.backToMyPools}
-      </Link>
+      </BackLink>
 
       <div className="mb-10">
         <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none">

@@ -8,6 +8,7 @@ import { getGroupForMember } from "@/lib/group-access";
 import { calcPoints } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
 import MatchDetailClient from "@/components/MatchDetailClient";
+import BackLink from "@/components/BackLink";
 import { getTournamentStart } from "@/lib/tournament";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
@@ -124,12 +125,9 @@ export default async function MatchDetailPage(props: {
 
   return (
     <div className="pt-8">
-      <Link
-        href={`/g/${slug}`}
-        className="back-link mb-3"
-      >
-        ← {ctx.name}
-      </Link>
+      <BackLink href={`/g/${slug}`} className="mb-3">
+        {ctx.name}
+      </BackLink>
 
       <div className="cromo bg-paper-50 text-pitch-950 p-5 sm:p-8 mb-6">
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-mono uppercase tracking-widest text-pitch-700 mb-5">

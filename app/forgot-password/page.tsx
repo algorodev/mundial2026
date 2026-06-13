@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Mail } from "lucide-react";
+import { Mail, ArrowRight } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 
 function ForgotPasswordInner() {
@@ -103,8 +103,9 @@ function ForgotPasswordInner() {
           </div>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full">
+        <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
           {loading ? t.auth.forgotPassword.submitting : t.auth.forgotPassword.submit}
+          {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
         </button>
 
         <p className="text-xs text-pitch-500 dark:text-chalk-400 text-center">

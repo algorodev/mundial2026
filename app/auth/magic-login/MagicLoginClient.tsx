@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 
 export default function MagicLoginClient({
@@ -66,8 +67,9 @@ export default function MagicLoginClient({
           </div>
         )}
 
-        <button type="submit" disabled={loading} className="btn-primary w-full">
+        <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
           {loading ? t.auth.magicLogin.submitting : t.auth.magicLogin.submit}
+          {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
         </button>
       </form>
     </div>

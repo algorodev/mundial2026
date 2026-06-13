@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { tournaments, matches, teams } from "@/lib/db/schema";
 import { asc, eq } from "drizzle-orm";
 import AdminResultsClient from "@/components/AdminResultsClient";
+import BackLink from "@/components/BackLink";
 import TournamentBadge from "@/components/TournamentBadge";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
@@ -54,12 +55,9 @@ export default async function AdminTournamentPage(
 
   return (
     <div className="pt-8">
-      <Link
-        href="/admin"
-        className="back-link mb-4"
-      >
+      <BackLink href="/admin" className="mb-4">
         {t.admin.backToTournaments}
-      </Link>
+      </BackLink>
       <div className="mb-10 flex items-start gap-4">
         <TournamentBadge
           slug={tournament.slug}

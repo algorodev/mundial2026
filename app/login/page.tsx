@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, KeyRound } from "lucide-react";
+import { Mail, KeyRound, ArrowRight } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 
 function LoginInner() {
@@ -165,9 +165,10 @@ function LoginInner() {
           type="button"
           onClick={sendMagicLink}
           disabled={magicLoading || loading}
-          className="btn-primary w-full"
+          className="btn-primary w-full flex items-center justify-center gap-2"
         >
           {magicLoading ? t.auth.login.sendingLink : t.auth.login.sendMagicLink}
+          {!magicLoading && <ArrowRight size={16} strokeWidth={2.5} />}
         </button>
 
         <div className="flex items-center gap-3 text-[10px] text-pitch-500 dark:text-chalk-500 uppercase tracking-widest font-mono">
@@ -200,9 +201,10 @@ function LoginInner() {
         <button
           type="submit"
           disabled={loading || magicLoading || !password}
-          className="btn-secondary w-full"
+          className="btn-secondary w-full flex items-center justify-center gap-2"
         >
           {loading ? t.auth.login.loggingIn : t.auth.login.loginWithPassword}
+          {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
         </button>
 
         <div className="flex items-center justify-between text-xs text-pitch-500 dark:text-chalk-400">

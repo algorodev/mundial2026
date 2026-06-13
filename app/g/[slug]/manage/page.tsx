@@ -12,6 +12,7 @@ import {
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
 import GroupTabs from "@/components/GroupTabs";
+import BackLink from "@/components/BackLink";
 import ManageGroupClient from "@/components/ManageGroupClient";
 import TournamentBadge from "@/components/TournamentBadge";
 import { getLocale } from "@/lib/locale";
@@ -82,12 +83,9 @@ export default async function ManageGroupPage(
 
   return (
     <div className="pt-8">
-      <Link
-        href="/groups"
-        className="back-link mb-3"
-      >
+      <BackLink href="/groups" className="mb-3">
         {t.manage.backToMyPools}
-      </Link>
+      </BackLink>
       <div className="mb-6 flex items-start gap-4">
         <TournamentBadge
           slug={details.tournamentSlug}

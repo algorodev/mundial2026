@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowRight } from "lucide-react";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
@@ -146,8 +147,9 @@ export default async function AboutPage() {
           .
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-          <Link href="/register" className="btn-primary">
+          <Link href="/register" className="btn-primary inline-flex items-center gap-2">
             {t.tournamentLanding.createPoolFree}
+            <ArrowRight size={16} strokeWidth={2.5} />
           </Link>
           <Link href="/" className="btn-secondary">
             {t.common.back}

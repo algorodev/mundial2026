@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useI18n } from "@/providers/I18nProvider";
 
 export default function JoinClient({
@@ -64,7 +65,7 @@ export default function JoinClient({
 
   return (
     <div className="space-y-3">
-      <button onClick={join} disabled={loading} className="btn-primary w-full">
+      <button onClick={join} disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
         {loading
           ? requiresApproval
             ? t.join.requestingButton
@@ -72,6 +73,7 @@ export default function JoinClient({
           : requiresApproval
             ? t.join.requestButton
             : t.join.joinButton}
+        {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
       </button>
       {deadlineLabel && (
         <p className="text-center font-mono text-[11px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">

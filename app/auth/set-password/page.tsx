@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { peekMagicLink } from "@/lib/auth";
 import SetPasswordClient from "./SetPasswordClient";
 import { getLocale } from "@/lib/locale";
@@ -52,8 +53,9 @@ function ErrorBlock({ title, hint, requestNewLink }: { title: string; hint?: str
         {title}
       </h1>
       {hint && <p className="text-pitch-500 dark:text-chalk-300 mb-6">{hint}</p>}
-      <Link href="/forgot-password" className="btn-primary">
+      <Link href="/forgot-password" className="btn-primary inline-flex items-center gap-2">
         {requestNewLink}
+        <ArrowRight size={16} strokeWidth={2.5} />
       </Link>
     </div>
   );

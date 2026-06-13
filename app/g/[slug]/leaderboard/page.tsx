@@ -10,6 +10,7 @@ import LeaderboardClient from "@/components/LeaderboardClient";
 import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
 import TournamentBadge from "@/components/TournamentBadge";
+import BackLink from "@/components/BackLink";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
@@ -63,12 +64,9 @@ export default async function GroupLeaderboardPage(props: {
 
   return (
     <div className="pt-8">
-      <Link
-        href={isMember ? "/groups" : "/"}
-        className="back-link mb-3"
-      >
+      <BackLink href={isMember ? "/groups" : "/"} className="mb-3">
         {isMember ? t.leaderboard.backToMyPools : t.leaderboard.backToHome}
-      </Link>
+      </BackLink>
       <div className="mb-6 flex items-start gap-4">
         {tournament && (
           <TournamentBadge

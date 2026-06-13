@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { getSession } from "@/lib/session";
 import { db } from "@/lib/db";
 import { tournaments } from "@/lib/db/schema";
@@ -119,12 +120,14 @@ export default async function HomePage() {
           {!featured && (
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
               {session ? (
-                <Link href="/groups" className="btn-primary">
+                <Link href="/groups" className="btn-primary inline-flex items-center gap-2">
                   {t.home.myPools}
+                  <ArrowRight size={16} strokeWidth={2.5} />
                 </Link>
               ) : (
-                <Link href="/login" className="btn-primary">
+                <Link href="/login" className="btn-primary inline-flex items-center gap-2">
                   {t.home.start}
+                  <ArrowRight size={16} strokeWidth={2.5} />
                 </Link>
               )}
             </div>

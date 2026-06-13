@@ -14,6 +14,7 @@ import { getTournamentStart } from "@/lib/tournament";
 import { getGroupForMember } from "@/lib/group-access";
 import { calcPoints, type ScoreResult } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
+import BackLink from "@/components/BackLink";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
@@ -140,12 +141,9 @@ export default async function MemberPredictionsPage(
   return (
     <div className="pt-8">
       <div className="mb-8">
-        <Link
-          href={`/g/${ctx.slug}/leaderboard`}
-          className="back-link mb-4"
-        >
+        <BackLink href={`/g/${ctx.slug}/leaderboard`} className="mb-4">
           {t.leaderboard.backToLeaderboard}
-        </Link>
+        </BackLink>
         <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500 dark:text-chalk-400 mb-1">
           {t.leaderboard.predictionsOf}
         </p>
@@ -153,7 +151,7 @@ export default async function MemberPredictionsPage(
           {member.name}
           {isSelf && (
             <span className="ml-4 align-middle inline-block bg-flame-500 text-pitch-950 font-display text-xs px-3 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest -rotate-1">
-              ← {t.common.you.replace("← ", "")}
+              {t.common.you}
             </span>
           )}
         </h1>

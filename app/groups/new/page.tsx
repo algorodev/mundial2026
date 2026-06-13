@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import NewGroupClient from "@/components/NewGroupClient";
+import BackLink from "@/components/BackLink";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
@@ -44,12 +45,9 @@ export default async function NewGroupPage({
 
   return (
     <div className="pt-8">
-      <Link
-        href="/groups"
-        className="back-link mb-4"
-      >
+      <BackLink href="/groups" className="mb-4">
         {t.groups.backToMyPools}
-      </Link>
+      </BackLink>
       <h1 className="font-display text-5xl sm:text-6xl text-pitch-900 dark:text-chalk-50 leading-none mb-8">
         {t.groups.newGroup.split(" ")[0]}{" "}
         <span className="text-pitch-600 dark:text-flame-500">{t.groups.newGroup.split(" ").slice(1).join(" ")}</span>
