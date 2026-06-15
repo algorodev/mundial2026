@@ -52,7 +52,7 @@ export default async function JoinPage(
         </p>
         <Link href="/groups" className="btn-primary inline-flex items-center gap-2">
           {t.join.goToMyPools}
-          <ArrowRight size={16} strokeWidth={2.5} />
+          <ArrowRight size={18} strokeWidth={2.5} />
         </Link>
       </div>
     );

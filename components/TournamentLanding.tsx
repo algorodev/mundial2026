@@ -234,13 +234,13 @@ export default async function TournamentLanding({
           {(tournament?.status === "upcoming" || tournament?.status === "live") && (
             <Link href={preselectHref} className="btn-primary inline-flex items-center gap-2">
               {t.tournamentLanding.createPoolFree}
-              <ArrowRight size={16} strokeWidth={2.5} />
+              <ArrowRight size={18} strokeWidth={2.5} />
             </Link>
           )}
           {tournament?.status === "finished" && officialSlug && (
             <Link href={`/g/${officialSlug}/leaderboard`} className="btn-primary inline-flex items-center gap-2">
               {t.tournamentLanding.seeResults}
-              <ArrowRight size={16} strokeWidth={2.5} />
+              <ArrowRight size={18} strokeWidth={2.5} />
             </Link>
           )}
           {tournament?.status === "draft" && (
@@ -408,7 +408,7 @@ export default async function TournamentLanding({
           </p>
           <Link href={preselectHref} className="btn-primary inline-flex items-center gap-2">
             {t.tournamentLanding.createNow}
-            <ArrowRight size={16} strokeWidth={2.5} />
+            <ArrowRight size={18} strokeWidth={2.5} />
           </Link>
           <p className="mt-3 font-mono text-[10px] text-chalk-400 dark:text-chalk-400 text-pitch-500 uppercase tracking-widest">
             {t.tournamentLanding.noCardNote}

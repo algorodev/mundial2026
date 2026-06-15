@@ -149,7 +149,7 @@ export default async function AboutPage() {
         <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
           <Link href="/register" className="btn-primary inline-flex items-center gap-2">
             {t.tournamentLanding.createPoolFree}
-            <ArrowRight size={16} strokeWidth={2.5} />
+            <ArrowRight size={18} strokeWidth={2.5} />
           </Link>
           <Link href="/" className="btn-secondary">
             {t.common.back}

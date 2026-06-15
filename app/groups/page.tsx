@@ -49,7 +49,7 @@ export default async function GroupsPage() {
         </div>
         <Link href="/groups/new" className="btn-primary inline-flex items-center gap-2">
           {t.groups.createGroup}
-          <ArrowRight size={16} strokeWidth={2.5} />
+          <ArrowRight size={18} strokeWidth={2.5} />
         </Link>
       </div>
 

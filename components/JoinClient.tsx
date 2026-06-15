@@ -73,7 +73,7 @@ export default function JoinClient({
           : requiresApproval
             ? t.join.requestButton
             : t.join.joinButton}
-        {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
+        {!loading && <ArrowRight size={18} strokeWidth={2.5} />}
       </button>
       {deadlineLabel && (
         <p className="text-center font-mono text-[11px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">

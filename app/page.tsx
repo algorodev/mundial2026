@@ -122,12 +122,12 @@ export default async function HomePage() {
               {session ? (
                 <Link href="/groups" className="btn-primary inline-flex items-center gap-2">
                   {t.home.myPools}
-                  <ArrowRight size={16} strokeWidth={2.5} />
+                  <ArrowRight size={18} strokeWidth={2.5} />
                 </Link>
               ) : (
                 <Link href="/login" className="btn-primary inline-flex items-center gap-2">
                   {t.home.start}
-                  <ArrowRight size={16} strokeWidth={2.5} />
+                  <ArrowRight size={18} strokeWidth={2.5} />
                 </Link>
               )}
             </div>

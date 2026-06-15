@@ -121,7 +121,7 @@ function RegisterInner() {
 
         <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
           {loading ? t.auth.register.submitting : t.auth.register.submit}
-          {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
+          {!loading && <ArrowRight size={18} strokeWidth={2.5} />}
         </button>
 
         <p className="text-xs text-pitch-500 dark:text-chalk-400 text-center">

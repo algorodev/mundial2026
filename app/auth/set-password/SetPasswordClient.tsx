@@ -108,7 +108,7 @@ export default function SetPasswordClient({
 
         <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
           {loading ? t.auth.setPassword.submitting : t.auth.setPassword.submit}
-          {!loading && <ArrowRight size={16} strokeWidth={2.5} />}
+          {!loading && <ArrowRight size={18} strokeWidth={2.5} />}
         </button>
       </form>
     </div>
