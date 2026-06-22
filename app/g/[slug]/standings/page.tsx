@@ -1,8 +1,8 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { tournaments } from "@/lib/db/schema";
+import { teams, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
 import GroupTabs from "@/components/GroupTabs";
@@ -33,6 +33,20 @@ export default async function GroupStandingsPage(props: {
     .where(eq(tournaments.id, ctx.tournamentId))
     .limit(1);
   if (!tournament) notFound();
+
+  const mappedTeams =
+    tournament.apiLeagueId && tournament.apiSeason
+      ? await db
+          .select({ code: teams.code, apiTeamId: teams.apiTeamId })
+          .from(teams)
+          .where(
+            and(eq(teams.tournamentId, ctx.tournamentId), isNotNull(teams.apiTeamId))
+          )
+      : [];
+  const teamCodeByApiId: Record<number, string> = {};
+  for (const tm of mappedTeams) {
+    if (tm.apiTeamId) teamCodeByApiId[tm.apiTeamId] = tm.code;
+  }
 
   return (
     <div className="pt-8">
@@ -69,7 +83,11 @@ export default async function GroupStandingsPage(props: {
           </p>
         </div>
       ) : (
-        <TournamentStandings tournamentSlug={tournament.slug} />
+        <TournamentStandings
+          tournamentSlug={tournament.slug}
+          groupSlug={ctx.slug}
+          teamCodeByApiId={teamCodeByApiId}
+        />
       )}
     </div>
   );

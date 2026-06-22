@@ -20,8 +20,14 @@ type LoadState =
 
 export default function TournamentStandings({
   tournamentSlug,
+  groupSlug,
+  teamCodeByApiId,
 }: {
   tournamentSlug: string;
+  // Si se pasan junto con groupSlug, cada equipo de la tabla enlaza a su
+  // página de detalle dentro de la porra.
+  groupSlug?: string;
+  teamCodeByApiId?: Record<number, string>;
 }) {
   const { t } = useI18n();
   const [state, setState] = useState<LoadState>({ status: "loading" });
@@ -66,9 +72,17 @@ export default function TournamentStandings({
   }
 
   const groups = state.data[0]?.league.standings ?? [];
+  const teamHref =
+    groupSlug && teamCodeByApiId
+      ? (apiTeamId: number) => {
+          const code = teamCodeByApiId[apiTeamId];
+          return code ? `/g/${groupSlug}/team/${code}` : null;
+        }
+      : undefined;
   return (
     <StandingsView
       groups={groups}
+      teamHref={teamHref}
       translations={{
         noData: t.standings.noData,
         rank: t.standings.rank,

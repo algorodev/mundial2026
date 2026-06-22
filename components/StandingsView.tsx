@@ -6,6 +6,7 @@
 // desde TournamentLanding (server, fetch directo con cache de Next).
 
 import Image from "next/image";
+import Link from "next/link";
 
 export type StandingRow = {
   rank: number;
@@ -56,9 +57,13 @@ const defaultTranslations: StandingsTranslations = {
 export default function StandingsView({
   groups,
   translations,
+  teamHref,
 }: {
   groups: StandingRow[][];
   translations?: Partial<StandingsTranslations>;
+  // Si se pasa, el nombre de cada equipo enlaza a su página de detalle.
+  // Devuelve null para un equipo concreto si no hay enlace disponible.
+  teamHref?: (apiTeamId: number) => string | null;
 }) {
   const tx: StandingsTranslations = { ...defaultTranslations, ...translations };
 
@@ -73,7 +78,7 @@ export default function StandingsView({
   }
 
   if (groups.length === 1) {
-    return <StandingsTable rows={groups[0]} tx={tx} />;
+    return <StandingsTable rows={groups[0]} tx={tx} teamHref={teamHref} />;
   }
 
   return (
@@ -83,7 +88,7 @@ export default function StandingsView({
           <h3 className="font-display text-xl uppercase mb-3 text-center">
             {extractGroupLabel(rows[0]?.group, tx.group) ?? tx.group.replace("{name}", String(i + 1))}
           </h3>
-          <StandingsTable rows={rows} compact tx={tx} />
+          <StandingsTable rows={rows} compact tx={tx} teamHref={teamHref} />
         </div>
       ))}
     </div>
@@ -101,10 +106,12 @@ function StandingsTable({
   rows,
   compact = false,
   tx,
+  teamHref,
 }: {
   rows: StandingRow[];
   compact?: boolean;
   tx: StandingsTranslations;
+  teamHref?: (apiTeamId: number) => string | null;
 }) {
   return (
     <div className={compact ? "" : "cromo bg-paper-50 text-pitch-950 p-3 sm:p-5"}>
@@ -140,21 +147,33 @@ function StandingsTable({
                   dentro de una celda de tabla: fuerza a la celda a ocupar
                   todo el espacio sobrante sin pedir más por contenido. */}
               <td className="py-2 max-w-0 w-full">
-                <div className="flex items-center gap-2 min-w-0">
-                  {r.team.logo && (
-                    <Image
-                      src={r.team.logo}
-                      alt=""
-                      width={18}
-                      height={18}
-                      className="inline-block shrink-0"
-                      unoptimized
-                    />
-                  )}
-                  <span className="font-display uppercase text-xs sm:text-sm truncate min-w-0">
-                    {r.team.name}
-                  </span>
-                </div>
+                {(() => {
+                  const href = teamHref?.(r.team.id) ?? null;
+                  const content = (
+                    <div className="flex items-center gap-2 min-w-0">
+                      {r.team.logo && (
+                        <Image
+                          src={r.team.logo}
+                          alt=""
+                          width={18}
+                          height={18}
+                          className="inline-block shrink-0"
+                          unoptimized
+                        />
+                      )}
+                      <span className="font-display uppercase text-xs sm:text-sm truncate min-w-0">
+                        {r.team.name}
+                      </span>
+                    </div>
+                  );
+                  return href ? (
+                    <Link href={href} className="hover:text-flame-600 transition-colors">
+                      {content}
+                    </Link>
+                  ) : (
+                    content
+                  );
+                })()}
               </td>
               <td className="py-2 text-center font-mono tabular-nums border-l border-pitch-100 px-1">
                 {r.all.played}

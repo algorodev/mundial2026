@@ -210,6 +210,18 @@
     "nextDay": "Next day",
     "dayCounter": "Matchday {current} / {total}"
   },
+  "teamDetail": {
+    "prevTeam": "Previous team",
+    "nextTeam": "Next team",
+    "record": "Tournament record",
+    "fixtures": "Matches",
+    "venue": "Stadium",
+    "founded": "Founded in {year}",
+    "capacity": "Capacity {capacity}",
+    "country": "Country",
+    "noApiData": "No additional team data",
+    "pendingVs": "vs"
+  },
   "leaderboard": {
     "loading": "Loading…",
     "noParticipants": "NO PARTICIPANTS YET!",

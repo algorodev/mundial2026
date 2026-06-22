@@ -10,6 +10,7 @@ import BackLink from "@/components/BackLink";
 import PredictionsClient from "@/components/PredictionsClient";
 import GroupTabs from "@/components/GroupTabs";
 import LiveScoreboard from "@/components/LiveScoreboard";
+import TeamCarousel from "@/components/TeamCarousel";
 import TournamentBadge from "@/components/TournamentBadge";
 import PushOptIn from "@/components/PushOptIn";
 import { getLocale } from "@/lib/locale";
@@ -70,9 +71,10 @@ export default async function GroupPredictionsPage(
           )
         ),
       db
-        .select({ code: teams.code, logoUrl: teams.logoUrl })
+        .select()
         .from(teams)
-        .where(eq(teams.tournamentId, ctx.tournamentId)),
+        .where(eq(teams.tournamentId, ctx.tournamentId))
+        .orderBy(asc(teams.id)),
       getTournamentStart(ctx.tournamentId),
     ]);
 
@@ -126,6 +128,17 @@ export default async function GroupPredictionsPage(
         isOwner={ctx.myRole === "owner"}
       />
       <PushOptIn />
+      <TeamCarousel
+        groupSlug={ctx.slug}
+        teams={tournamentTeams.map((tm) => ({
+          code: tm.code,
+          name: tm.name,
+          flagEmoji: tm.flagEmoji,
+          logoUrl: tm.logoUrl,
+        }))}
+        labelPrev={t.teamDetail.prevTeam}
+        labelNext={t.teamDetail.nextTeam}
+      />
       {matchesSerialized.length === 0 ? (
         <div className="cromo bg-paper-50 text-pitch-950 p-8 sm:p-10 text-center">
           <div className="font-display text-3xl sm:text-4xl mb-3">

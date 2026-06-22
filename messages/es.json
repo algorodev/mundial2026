@@ -210,6 +210,18 @@
     "nextDay": "Día siguiente",
     "dayCounter": "Jornada {current} / {total}"
   },
+  "teamDetail": {
+    "prevTeam": "Equipo anterior",
+    "nextTeam": "Siguiente equipo",
+    "record": "Récord en el torneo",
+    "fixtures": "Partidos",
+    "venue": "Estadio",
+    "founded": "Fundado en {year}",
+    "capacity": "Aforo {capacity}",
+    "country": "País",
+    "noApiData": "Sin datos adicionales del equipo",
+    "pendingVs": "vs"
+  },
   "leaderboard": {
     "loading": "Cargando…",
     "noParticipants": "¡SIN PARTICIPANTES!",

@@ -146,6 +146,14 @@ html[data-theme=dark] ::-webkit-scrollbar-track {
   @apply border-2 border-pitch-950 rounded-sm shadow-brutal-sm;
 }
 
+/* Oculta la scrollbar del carousel de equipos sin perder el scroll táctil */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* === Botones brutalist === */
 .back-link {
   @apply inline-block font-mono text-xs text-pitch-500 dark:text-chalk-400 hover:text-flame-500 dark:hover:text-flame-400

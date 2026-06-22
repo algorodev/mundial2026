@@ -133,6 +133,12 @@ export function getTeamsByLeague(leagueId: number, season: number) {
   return apiGet<ApiTeamSummary>("/teams", { league: leagueId, season });
 }
 
+// Ficha de un equipo concreto (escudo oficial, país, estadio, fundación).
+// Usado en la página de detalle de equipo dentro de una porra.
+export function getTeamById(teamId: number, opts: ApiGetOpts = {}) {
+  return apiGet<ApiTeamSummary>("/teams", { id: teamId }, opts);
+}
+
 export function getFixturesByLeague(leagueId: number, season: number) {
   return apiGet<ApiFixture>("/fixtures", { league: leagueId, season });
 }
