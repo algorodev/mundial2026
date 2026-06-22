@@ -76,6 +76,12 @@ export const matches = pgTable(
     homeFlag: varchar("home_flag", { length: 10 }),
     awayFlag: varchar("away_flag", { length: 10 }),
     stadium: varchar("stadium", { length: 120 }),
+    // Regla para resolver el equipo de un hueco de eliminatoria aún sin
+    // decidir, p.ej. "group:A:2" (2º de Grupo A) o "match:73:W" (ganador del
+    // partido 73). lib/knockout.ts las resuelve cuando hay datos suficientes.
+    // Null en partidos normales (fase de grupos ya con equipos fijos).
+    homeFrom: varchar("home_from", { length: 40 }),
+    awayFrom: varchar("away_from", { length: 40 }),
     homeScore: integer("home_score"),
     awayScore: integer("away_score"),
     // 'api' = lo escribió el cron de auto-resultados. 'admin' = lo escribió

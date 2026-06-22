@@ -4,6 +4,7 @@ import { db } from "../lib/db";
 import { matches, teams, tournaments, users } from "../lib/db/schema";
 import type { MatchData } from "../lib/matches-data";
 import { MATCHES, flagToCode } from "../lib/matches-data";
+import { KNOCKOUT_2026_MATCHES } from "../lib/matches-knockout-2026-data";
 import {
   CHAMPIONS_2026_SLUG,
   CHAMPIONS_2026_NAME,
@@ -238,6 +239,37 @@ async function upsertMatches(t: SeedTournament, tournamentId: number) {
   console.log("✅ Partidos cargados");
 }
 
+// Placeholders de la fase eliminatoria del Mundial 2026: a diferencia de
+// upsertMatches, NUNCA actualiza una fila existente. Una vez insertado, el
+// cron (lib/knockout.ts) o un admin editando a mano son los únicos que tocan
+// homeCode/awayCode — si reseed pisara esos campos con el placeholder
+// original, perderíamos cualquier cruce ya resuelto.
+async function insertKnockoutPlaceholders(tournamentId: number) {
+  for (const k of KNOCKOUT_2026_MATCHES) {
+    await db
+      .insert(matches)
+      .values({
+        tournamentId,
+        matchNumber: k.num,
+        matchDate: k.date,
+        matchTime: k.time,
+        kickoffAt: new Date(k.iso),
+        groupName: k.group,
+        homeTeam: k.home,
+        awayTeam: k.away,
+        homeFrom: k.homeFrom,
+        awayFrom: k.awayFrom,
+        stadium: k.stadium,
+      })
+      .onConflictDoNothing({
+        target: [matches.tournamentId, matches.matchNumber],
+      });
+  }
+  console.log(
+    `✅ ${KNOCKOUT_2026_MATCHES.length} placeholders de eliminatoria comprobados`
+  );
+}
+
 async function promoteAdminEmail() {
   const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
   if (!adminEmail) {
@@ -283,6 +315,9 @@ async function main() {
     const row = await ensureTournament(t);
     await upsertTeams(t, row.id);
     await upsertMatches(t, row.id);
+    if (t.slug === "mundial-2026") {
+      await insertKnockoutPlaceholders(row.id);
+    }
   }
 
   await promoteAdminEmail();

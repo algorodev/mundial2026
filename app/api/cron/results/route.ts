@@ -38,6 +38,7 @@ import {
   notifyRedCard,
   pickRecipients,
 } from "@/lib/notify";
+import { resolveKnockoutPlaceholders } from "@/lib/knockout";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -48,6 +49,7 @@ type TournamentSummary = {
   updated: number;
   skippedAdmin: number;
   skippedNotFinal: number;
+  knockoutResolved: number[];
   notified: {
     kickoff: number;
     ft: number;
@@ -100,6 +102,7 @@ export async function GET(req: NextRequest) {
       updated: 0,
       skippedAdmin: 0,
       skippedNotFinal: 0,
+      knockoutResolved: [],
       notified: { kickoff: 0, ft: 0, goal: 0, redCard: 0, missedPenalty: 0 },
     };
 
@@ -186,6 +189,15 @@ export async function GET(req: NextRequest) {
         const sent = await notifyFinal(ours, home, away, recipients);
         if (sent) s.notified.ft++;
       }
+    }
+
+    // ─── Resolver huecos de eliminatoria que ya tengan equipo conocido ───
+    try {
+      s.knockoutResolved = await resolveKnockoutPlaceholders(t.id);
+    } catch (e) {
+      console.warn(
+        `[cron] resolveKnockoutPlaceholders falló para ${t.slug}: ${(e as Error).message}`
+      );
     }
 
     // ─── Eventos en directo (gol / roja / penalti fallado) ───────────────
