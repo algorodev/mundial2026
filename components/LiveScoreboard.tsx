@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import TeamBadge from "@/components/TeamBadge";
 import { useI18n } from "@/providers/I18nProvider";
 
@@ -179,9 +180,26 @@ export default function LiveScoreboard({
 
       <div className="overflow-y-auto p-3 space-y-3">
         {live.length > 0 ? (
-          live.map((m) => <LiveRow key={m.id} match={m} liveLabel={liveLabel} />)
+          live.map((m) => (
+            <LiveRow
+              key={m.id}
+              match={m}
+              groupSlug={groupSlug}
+              liveLabel={liveLabel}
+              labelMatchDetail={t.predictions.matchDetail}
+            />
+          ))
         ) : next ? (
-          <Countdown next={next} realNow={realNow} labelNext={t.liveScoreboard.nextNoGroup} labelNextGroup={t.liveScoreboard.nextGroup} labelCountdown={t.liveScoreboard.countdown} labelGroupInline={t.liveScoreboard.groupLabel} />
+          <Countdown
+            next={next}
+            groupSlug={groupSlug}
+            realNow={realNow}
+            labelNext={t.liveScoreboard.nextNoGroup}
+            labelNextGroup={t.liveScoreboard.nextGroup}
+            labelCountdown={t.liveScoreboard.countdown}
+            labelGroupInline={t.liveScoreboard.groupLabel}
+            labelMatchDetail={t.predictions.matchDetail}
+          />
         ) : (
           <p className="font-mono text-[11px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest text-center py-6">
             {t.liveScoreboard.noPending}
@@ -205,7 +223,17 @@ function goalTag(detail: string): string | null {
   return null;
 }
 
-function LiveRow({ match, liveLabel }: { match: LiveMatch; liveLabel: (m: LiveMatch) => string }) {
+function LiveRow({
+  match,
+  groupSlug,
+  liveLabel,
+  labelMatchDetail,
+}: {
+  match: LiveMatch;
+  groupSlug: string;
+  liveLabel: (m: LiveMatch) => string;
+  labelMatchDetail: string;
+}) {
   // Los goleadores los pedimos al endpoint /api/match/[id]/events (server cachea
   // 30s en directo, así que aunque el poll vaya cada 12s sólo gastamos cuota
   // cada 30s real). Fallo silencioso: si la API se cae, sigue mostrándose el
@@ -334,24 +362,37 @@ function LiveRow({ match, liveLabel }: { match: LiveMatch; liveLabel: (m: LiveMa
           </ul>
         </div>
       )}
+
+      <div className="mt-2 pt-2 border-t border-pitch-200/60 text-right">
+        <Link
+          href={`/g/${groupSlug}/m/${match.matchNumber}`}
+          className="inline-block font-mono text-[10px] uppercase tracking-widest text-pitch-700 hover:text-flame-600 whitespace-nowrap"
+        >
+          {labelMatchDetail}
+        </Link>
+      </div>
     </div>
   );
 }
 
 function Countdown({
   next,
+  groupSlug,
   realNow,
   labelNext,
   labelNextGroup,
   labelCountdown,
   labelGroupInline,
+  labelMatchDetail,
 }: {
   next: NextMatch;
+  groupSlug: string;
   realNow: number;
   labelNext: string;
   labelNextGroup: string;
   labelCountdown: string;
   labelGroupInline: string;
+  labelMatchDetail: string;
 }) {
   const remainingMs = Math.max(0, new Date(next.kickoffAt).getTime() - realNow);
   const totalSec = Math.floor(remainingMs / 1000);
@@ -403,6 +444,14 @@ function Countdown({
       <p className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest mt-2">
         {labelCountdown}
       </p>
+      <div className="mt-2 pt-2 border-t border-pitch-200/60">
+        <Link
+          href={`/g/${groupSlug}/m/${next.matchNumber}`}
+          className="inline-block font-mono text-[10px] uppercase tracking-widest text-pitch-700 hover:text-flame-600 whitespace-nowrap"
+        >
+          {labelMatchDetail}
+        </Link>
+      </div>
     </div>
   );
 }
