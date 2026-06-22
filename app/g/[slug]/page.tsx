@@ -4,7 +4,8 @@ import { eq, and, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, predictions, teams, tournaments, groups } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { getTournamentStart } from "@/lib/tournament";
+import { getPhaseStarts } from "@/lib/tournament";
+import { MAIN_PHASE } from "@/lib/knockout-phases";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
 import BackLink from "@/components/BackLink";
 import PredictionsClient from "@/components/PredictionsClient";
@@ -42,7 +43,7 @@ export default async function GroupPredictionsPage(
   const locale = await getLocale();
   const t = getDictionary(locale);
 
-  const [tournament, group, allMatches, myPreds, tournamentTeams, start] =
+  const [tournament, group, allMatches, myPreds, tournamentTeams, phaseStarts] =
     await Promise.all([
       db
         .select()
@@ -75,8 +76,9 @@ export default async function GroupPredictionsPage(
         .from(teams)
         .where(eq(teams.tournamentId, ctx.tournamentId))
         .orderBy(asc(teams.id)),
-      getTournamentStart(ctx.tournamentId),
+      getPhaseStarts(ctx.tournamentId),
     ]);
+  const start = phaseStarts[MAIN_PHASE] ?? null;
 
   const teamLogos: Record<string, string> = {};
   for (const tm of tournamentTeams) {
@@ -165,6 +167,7 @@ export default async function GroupPredictionsPage(
             teamLogos={teamLogos}
             tournamentStartIso={start?.iso ?? new Date(0).toISOString()}
             tournamentStartLabel={start?.label ?? ""}
+            phaseStarts={phaseStarts}
             predictionLockMode={ctx.predictionLockMode}
             lockMinutesBefore={ctx.lockMinutesBefore}
           />

@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { predictions, matches } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { getTournamentStart } from "@/lib/tournament";
+import { getPhaseStarts, phaseStartMs } from "@/lib/tournament";
 import { getGroupForMember } from "@/lib/group-access";
 import { isMatchLocked } from "@/lib/lock";
 
@@ -90,15 +90,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Cierre depende del modo configurado en el grupo (per-match o
-    // tournament-start). Solo cargamos el primer kickoff del torneo si el
-    // modo lo necesita.
-    const start =
+    // tournament-start). Solo cargamos los inicios de fase si el modo lo
+    // necesita; en tournament-start cada fase (grupos, dieciseisavos,
+    // octavos...) se cierra con su propio primer kickoff.
+    const phaseStarts =
       ctx.predictionLockMode === "tournament-start"
-        ? await getTournamentStart(ctx.tournamentId)
+        ? await getPhaseStarts(ctx.tournamentId)
         : null;
-    const tournamentStartMs = start ? new Date(start.iso).getTime() : null;
+    const lookup = phaseStarts
+      ? (groupName: string | null) => phaseStartMs(phaseStarts, groupName)
+      : null;
 
-    if (isMatchLocked(m, ctx, tournamentStartMs)) {
+    if (isMatchLocked(m, ctx, lookup)) {
       return NextResponse.json(
         {
           error:

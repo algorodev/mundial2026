@@ -3,16 +3,21 @@
 // El cierre depende de tres campos del grupo:
 //   - predictionLockMode:    "per-match" | "tournament-start"
 //   - lockMinutesBefore:     int — solo aplica en per-match
-//   - tournament start time: el primer kickoff del torneo (calculado en runtime
-//                              desde matches, para sobrevivir al simulador)
+//   - phase start time:      el primer kickoff de la FASE de ese partido
+//                              (calculado en runtime desde matches, para
+//                              sobrevivir al simulador)
 //
 // "per-match" es el comportamiento intuitivo: cada predicción se cierra cuando
 // empieza ese partido (o N minutos antes). Soporta porras de muchos eventos
 // independientes (LaLiga, Champions de varios partidos, etc.).
 //
 // "tournament-start" es el clásico de quiniela / Mundial: pronosticas todos
-// los partidos antes del primer pitido y a partir de ese momento se bloquea
-// todo. El campo lockMinutesBefore se ignora en este modo.
+// los partidos de una fase antes de su primer pitido y a partir de ese
+// momento se bloquea esa fase entera. El campo lockMinutesBefore se ignora en
+// este modo. "Fase" es fase de grupos (un solo bloque, igual que cuando solo
+// existía un corte por torneo) o cada ronda de eliminatoria por separado —
+// ver lib/knockout-phases.ts. Así un grupo puede seguir prediciendo la final
+// aunque la fase de grupos lleve semanas cerrada.
 
 import type { Match } from "./db/schema";
 
@@ -23,31 +28,47 @@ export type LockableGroup = {
   lockMinutesBefore: number;
 };
 
+// El umbral de cierre en modo tournament-start: o un único timestamp (ms) ya
+// resuelto para todos los partidos, o una función que lo resuelve por
+// partido a partir de su groupName (fase). Pasar un número plano sigue
+// dando el comportamiento "un solo corte para todo" de siempre.
+export type PhaseStartLookup = (
+  groupName: string | null
+) => number | null | undefined;
+
 function asLockMode(s: string): LockMode {
   return s === "tournament-start" ? "tournament-start" : "per-match";
+}
+
+function resolveThreshold(
+  groupName: string | null,
+  phaseStart: PhaseStartLookup | number | null | undefined
+): number | null | undefined {
+  return typeof phaseStart === "function" ? phaseStart(groupName) : phaseStart;
 }
 
 /**
  * Devuelve true si la predicción de este partido ya está cerrada.
  *
- * @param match           el partido (con su kickoffAt)
- * @param group           grupo con su lock mode y lockMinutesBefore
- * @param tournamentStart timestamp del primer kickoff del torneo (ms desde epoch).
- *                        Solo se usa en modo 'tournament-start'. Si null o
- *                        undefined, ese modo no bloquea (torneo aún sin partidos).
- * @param now             timestamp actual; defaults a Date.now() para tests
+ * @param match      el partido (con su kickoffAt y groupName)
+ * @param group      grupo con su lock mode y lockMinutesBefore
+ * @param phaseStart umbral en modo 'tournament-start' (ver PhaseStartLookup).
+ *                   Si resuelve a null/undefined, esa fase no bloquea aún
+ *                   (sin partidos cargados todavía).
+ * @param now        timestamp actual; defaults a Date.now() para tests
  */
 export function isMatchLocked(
-  match: Pick<Match, "kickoffAt">,
+  match: Pick<Match, "kickoffAt" | "groupName">,
   group: LockableGroup,
-  tournamentStart: number | null | undefined,
+  phaseStart: PhaseStartLookup | number | null | undefined,
   now: number = Date.now()
 ): boolean {
   const mode = asLockMode(group.predictionLockMode);
 
   if (mode === "tournament-start") {
-    if (tournamentStart == null) return false;
-    return now >= tournamentStart;
+    const threshold = resolveThreshold(match.groupName, phaseStart);
+    if (threshold == null) return false;
+    return now >= threshold;
   }
 
   // per-match
@@ -58,24 +79,18 @@ export function isMatchLocked(
 
 /**
  * Devuelve true si el grupo entero está cerrado: ninguna predicción se puede
- * tocar. En modo per-match, esto sólo es true si TODOS los partidos están ya
- * lockeados. En modo tournament-start, lo está cuando empieza el torneo.
+ * tocar, en ningún partido de ninguna fase.
  *
  * Útil para mostrar un banner "ya empezó".
  */
 export function isWholeGroupLocked(
-  matches: Pick<Match, "kickoffAt">[],
+  matches: Pick<Match, "kickoffAt" | "groupName">[],
   group: LockableGroup,
-  tournamentStart: number | null | undefined,
+  phaseStart: PhaseStartLookup | number | null | undefined,
   now: number = Date.now()
 ): boolean {
-  const mode = asLockMode(group.predictionLockMode);
-  if (mode === "tournament-start") {
-    if (tournamentStart == null) return false;
-    return now >= tournamentStart;
-  }
   if (matches.length === 0) return false;
-  return matches.every((m) => isMatchLocked(m, group, tournamentStart, now));
+  return matches.every((m) => isMatchLocked(m, group, phaseStart, now));
 }
 
 /**

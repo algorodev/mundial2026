@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import TeamBadge from "@/components/TeamBadge";
 import { useI18n } from "@/providers/I18nProvider";
+import { phaseKeyFor } from "@/lib/knockout-phases";
 
 type MatchRow = {
   id: number;
@@ -35,6 +36,7 @@ export default function PredictionsClient({
   teamLogos,
   tournamentStartIso,
   tournamentStartLabel,
+  phaseStarts = {},
   predictionLockMode = "per-match",
   lockMinutesBefore = 0,
 }: {
@@ -44,6 +46,7 @@ export default function PredictionsClient({
   teamLogos: Record<string, string>;
   tournamentStartIso: string;
   tournamentStartLabel: string;
+  phaseStarts?: Record<string, { iso: string; label: string }>;
   predictionLockMode?: string;
   lockMinutesBefore?: number;
 }) {
@@ -61,20 +64,27 @@ export default function PredictionsClient({
   const now = Date.now();
   const tournamentStartMs = new Date(tournamentStartIso).getTime();
 
+  // En tournament-start, cada fase (grupos, dieciseisavos, octavos...) se
+  // cierra con su propio primer kickoff en vez de con el del torneo entero
+  // — así se puede seguir prediciendo la eliminatoria aunque la fase de
+  // grupos lleve semanas cerrada. Ver lib/knockout-phases.ts.
+  function phaseStartMsFor(groupName: string | null): number | null {
+    const entry = phaseStarts[phaseKeyFor(groupName)];
+    return entry ? new Date(entry.iso).getTime() : null;
+  }
+
   function isMatchLocked(match: MatchRow): boolean {
     if (predictionLockMode === "tournament-start") {
-      return now >= tournamentStartMs;
+      const threshold = phaseStartMsFor(match.groupName);
+      if (threshold == null) return false;
+      return now >= threshold;
     }
     const cutoff = new Date(match.kickoffAt).getTime() - Math.max(0, lockMinutesBefore) * 60_000;
     return now >= cutoff;
   }
 
-  // En modo tournament-start: true cuando arranca el torneo.
-  // En modo per-match: true solo cuando ya no queda ningún partido abierto.
-  const tournamentLocked =
-    predictionLockMode === "tournament-start"
-      ? now >= tournamentStartMs
-      : matches.every((m) => isMatchLocked(m));
+  // true solo cuando ya no queda ningún partido abierto en ninguna fase.
+  const tournamentLocked = matches.every((m) => isMatchLocked(m));
 
   // Días estables (sin aplicar el filtro pending) para que las flechas del
   // carousel no salten de jornada al ir rellenando predicciones.
@@ -98,6 +108,14 @@ export default function PredictionsClient({
   });
 
   const selectedDay = dayGroups[selectedDayIndex];
+
+  // Etiqueta del corte relevante para lo que se está viendo ahora mismo
+  // (puede ser el de fase de grupos o el de la ronda de eliminatoria de
+  // turno, según qué jornada esté seleccionada).
+  const selectedPhaseLabel = useMemo(() => {
+    const groupName = selectedDay?.[1]?.[0]?.groupName ?? null;
+    return phaseStarts[phaseKeyFor(groupName)]?.label ?? tournamentStartLabel;
+  }, [selectedDay, phaseStarts, tournamentStartLabel]);
 
   const matchesOfSelectedDay = useMemo(() => {
     if (!selectedDay) return [];
@@ -214,7 +232,7 @@ export default function PredictionsClient({
         </div>
       ) : predictionLockMode === "tournament-start" ? (
         <div className="cromo bg-paper-100 dark:bg-pitch-900 text-pitch-700 dark:text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
-          {t.predictions.closesWithTournament.replace("{label}", tournamentStartLabel)}
+          {t.predictions.closesWithTournament.replace("{label}", selectedPhaseLabel)}
         </div>
       ) : (
         <div className="cromo bg-paper-100 dark:bg-pitch-900 text-pitch-700 dark:text-chalk-300 px-4 py-3 mb-6 font-mono text-[11px] uppercase tracking-widest">
