@@ -13,6 +13,27 @@ import { getTournamentStart } from "@/lib/tournament";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
+function TeamLink({
+  slug,
+  code,
+  className,
+  children,
+}: {
+  slug: string;
+  code: string | null;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  if (!code) {
+    return <div className={className}>{children}</div>;
+  }
+  return (
+    <Link href={`/g/${slug}/team/${code}`} className={className}>
+      {children}
+    </Link>
+  );
+}
+
 export default async function MatchDetailPage(props: {
   params: Promise<{ slug: string; matchNumber: string }>;
 }) {
@@ -143,7 +164,7 @@ export default async function MatchDetailPage(props: {
         </div>
 
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 sm:gap-6 items-center">
-          <div className="flex flex-col items-center min-w-0 w-full">
+          <TeamLink slug={slug} code={match.homeCode} className="flex flex-col items-center min-w-0 w-full">
             <TeamBadge
               code={match.homeCode}
               flag={match.homeFlag}
@@ -154,7 +175,7 @@ export default async function MatchDetailPage(props: {
             <span className="font-display uppercase text-sm sm:text-base tracking-tight leading-tight text-balance mt-2 text-center w-full min-h-[2.5em] flex items-start justify-center">
               {match.homeTeam}
             </span>
-          </div>
+          </TeamLink>
           <div className="font-display text-3xl sm:text-6xl tabular-nums whitespace-nowrap shrink-0 self-start mt-3 sm:mt-4">
             {match.homeScore !== null && match.awayScore !== null ? (
               <>
@@ -166,7 +187,7 @@ export default async function MatchDetailPage(props: {
               <span className="text-pitch-400">vs</span>
             )}
           </div>
-          <div className="flex flex-col items-center min-w-0 w-full">
+          <TeamLink slug={slug} code={match.awayCode} className="flex flex-col items-center min-w-0 w-full">
             <TeamBadge
               code={match.awayCode}
               flag={match.awayFlag}
@@ -177,7 +198,7 @@ export default async function MatchDetailPage(props: {
             <span className="font-display uppercase text-sm sm:text-base tracking-tight leading-tight text-balance mt-2 text-center w-full min-h-[2.5em] flex items-start justify-center">
               {match.awayTeam}
             </span>
-          </div>
+          </TeamLink>
         </div>
 
         {tournament && (
