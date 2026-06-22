@@ -366,6 +366,16 @@
     "noSync": "Este torneo no tiene clasificación sincronizada.",
     "updatedHourly": "Datos oficiales · actualizado cada hora"
   },
+  "bracket": {
+    "title": "Cuadro de eliminatoria",
+    "R32": "Dieciseisavos",
+    "R16": "Octavos",
+    "Cuartos": "Cuartos",
+    "Semifinal": "Semifinal",
+    "3erPuesto": "3er puesto",
+    "Final": "Final",
+    "tbd": "Por decidir"
+  },
   "profile": {
     "title": "MI PERFIL",
     "backToMyPools": "Mis porras",

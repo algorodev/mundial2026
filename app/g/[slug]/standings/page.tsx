@@ -1,14 +1,16 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { teams, tournaments } from "@/lib/db/schema";
+import { matches, teams, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
 import GroupTabs from "@/components/GroupTabs";
 import BackLink from "@/components/BackLink";
 import TournamentBadge from "@/components/TournamentBadge";
 import TournamentStandings from "@/components/TournamentStandings";
+import KnockoutBracket, { type BracketRound } from "@/components/KnockoutBracket";
+import { ROUND_PHASE_LABELS } from "@/lib/knockout-phases";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
@@ -48,6 +50,56 @@ export default async function GroupStandingsPage(props: {
     if (tm.apiTeamId) teamCodeByApiId[tm.apiTeamId] = tm.code;
   }
 
+  // Cuadro de eliminatoria: viene de nuestra propia tabla matches (no de la
+  // API externa), así que se ve aunque el torneo no tenga apiLeagueId.
+  const knockoutMatches = await db
+    .select()
+    .from(matches)
+    .where(
+      and(
+        eq(matches.tournamentId, ctx.tournamentId),
+        inArray(matches.groupName, [...ROUND_PHASE_LABELS])
+      )
+    )
+    .orderBy(asc(matches.matchNumber));
+
+  const knockoutCodes = [
+    ...new Set(
+      knockoutMatches.flatMap((m) => [m.homeCode, m.awayCode]).filter((c): c is string => !!c)
+    ),
+  ];
+  const knockoutTeamLogos: Record<string, string> = {};
+  if (knockoutCodes.length > 0) {
+    const rows = await db
+      .select({ code: teams.code, logoUrl: teams.logoUrl })
+      .from(teams)
+      .where(and(eq(teams.tournamentId, ctx.tournamentId), inArray(teams.code, knockoutCodes)));
+    for (const r of rows) {
+      if (r.logoUrl) knockoutTeamLogos[r.code] = r.logoUrl;
+    }
+  }
+
+  const bracketRounds: BracketRound[] = ROUND_PHASE_LABELS.map((key) => ({
+    key,
+    label: t.bracket[key],
+    matches: knockoutMatches
+      .filter((m) => m.groupName === key)
+      .map((m) => ({
+        matchNumber: m.matchNumber,
+        date: m.matchDate ?? "",
+        homeTeam: m.homeTeam,
+        awayTeam: m.awayTeam,
+        homeCode: m.homeCode,
+        awayCode: m.awayCode,
+        homeFlag: m.homeFlag,
+        awayFlag: m.awayFlag,
+        homeLogoUrl: m.homeCode ? knockoutTeamLogos[m.homeCode] ?? null : null,
+        awayLogoUrl: m.awayCode ? knockoutTeamLogos[m.awayCode] ?? null : null,
+        homeScore: m.homeScore,
+        awayScore: m.awayScore,
+      })),
+  })).filter((round) => round.matches.length > 0);
+
   return (
     <div className="pt-8">
       <BackLink href="/groups" className="mb-3">
@@ -74,6 +126,12 @@ export default async function GroupStandingsPage(props: {
         slug={ctx.slug}
         active="standings"
         isOwner={ctx.myRole === "owner"}
+      />
+
+      <KnockoutBracket
+        groupSlug={ctx.slug}
+        rounds={bracketRounds}
+        title={t.bracket.title}
       />
 
       {!tournament.apiLeagueId || !tournament.apiSeason ? (

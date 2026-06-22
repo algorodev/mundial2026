@@ -366,6 +366,16 @@
     "noSync": "This tournament has no synced standings.",
     "updatedHourly": "Official data · updated hourly"
   },
+  "bracket": {
+    "title": "Knockout bracket",
+    "R32": "Round of 32",
+    "R16": "Round of 16",
+    "Cuartos": "Quarterfinals",
+    "Semifinal": "Semifinals",
+    "3erPuesto": "Third place",
+    "Final": "Final",
+    "tbd": "To be decided"
+  },
   "profile": {
     "title": "MY PROFILE",
     "backToMyPools": "My pools",
