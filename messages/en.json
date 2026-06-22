@@ -423,7 +423,13 @@
     "lightModeTitle": "Light mode",
     "lightModeDesc": "New light theme available. Activate it with the ☀ button in the menu.",
     "iconsTitle": "Icons",
-    "iconsDesc": "New icon library throughout the interface: arrow buttons, Mail/Key/User labels and leaderboard positions with trophies."
+    "iconsDesc": "New icon library throughout the interface: arrow buttons, Mail/Key/User labels and leaderboard positions with trophies.",
+    "dayCarouselTitle": "Matches by matchday",
+    "dayCarouselDesc": "No more endless scrolling: Predictions now navigates matches one day at a time with arrows instead of showing all 72 at once.",
+    "liveMatchDetailTitle": "Match detail from the scoreboard",
+    "liveMatchDetailDesc": "From the live scoreboard and the next-match countdown you can now jump straight to lineups, events and head-to-head.",
+    "teamsTitle": "Teams",
+    "teamsDesc": "New team carousel in every pool: tap a badge to see its record and schedule. Also linked from the standings table."
   },
   "push": {
     "title": "🔔 Push notifications",

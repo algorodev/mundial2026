@@ -423,7 +423,13 @@
     "lightModeTitle": "Modo claro",
     "lightModeDesc": "Nuevo tema claro disponible. Actívalo con el botón ☀ del menú.",
     "iconsTitle": "Iconos",
-    "iconsDesc": "Nueva librería de iconos en toda la interfaz: botones con flechas, labels con Mail/Key/User y posiciones del leaderboard con trofeos."
+    "iconsDesc": "Nueva librería de iconos en toda la interfaz: botones con flechas, labels con Mail/Key/User y posiciones del leaderboard con trofeos.",
+    "dayCarouselTitle": "Partidos por jornada",
+    "dayCarouselDesc": "Adiós al scroll interminable: en Pronósticos navega los partidos día a día con las flechas en vez de ver los 72 de golpe.",
+    "liveMatchDetailTitle": "Detalle del partido desde el marcador",
+    "liveMatchDetailDesc": "Desde el marcador en vivo y el próximo partido ya puedes saltar directo a alineaciones, eventos y H2H.",
+    "teamsTitle": "Equipos",
+    "teamsDesc": "Nuevo carousel de equipos en cada porra: toca un escudo para ver su récord y calendario. También enlazado desde la tabla de clasificación."
   },
   "push": {
     "title": "🔔 Notificaciones push",
