@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import TeamBadge from "@/components/TeamBadge";
 import { useI18n } from "@/providers/I18nProvider";
 
@@ -75,20 +76,37 @@ export default function PredictionsClient({
       ? now >= tournamentStartMs
       : matches.every((m) => isMatchLocked(m));
 
-  const grouped = useMemo(() => {
-    const visible = matches.filter((m) => {
-      if (filter === "pending") return !isMatchLocked(m) && preds[m.id] === undefined;
-      return true;
-    });
-
+  // Días estables (sin aplicar el filtro pending) para que las flechas del
+  // carousel no salten de jornada al ir rellenando predicciones.
+  const dayGroups = useMemo(() => {
     const map = new Map<string, MatchRow[]>();
-    for (const m of visible) {
+    for (const m of matches) {
       const key = m.matchDate ?? "—";
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(m);
     }
     return Array.from(map.entries());
-  }, [matches, filter, preds, tournamentLocked]);
+  }, [matches]);
+
+  // Por defecto mostramos el primer día que aún tenga algún partido sin
+  // empezar; si el torneo ya terminó, el último día.
+  const [selectedDayIndex, setSelectedDayIndex] = useState(() => {
+    const idx = dayGroups.findIndex(([, ms]) =>
+      ms.some((m) => new Date(m.kickoffAt).getTime() >= now)
+    );
+    return idx === -1 ? Math.max(0, dayGroups.length - 1) : idx;
+  });
+
+  const selectedDay = dayGroups[selectedDayIndex];
+
+  const matchesOfSelectedDay = useMemo(() => {
+    if (!selectedDay) return [];
+    const [, ms] = selectedDay;
+    if (filter === "pending") {
+      return ms.filter((m) => !isMatchLocked(m) && preds[m.id] === undefined);
+    }
+    return ms;
+  }, [selectedDay, filter, preds, tournamentLocked]);
 
   const stats = useMemo(() => {
     const filledCount = matches.filter((m) => preds[m.id] !== undefined).length;
@@ -250,55 +268,76 @@ export default function PredictionsClient({
         </div>
       )}
 
-      <div className="space-y-12">
-        {grouped.length === 0 && (
+      {/* Carousel de día: flechas a los lados, fecha en medio */}
+      {dayGroups.length > 0 && (
+        <div className="flex items-center justify-center gap-3 sm:gap-6 mb-8">
+          <button
+            type="button"
+            onClick={() => setSelectedDayIndex((i) => Math.max(0, i - 1))}
+            disabled={selectedDayIndex === 0}
+            aria-label={t.predictions.prevDay}
+            className="shrink-0 p-2 sm:p-2.5 border-2 border-pitch-950 bg-paper-50 text-pitch-950 shadow-brutal-sm disabled:opacity-30 disabled:shadow-none hover:bg-paper-100 transition-all enabled:hover:-translate-x-0.5"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <div className="flex flex-col items-center min-w-0">
+            <span className="bg-flame-500 text-pitch-950 font-display text-lg sm:text-xl px-4 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block text-center">
+              {selectedDay?.[0] ?? "—"}
+            </span>
+            <span className="mt-2 font-mono text-[10px] text-pitch-500 dark:text-chalk-400 uppercase tracking-widest">
+              {t.predictions.dayCounter
+                .replace("{current}", String(selectedDayIndex + 1))
+                .replace("{total}", String(dayGroups.length))}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setSelectedDayIndex((i) => Math.min(dayGroups.length - 1, i + 1))
+            }
+            disabled={selectedDayIndex === dayGroups.length - 1}
+            aria-label={t.predictions.nextDay}
+            className="shrink-0 p-2 sm:p-2.5 border-2 border-pitch-950 bg-paper-50 text-pitch-950 shadow-brutal-sm disabled:opacity-30 disabled:shadow-none hover:bg-paper-100 transition-all enabled:hover:translate-x-0.5"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
+
+      <div>
+        {matchesOfSelectedDay.length === 0 && (
           <div className="text-center py-16 text-pitch-500 dark:text-chalk-400 font-mono uppercase tracking-widest text-sm">
             {t.predictions.noMatchesInView}
           </div>
         )}
-        {grouped.map(([date, matchesOfDay]) => (
-          <section key={date}>
-            <h2 className="mb-5 flex items-center gap-3">
-              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
-              <span className="bg-flame-500 text-pitch-950 font-display text-xl px-4 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block">
-                {date}
-              </span>
-              <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 px-1 py-2">
-              {matchesOfDay.map((m, idx) => (
-                <MatchCard
-                  key={m.id}
-                  match={m}
-                  groupSlug={groupSlug}
-                  pred={preds[m.id]}
-                  onUpdate={updateLocal}
-                  onFlush={flushPrediction}
-                  saving={savingMatchId === m.id}
-                  saved={savedFlash === m.id}
-                  locked={isMatchLocked(m)}
-                  tilt={idx % 2 === 0 ? "even" : "odd"}
-                  homeLogoUrl={
-                    m.homeCode ? teamLogos[m.homeCode] ?? null : null
-                  }
-                  awayLogoUrl={
-                    m.awayCode ? teamLogos[m.awayCode] ?? null : null
-                  }
-                  labelSaving={t.predictions.saving}
-                  labelSaved={t.predictions.saved}
-                  labelLocked={t.predictions.locked_badge}
-                  labelExact={t.predictions.exactBadge}
-                  labelSign={t.predictions.signBadge}
-                  labelRealResult={t.predictions.realResult}
-                  labelMatchDetail={t.predictions.matchDetail}
-                  labelGoalsHome={t.predictions.goalsLabel.replace("{team}", m.homeTeam)}
-                  labelGoalsAway={t.predictions.goalsLabel.replace("{team}", m.awayTeam)}
-                  labelGroup={t.predictions.group}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 px-1 py-2">
+          {matchesOfSelectedDay.map((m, idx) => (
+            <MatchCard
+              key={m.id}
+              match={m}
+              groupSlug={groupSlug}
+              pred={preds[m.id]}
+              onUpdate={updateLocal}
+              onFlush={flushPrediction}
+              saving={savingMatchId === m.id}
+              saved={savedFlash === m.id}
+              locked={isMatchLocked(m)}
+              tilt={idx % 2 === 0 ? "even" : "odd"}
+              homeLogoUrl={m.homeCode ? teamLogos[m.homeCode] ?? null : null}
+              awayLogoUrl={m.awayCode ? teamLogos[m.awayCode] ?? null : null}
+              labelSaving={t.predictions.saving}
+              labelSaved={t.predictions.saved}
+              labelLocked={t.predictions.locked_badge}
+              labelExact={t.predictions.exactBadge}
+              labelSign={t.predictions.signBadge}
+              labelRealResult={t.predictions.realResult}
+              labelMatchDetail={t.predictions.matchDetail}
+              labelGoalsHome={t.predictions.goalsLabel.replace("{team}", m.homeTeam)}
+              labelGoalsAway={t.predictions.goalsLabel.replace("{team}", m.awayTeam)}
+              labelGroup={t.predictions.group}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

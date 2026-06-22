@@ -205,7 +205,10 @@
     "goalsLabel": "Goals {team}",
     "comingSoon": "🗓 COMING SOON",
     "comingSoonDesc": "The {name} schedule hasn't been published yet.\nCome back when the tournament starts to make your picks.",
-    "group": "GROUP {name}"
+    "group": "GROUP {name}",
+    "prevDay": "Previous day",
+    "nextDay": "Next day",
+    "dayCounter": "Matchday {current} / {total}"
   },
   "leaderboard": {
     "loading": "Loading…",

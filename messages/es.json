@@ -205,7 +205,10 @@
     "goalsLabel": "Goles {team}",
     "comingSoon": "🗓 PRÓXIMAMENTE",
     "comingSoonDesc": "El calendario de {name} aún no se ha publicado.\nVuelve cuando arranque el torneo para empezar a pronosticar.",
-    "group": "GRUPO {name}"
+    "group": "GRUPO {name}",
+    "prevDay": "Día anterior",
+    "nextDay": "Día siguiente",
+    "dayCounter": "Jornada {current} / {total}"
   },
   "leaderboard": {
     "loading": "Cargando…",
