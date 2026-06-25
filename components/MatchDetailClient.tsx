@@ -200,7 +200,13 @@ export default function MatchDetailClient({
         homeLogoUrl={homeLogoUrl}
         awayLogoUrl={awayLogoUrl}
       />
-      <EventsSection state={events} homeName={homeTeam} awayName={awayTeam} />
+      <EventsSection
+        state={events}
+        homeName={homeTeam}
+        awayName={awayTeam}
+        homeApiTeamId={homeApiTeamId}
+        awayApiTeamId={awayApiTeamId}
+      />
       <H2HSection
         state={h2h}
         homeName={homeTeam}
@@ -464,10 +470,14 @@ function EventsSection({
   state,
   homeName,
   awayName,
+  homeApiTeamId,
+  awayApiTeamId,
 }: {
   state: LoadState<MatchEvent[]>;
   homeName: string;
   awayName: string;
+  homeApiTeamId: number | null;
+  awayApiTeamId: number | null;
 }) {
   const { t } = useI18n();
   return (
@@ -480,28 +490,33 @@ function EventsSection({
       ) : state.data.length === 0 ? null : (
         <ul className="space-y-1.5">
           {state.data.map((e, i) => {
-            const isHome = e.team.name === homeName;
-            const isAway = e.team.name === awayName;
+            // Matching por ID (fiable) o por nombre (fallback)
+            const isHome =
+              (homeApiTeamId != null && e.team.id === homeApiTeamId) ||
+              e.team.name === homeName;
+            const isAway =
+              !isHome &&
+              ((awayApiTeamId != null && e.team.id === awayApiTeamId) ||
+                e.team.name === awayName);
             return (
               <li
                 key={i}
                 className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-3 items-center text-sm"
               >
                 <div className="text-right font-mono min-w-0">
-                  {isHome ? (
-                    <EventLabel ev={e} side="home" />
-                  ) : !isAway ? (
-                    <span className="text-pitch-500 italic text-xs truncate inline-block max-w-full align-middle">
-                      {e.team.name}
-                    </span>
-                  ) : null}
+                  {isHome ? <EventLabel ev={e} side="home" /> : null}
                 </div>
                 <span className="font-mono text-xs text-pitch-600 tabular-nums px-2 py-0.5 bg-pitch-100 rounded-sm whitespace-nowrap shrink-0">
                   {e.time.elapsed}
                   {e.time.extra ? `+${e.time.extra}` : ""}'
                 </span>
                 <div className="text-left font-mono min-w-0">
-                  {isAway && <EventLabel ev={e} side="away" />}
+                  {isAway ? (
+                    <EventLabel ev={e} side="away" />
+                  ) : !isHome ? (
+                    // Equipo desconocido: muestra el evento en la derecha con el nombre del equipo
+                    <EventLabel ev={e} side="away" teamNameOverride={e.team.name} />
+                  ) : null}
                 </div>
               </li>
             );
@@ -512,17 +527,23 @@ function EventsSection({
   );
 }
 
-function EventLabel({ ev, side }: { ev: MatchEvent; side: "home" | "away" }) {
+function EventLabel({
+  ev,
+  side,
+  teamNameOverride,
+}: {
+  ev: MatchEvent;
+  side: "home" | "away";
+  teamNameOverride?: string;
+}) {
   const icon = iconFor(ev);
-  const playerName = ev.player.name ?? "—";
+  const playerName = ev.player.name ?? teamNameOverride ?? "—";
   const tag =
     ev.type === "Goal" && ev.detail === "Penalty"
       ? " (P)"
       : ev.type === "Goal" && ev.detail === "Own Goal"
         ? " (EN P)"
         : "";
-  // Para mantener el icono pegado al nombre incluso cuando trunca, usamos
-  // un flex con el icono shrink-0 y el bloque del nombre con truncate.
   const dir = side === "home" ? "flex-row-reverse text-right" : "flex-row text-left";
   return (
     <span className={`flex items-baseline gap-1 min-w-0 ${dir}`}>
