@@ -229,7 +229,13 @@
     "noApiData": "No additional team data",
     "pendingVs": "vs",
     "form": "Form",
-    "recentResults": "Recent results"
+    "recentResults": "Recent results",
+    "squad": "Squad",
+    "noSquad": "No squad available",
+    "posGoalkeeper": "Goalkeepers",
+    "posDefender": "Defenders",
+    "posMidfielder": "Midfielders",
+    "posAttacker": "Attackers"
   },
   "leaderboard": {
     "loading": "Loading…",

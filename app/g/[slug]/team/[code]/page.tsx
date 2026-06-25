@@ -5,13 +5,14 @@ import { db } from "@/lib/db";
 import { matches, teams, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
-import { getTeamById } from "@/lib/api-football";
+import { getTeamById, getSquad, type ApiSquadPlayer } from "@/lib/api-football";
 import TeamBadge from "@/components/TeamBadge";
 import BackLink from "@/components/BackLink";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
 const TEAM_META_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 días
+const TEAM_SQUAD_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 días
 
 export default async function TeamDetailPage(props: {
   params: Promise<{ slug: string; code: string }>;
@@ -95,8 +96,8 @@ export default async function TeamDetailPage(props: {
       return own > opp ? "W" : own < opp ? "L" : "D";
     });
 
-  // Metadatos del equipo: servir desde DB si están frescos (< 30 días).
-  // Solo llamar a la API si el cache de DB está vacío o expirado.
+  // Metadatos (país, fundación, estadio) y plantilla: cache en DB.
+  // metaFreshAt controla si ya se intentó la llamada (no si tiene datos).
   type TeamMeta = {
     country: string | null;
     founded: number | null;
@@ -105,46 +106,67 @@ export default async function TeamDetailPage(props: {
     venueCapacity: number | null;
   };
 
-  let teamMeta: TeamMeta | null = null;
-
+  const now = Date.now();
   const metaFresh =
-    team.metaFetchedAt &&
-    Date.now() - team.metaFetchedAt.getTime() < TEAM_META_MAX_AGE_MS;
+    !!team.metaFetchedAt &&
+    now - team.metaFetchedAt.getTime() < TEAM_META_MAX_AGE_MS;
+  const squadFresh =
+    !!team.squadFetchedAt &&
+    now - team.squadFetchedAt.getTime() < TEAM_SQUAD_MAX_AGE_MS;
 
-  if (metaFresh && (team.country || team.venueName)) {
-    teamMeta = {
-      country: team.country ?? null,
-      founded: team.founded ?? null,
-      venueName: team.venueName ?? null,
-      venueCity: team.venueCity ?? null,
-      venueCapacity: team.venueCapacity ?? null,
-    };
-  } else if (team.apiTeamId) {
-    try {
-      const [info] = await getTeamById(team.apiTeamId);
-      if (info) {
+  let teamMeta: TeamMeta | null = null;
+  let squad: ApiSquadPlayer[] | null = null;
+
+  if (team.apiTeamId) {
+    // --- Meta ---
+    if (metaFresh) {
+      // Servir desde DB aunque todos los campos sean null (evita refetch continuo).
+      if (team.country || team.founded || team.venueName) {
         teamMeta = {
-          country: info.team.country ?? null,
-          founded: info.team.founded ?? null,
-          venueName: info.venue.name ?? null,
-          venueCity: info.venue.city ?? null,
-          venueCapacity: info.venue.capacity ?? null,
+          country: team.country ?? null,
+          founded: team.founded ?? null,
+          venueName: team.venueName ?? null,
+          venueCity: team.venueCity ?? null,
+          venueCapacity: team.venueCapacity ?? null,
         };
-        // Persistir en DB para evitar llamadas futuras.
-        await db
-          .update(teams)
-          .set({
+      }
+    } else {
+      try {
+        const [info] = await getTeamById(team.apiTeamId);
+        if (info) {
+          teamMeta = {
+            country: info.team.country ?? null,
+            founded: info.team.founded ?? null,
+            venueName: info.venue.name ?? null,
+            venueCity: info.venue.city ?? null,
+            venueCapacity: info.venue.capacity ?? null,
+          };
+          await db.update(teams).set({
             country: teamMeta.country,
             founded: teamMeta.founded,
             venueName: teamMeta.venueName,
             venueCity: teamMeta.venueCity,
             venueCapacity: teamMeta.venueCapacity,
             metaFetchedAt: new Date(),
-          })
-          .where(eq(teams.id, team.id));
-      }
-    } catch {
-      // Silenciamos: la página sigue funcionando solo con datos propios.
+          }).where(eq(teams.id, team.id));
+        }
+      } catch { /* Silenciamos: la página sigue con datos propios. */ }
+    }
+
+    // --- Plantilla ---
+    if (squadFresh && team.squadJson) {
+      try { squad = JSON.parse(team.squadJson) as ApiSquadPlayer[]; } catch { /* ignore */ }
+    } else if (!squadFresh) {
+      try {
+        const [res] = await getSquad(team.apiTeamId);
+        if (res?.players?.length) {
+          squad = res.players;
+          await db.update(teams).set({
+            squadJson: JSON.stringify(squad),
+            squadFetchedAt: new Date(),
+          }).where(eq(teams.id, team.id));
+        }
+      } catch { /* Silenciamos: sin plantilla. */ }
     }
   }
 
@@ -277,7 +299,7 @@ export default async function TeamDetailPage(props: {
             result === "W"
               ? "bg-grass-50"
               : result === "L"
-              ? "bg-brick-50/40"
+              ? "bg-brick-50"
               : "bg-paper-50";
           return (
             <article key={m.id} className={`cromo-sm ${cardBg} text-pitch-950 p-4`}>
@@ -381,6 +403,77 @@ export default async function TeamDetailPage(props: {
           );
         })}
       </div>
+
+      {/* Plantilla */}
+      {squad && squad.length > 0 && (
+        <>
+          <h2 className="mt-10 mb-5 flex items-center gap-3">
+            <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
+            <span className="bg-flame-500 text-pitch-950 font-display text-lg px-4 py-1.5 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-wider -rotate-1 inline-block">
+              {t.teamDetail.squad}
+            </span>
+            <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
+          </h2>
+          <SquadSection squad={squad} t={t.teamDetail} />
+        </>
+      )}
+    </div>
+  );
+}
+
+const POSITION_ORDER = ["Goalkeeper", "Defender", "Midfielder", "Attacker"] as const;
+type PosKey = (typeof POSITION_ORDER)[number];
+
+function posLabel(pos: PosKey, t: { posGoalkeeper: string; posDefender: string; posMidfielder: string; posAttacker: string }) {
+  return pos === "Goalkeeper" ? t.posGoalkeeper
+    : pos === "Defender" ? t.posDefender
+    : pos === "Midfielder" ? t.posMidfielder
+    : t.posAttacker;
+}
+
+function SquadSection({ squad, t }: {
+  squad: ApiSquadPlayer[];
+  t: { posGoalkeeper: string; posDefender: string; posMidfielder: string; posAttacker: string };
+}) {
+  const byPos = new Map<PosKey, ApiSquadPlayer[]>();
+  for (const pos of POSITION_ORDER) byPos.set(pos, []);
+  for (const p of squad) {
+    const key = POSITION_ORDER.find((k) => k === p.position) ?? "Attacker";
+    byPos.get(key)!.push(p);
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-8">
+      {POSITION_ORDER.map((pos) => {
+        const players = byPos.get(pos)!;
+        if (players.length === 0) return null;
+        return (
+          <div key={pos} className="cromo-sm bg-paper-50 text-pitch-950 p-4">
+            <div className="font-mono text-[10px] uppercase tracking-widest text-pitch-500 mb-3 border-b-2 border-dashed border-pitch-950/15 pb-2">
+              {posLabel(pos, t)}
+            </div>
+            <ul className="space-y-1.5">
+              {players
+                .sort((a, b) => (a.number ?? 99) - (b.number ?? 99))
+                .map((p) => (
+                  <li key={p.id} className="flex items-center gap-2 text-sm">
+                    <span className="font-display text-[11px] w-5 text-right text-pitch-400 shrink-0">
+                      {p.number ?? "—"}
+                    </span>
+                    <span className="flex-1 font-display text-[13px] uppercase tracking-tight leading-tight truncate">
+                      {p.name}
+                    </span>
+                    {p.age != null && (
+                      <span className="font-mono text-[10px] text-pitch-400 shrink-0">
+                        {p.age}
+                      </span>
+                    )}
+                  </li>
+                ))}
+            </ul>
+          </div>
+        );
+      })}
     </div>
   );
 }

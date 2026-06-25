@@ -139,6 +139,9 @@ export const teams = pgTable(
     venueCity: varchar("venue_city", { length: 80 }),
     venueCapacity: integer("venue_capacity"),
     metaFetchedAt: timestamp("meta_fetched_at"),
+    // Plantilla: JSON [{id,name,number,age,position,photo}], se refresca cada 7 días.
+    squadJson: text("squad_json"),
+    squadFetchedAt: timestamp("squad_fetched_at"),
   },
   (t) => ({
     tournamentCodeIdx: uniqueIndex("teams_tournament_code_idx").on(

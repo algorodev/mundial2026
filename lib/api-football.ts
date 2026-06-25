@@ -139,6 +139,24 @@ export function getTeamById(teamId: number, opts: ApiGetOpts = {}) {
   return apiGet<ApiTeamSummary>("/teams", { id: teamId }, opts);
 }
 
+export type ApiSquadPlayer = {
+  id: number;
+  name: string;
+  age: number | null;
+  number: number | null;
+  position: string; // "Goalkeeper" | "Defender" | "Midfielder" | "Attacker"
+  photo: string | null;
+};
+
+export type ApiSquad = {
+  team: { id: number; name: string; logo: string };
+  players: ApiSquadPlayer[];
+};
+
+export function getSquad(teamId: number, opts: ApiGetOpts = {}) {
+  return apiGet<ApiSquad>("/players/squads", { team: teamId }, opts);
+}
+
 export function getFixturesByLeague(leagueId: number, season: number) {
   return apiGet<ApiFixture>("/fixtures", { league: leagueId, season });
 }

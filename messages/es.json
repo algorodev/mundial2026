@@ -229,7 +229,13 @@
     "noApiData": "Sin datos adicionales del equipo",
     "pendingVs": "vs",
     "form": "Forma",
-    "recentResults": "Últimos resultados"
+    "recentResults": "Últimos resultados",
+    "squad": "Plantilla",
+    "noSquad": "Sin plantilla disponible",
+    "posGoalkeeper": "Porteros",
+    "posDefender": "Defensas",
+    "posMidfielder": "Centrocampistas",
+    "posAttacker": "Delanteros"
   },
   "leaderboard": {
     "loading": "Cargando…",
