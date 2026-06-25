@@ -16,7 +16,7 @@ export function calcPoints(
     return { points: 0, result: "pending" };
   }
   if (predHome === realHome && predAway === realAway) {
-    return { points: 3, result: "exact" };
+    return { points: 4, result: "exact" };
   }
   const predSign = Math.sign(predHome - predAway);
   const realSign = Math.sign(realHome - realAway);
