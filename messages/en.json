@@ -441,6 +441,23 @@
     "teamsTitle": "Teams",
     "teamsDesc": "New team carousel in every pool: tap a badge to see its record and schedule. Also linked from the standings table."
   },
+  "pwaInstall": {
+    "menuLabel": "Install app",
+    "modalTitle": "ADD PORRABROS TO YOUR PHONE",
+    "modalDesc": "Faster access without opening the browser",
+    "tabIos": "iPhone · iPad",
+    "tabAndroid": "Android",
+    "iosStep1": "Open this page in Safari",
+    "iosStep2": "Tap the Share button",
+    "iosStep3": "Scroll to «Add to Home Screen» and tap it",
+    "iosStep4": "Tap «Add» — you're done!",
+    "iosNote": "This only works in Safari. If you're using Chrome or Firefox on iPhone, copy the URL and open it in Safari.",
+    "androidStep1": "Open this page in Chrome",
+    "androidStep2": "Tap the menu",
+    "androidStep3": "Tap «Install app» or «Add to Home Screen»",
+    "androidStep4": "Confirm — you're done!",
+    "androidNote": "Chrome may automatically show an install button directly in the browser bar."
+  },
   "push": {
     "title": "🔔 Push notifications",
     "active": "Active on this device",

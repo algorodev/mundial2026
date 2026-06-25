@@ -441,6 +441,23 @@
     "teamsTitle": "Equipos",
     "teamsDesc": "Nuevo carousel de equipos en cada porra: toca un escudo para ver su récord y calendario. También enlazado desde la tabla de clasificación."
   },
+  "pwaInstall": {
+    "menuLabel": "Instalar app",
+    "modalTitle": "AÑADE PORRABROS A TU MÓVIL",
+    "modalDesc": "Accede más rápido sin abrir el navegador",
+    "tabIos": "iPhone · iPad",
+    "tabAndroid": "Android",
+    "iosStep1": "Abre esta página en Safari",
+    "iosStep2": "Toca el botón Compartir",
+    "iosStep3": "Desplázate hasta «Añadir a pantalla de inicio» y tócalo",
+    "iosStep4": "Toca «Añadir» — ¡ya está!",
+    "iosNote": "Solo funciona desde Safari. Si usas Chrome o Firefox en iPhone, copia la URL y ábrela en Safari.",
+    "androidStep1": "Abre esta página en Chrome",
+    "androidStep2": "Toca el menú",
+    "androidStep3": "Toca «Instalar app» o «Añadir a pantalla de inicio»",
+    "androidStep4": "Confirma — ¡ya está!",
+    "androidNote": "Chrome puede mostrar automáticamente un botón de instalación en la barra del navegador."
+  },
   "push": {
     "title": "🔔 Notificaciones push",
     "active": "Activas en este dispositivo",

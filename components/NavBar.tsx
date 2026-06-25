@@ -16,6 +16,7 @@ import {
 import type { SessionPayload } from "@/lib/session";
 import { useI18n } from "@/providers/I18nProvider";
 import { useTheme } from "@/providers/ThemeProvider";
+import { PwaInstallGuide } from "@/components/PwaInstallGuide";
 
 export default function NavBar({
   session,
@@ -145,6 +146,7 @@ export default function NavBar({
               >
                 {theme === "dark" ? <Sun size={16} strokeWidth={2} /> : <Moon size={16} strokeWidth={2} />}
               </button>
+              <PwaInstallGuide variant="icon" />
               <Link
                 href="/login"
                 className="text-xs bg-flame-500 hover:bg-flame-400 text-pitch-950 font-display px-4 py-2 border-2 border-pitch-950 shadow-brutal-sm uppercase tracking-widest"
@@ -231,6 +233,8 @@ export default function NavBar({
               {theme === "dark" ? <Sun size={18} strokeWidth={2} /> : <Moon size={18} strokeWidth={2} />}
               {themeLabel}
             </button>
+
+            <PwaInstallGuide variant="item" onBeforeOpen={close} />
 
             <button
               onClick={logout}
