@@ -36,13 +36,18 @@ type MatchEvent = {
 };
 
 type H2HFixture = {
-  fixture: { id: number; date: string };
+  fixture: { id: number; date: string; status: { short: string } };
   league: { name: string; round: string };
   teams: {
     home: { id: number; name: string; logo: string; winner: boolean | null };
     away: { id: number; name: string; logo: string; winner: boolean | null };
   };
   goals: { home: number | null; away: number | null };
+  score: {
+    halftime: { home: number | null; away: number | null };
+    extratime: { home: number | null; away: number | null };
+    penalty: { home: number | null; away: number | null };
+  };
 };
 
 type LoadState<T> =
@@ -558,8 +563,8 @@ function H2HSection({
   homeApiTeamId: number | null;
   awayApiTeamId: number | null;
 }) {
-  const { t } = useI18n();
-  // Stats simples sobre los últimos N.
+  const { t, locale } = useI18n();
+
   const stats =
     state.status === "ok"
       ? (() => {
@@ -570,8 +575,6 @@ function H2HSection({
             const hg = f.goals.home;
             const ag = f.goals.away;
             if (hg === null || ag === null) continue;
-            // Preferimos comparar por apiTeamId (fiable). Fallback a nombre
-            // por si el ID no está mapeado aún.
             const homeIsOurs = homeApiTeamId
               ? f.teams.home.id === homeApiTeamId
               : f.teams.home.name === homeName;
@@ -588,6 +591,8 @@ function H2HSection({
           return { homeWins, awayWins, draws };
         })()
       : null;
+
+  const dateLocale = locale === "es" ? "es-ES" : "en-GB";
 
   return (
     <SectionShell
@@ -627,58 +632,107 @@ function H2HSection({
             </div>
           )}
           <ul className="divide-y divide-pitch-200">
-            {state.data.map((f) => (
-              <li key={f.fixture.id} className="py-2.5">
-                <div className="flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-pitch-500 mb-1.5 min-w-0">
-                  <span className="shrink-0">
-                    {new Date(f.fixture.date).toLocaleDateString("es-ES", {
-                      year: "numeric",
-                      month: "short",
-                      day: "2-digit",
-                    })}
-                  </span>
-                  <span className="shrink-0">·</span>
-                  <span className="truncate min-w-0">{f.league.name}</span>
-                </div>
-                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-3 items-center text-sm">
-                  <div className="flex items-center justify-end gap-1.5 min-w-0">
-                    <span className="truncate min-w-0 font-display uppercase text-xs sm:text-sm tracking-tight">
-                      {f.teams.home.name}
+            {state.data.map((f) => {
+              const homeWins = f.teams.home.winner === true;
+              const awayWins = f.teams.away.winner === true;
+              const status = f.fixture.status?.short;
+              const isAet = status === "AET";
+              const isPen = status === "PEN";
+              const htH = f.score?.halftime?.home;
+              const htA = f.score?.halftime?.away;
+              const showHt = htH !== null && htH !== undefined && htA !== null && htA !== undefined;
+              const showRound =
+                f.league.round &&
+                f.league.round !== f.league.name &&
+                !f.league.round.toLowerCase().startsWith("regular season");
+
+              return (
+                <li key={f.fixture.id} className="py-3">
+                  {/* Meta */}
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-widest text-pitch-500 mb-2 flex-wrap">
+                    <span className="shrink-0">
+                      {new Date(f.fixture.date).toLocaleDateString(dateLocale, {
+                        year: "numeric",
+                        month: "short",
+                        day: "2-digit",
+                      })}
                     </span>
-                    {f.teams.home.logo && (
-                      <Image
-                        src={f.teams.home.logo}
-                        alt=""
-                        width={18}
-                        height={18}
-                        className="inline-block shrink-0"
-                        unoptimized
-                      />
+                    <span>·</span>
+                    <span className="truncate min-w-0">{f.league.name}</span>
+                    {showRound && (
+                      <>
+                        <span className="shrink-0">·</span>
+                        <span className="shrink-0 text-pitch-700">{f.league.round}</span>
+                      </>
                     )}
                   </div>
-                  <span className="font-display tabular-nums whitespace-nowrap px-2 text-base">
-                    {f.goals.home ?? "—"}
-                    <span className="text-pitch-400 mx-1">·</span>
-                    {f.goals.away ?? "—"}
-                  </span>
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    {f.teams.away.logo && (
-                      <Image
-                        src={f.teams.away.logo}
-                        alt=""
-                        width={18}
-                        height={18}
-                        className="inline-block shrink-0"
-                        unoptimized
-                      />
-                    )}
-                    <span className="truncate min-w-0 font-display uppercase text-xs sm:text-sm tracking-tight">
-                      {f.teams.away.name}
-                    </span>
+
+                  {/* Score row */}
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 sm:gap-3 items-center">
+                    {/* Home */}
+                    <div className="flex items-center justify-end gap-1.5 min-w-0">
+                      <span
+                        className={`truncate min-w-0 font-display uppercase text-xs sm:text-sm tracking-tight transition-colors ${
+                          awayWins ? "text-pitch-400" : "text-pitch-950"
+                        } ${homeWins ? "font-bold" : ""}`}
+                      >
+                        {f.teams.home.name}
+                      </span>
+                      {f.teams.home.logo && (
+                        <Image
+                          src={f.teams.home.logo}
+                          alt=""
+                          width={18}
+                          height={18}
+                          className={`inline-block shrink-0 ${awayWins ? "opacity-40" : ""}`}
+                          unoptimized
+                        />
+                      )}
+                    </div>
+
+                    {/* Score + sub-info */}
+                    <div className="text-center shrink-0">
+                      <div className="font-display tabular-nums whitespace-nowrap px-2 text-base">
+                        {f.goals.home ?? "—"}
+                        <span className="text-pitch-400 mx-1">·</span>
+                        {f.goals.away ?? "—"}
+                      </div>
+                      {(showHt || isAet || isPen) && (
+                        <div className="font-mono text-[9px] uppercase tracking-widest mt-0.5 text-pitch-500 whitespace-nowrap">
+                          {showHt && `HT ${htH}·${htA}`}
+                          {(isAet || isPen) && (
+                            <span className="ml-1 text-flame-500 font-bold">
+                              {isAet ? "AET" : "PEN"}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Away */}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {f.teams.away.logo && (
+                        <Image
+                          src={f.teams.away.logo}
+                          alt=""
+                          width={18}
+                          height={18}
+                          className={`inline-block shrink-0 ${homeWins ? "opacity-40" : ""}`}
+                          unoptimized
+                        />
+                      )}
+                      <span
+                        className={`truncate min-w-0 font-display uppercase text-xs sm:text-sm tracking-tight transition-colors ${
+                          homeWins ? "text-pitch-400" : "text-pitch-950"
+                        } ${awayWins ? "font-bold" : ""}`}
+                      >
+                        {f.teams.away.name}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </>
       )}

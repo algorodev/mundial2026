@@ -85,6 +85,16 @@ export default async function TeamDetailPage(props: {
     { played: 0, win: 0, draw: 0, lose: 0, goalsFor: 0, goalsAgainst: 0 }
   );
 
+  // Forma cronológica: W/D/L de los partidos ya jugados (más antiguo primero)
+  const form = teamMatches
+    .filter((m) => m.homeScore !== null && m.awayScore !== null)
+    .map((m): "W" | "D" | "L" => {
+      const isHome = m.homeCode === code;
+      const own = isHome ? m.homeScore! : m.awayScore!;
+      const opp = isHome ? m.awayScore! : m.homeScore!;
+      return own > opp ? "W" : own < opp ? "L" : "D";
+    });
+
   let apiInfo: ApiTeamSummary | null = null;
   if (team.apiTeamId && tournament?.apiLeagueId && tournament?.apiSeason) {
     try {
@@ -153,13 +163,51 @@ export default async function TeamDetailPage(props: {
         </span>
         <span className="h-1 flex-1 bg-paper-200 dark:bg-pitch-800" />
       </h2>
-      <div className="cromo bg-paper-50 text-pitch-950 p-5 mb-8 grid grid-cols-3 sm:grid-cols-6 gap-4 text-center">
-        <RecordStat label={t.standings.played} value={record.played} />
-        <RecordStat label={t.standings.wins} value={record.win} />
-        <RecordStat label={t.standings.draws} value={record.draw} />
-        <RecordStat label={t.standings.losses} value={record.lose} />
-        <RecordStat label={t.standings.goalsFor} value={record.goalsFor} />
-        <RecordStat label={t.standings.goalsAgainst} value={record.goalsAgainst} />
+      <div className="cromo bg-paper-50 text-pitch-950 p-5 mb-8">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-4 text-center">
+          <RecordStat label={t.standings.played} value={record.played} />
+          <RecordStat label={t.standings.wins} value={record.win} />
+          <RecordStat label={t.standings.draws} value={record.draw} />
+          <RecordStat label={t.standings.losses} value={record.lose} />
+          <RecordStat label={t.standings.goalsFor} value={record.goalsFor} />
+          <RecordStat label={t.standings.goalsAgainst} value={record.goalsAgainst} />
+          <RecordStat
+            label={t.standings.goalDiff}
+            value={record.goalsFor - record.goalsAgainst}
+            valueStr={
+              record.goalsFor - record.goalsAgainst > 0
+                ? `+${record.goalsFor - record.goalsAgainst}`
+                : String(record.goalsFor - record.goalsAgainst)
+            }
+          />
+        </div>
+        {form.length > 0 && (
+          <div className="mt-4 pt-4 border-t-2 border-dashed border-pitch-950/20 flex items-center gap-4 flex-wrap">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-pitch-500 shrink-0">
+              {t.teamDetail.form}
+            </span>
+            <div className="flex gap-1.5 flex-wrap">
+              {form.map((r, i) => (
+                <span
+                  key={i}
+                  className={`w-6 h-6 flex items-center justify-center text-[11px] font-display font-bold border-2 border-pitch-950 ${
+                    r === "W"
+                      ? "bg-grass-500 text-white"
+                      : r === "L"
+                      ? "bg-brick-500 text-white"
+                      : "bg-pitch-200 text-pitch-700"
+                  }`}
+                >
+                  {r === "W"
+                    ? t.standings.wins
+                    : r === "L"
+                    ? t.standings.losses
+                    : t.standings.draws}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <h2 className="mb-5 flex items-center gap-3">
@@ -174,19 +222,61 @@ export default async function TeamDetailPage(props: {
           const homeInfo = m.homeCode ? teamByCode[m.homeCode] : undefined;
           const awayInfo = m.awayCode ? teamByCode[m.awayCode] : undefined;
           const hasResult = m.homeScore !== null && m.awayScore !== null;
+          const isHome = m.homeCode === code;
+          const result: "W" | "D" | "L" | null = hasResult
+            ? (() => {
+                const own = isHome ? m.homeScore! : m.awayScore!;
+                const opp = isHome ? m.awayScore! : m.homeScore!;
+                return own > opp ? "W" : own < opp ? "L" : "D";
+              })()
+            : null;
+          const cardBg =
+            result === "W"
+              ? "bg-grass-50"
+              : result === "L"
+              ? "bg-brick-50/40"
+              : "bg-paper-50";
           return (
-            <article key={m.id} className="cromo-sm bg-paper-50 text-pitch-950 p-4">
-              <div className="flex items-center justify-between gap-2 mb-3 text-[10px] font-mono uppercase tracking-widest text-pitch-700">
-                <div className="flex items-center gap-2">
+            <article key={m.id} className={`cromo-sm ${cardBg} text-pitch-950 p-4`}>
+              {/* Meta: grupo + fecha + badge resultado */}
+              <div className="flex items-center justify-between gap-2 mb-1 text-[10px] font-mono uppercase tracking-widest text-pitch-700">
+                <div className="flex items-center gap-2 min-w-0">
                   {m.groupName && (
-                    <span className={`group-${m.groupName} px-2 py-0.5 rounded-sm`}>
+                    <span className={`group-${m.groupName} px-2 py-0.5 rounded-sm shrink-0`}>
                       {t.predictions.group.replace("{name}", m.groupName)}
                     </span>
                   )}
-                  <span>{m.matchDate}</span>
+                  <span className="shrink-0">{m.matchDate}</span>
+                  {!hasResult && m.matchTime && (
+                    <span className="shrink-0">· {m.matchTime}</span>
+                  )}
                 </div>
-                {m.matchTime && <span>{m.matchTime}</span>}
+                {result && (
+                  <span
+                    className={`shrink-0 font-display text-[10px] px-2 py-0.5 border-2 border-pitch-950 ${
+                      result === "W"
+                        ? "bg-grass-500 text-white"
+                        : result === "L"
+                        ? "bg-brick-500 text-white"
+                        : "bg-pitch-200 text-pitch-700"
+                    }`}
+                  >
+                    {result === "W"
+                      ? t.standings.wins
+                      : result === "L"
+                      ? t.standings.losses
+                      : t.standings.draws}
+                  </span>
+                )}
               </div>
+              {/* Estadio */}
+              {m.stadium && (
+                <p className="text-[9px] font-mono text-pitch-500 uppercase tracking-widest mb-3">
+                  {m.stadium}
+                </p>
+              )}
+              {!m.stadium && <div className="mb-2" />}
+              {/* Equipos + marcador */}
               <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-2 items-center">
                 <div className="text-right min-w-0">
                   <div className="flex justify-end mb-1">
@@ -198,7 +288,11 @@ export default async function TeamDetailPage(props: {
                       size="sm"
                     />
                   </div>
-                  <div className="font-display uppercase text-xs leading-tight tracking-tight truncate">
+                  <div
+                    className={`font-display uppercase text-xs leading-tight tracking-tight truncate ${
+                      hasResult && !isHome && result === "L" ? "text-pitch-400" : ""
+                    } ${hasResult && isHome && result === "W" ? "font-bold" : ""}`}
+                  >
                     {m.homeTeam}
                   </div>
                 </div>
@@ -223,7 +317,11 @@ export default async function TeamDetailPage(props: {
                       size="sm"
                     />
                   </div>
-                  <div className="font-display uppercase text-xs leading-tight tracking-tight truncate">
+                  <div
+                    className={`font-display uppercase text-xs leading-tight tracking-tight truncate ${
+                      hasResult && isHome && result === "L" ? "text-pitch-400" : ""
+                    } ${hasResult && !isHome && result === "W" ? "font-bold" : ""}`}
+                  >
                     {m.awayTeam}
                   </div>
                 </div>
@@ -244,10 +342,10 @@ export default async function TeamDetailPage(props: {
   );
 }
 
-function RecordStat({ label, value }: { label: string; value: number }) {
+function RecordStat({ label, value, valueStr }: { label: string; value: number; valueStr?: string }) {
   return (
     <div>
-      <div className="font-display text-3xl sm:text-4xl leading-none">{value}</div>
+      <div className="font-display text-3xl sm:text-4xl leading-none">{valueStr ?? value}</div>
       <div className="font-mono text-[9px] text-pitch-500 uppercase tracking-widest mt-1.5">
         {label}
       </div>
