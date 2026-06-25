@@ -3,8 +3,9 @@ import { db } from "@/lib/db";
 import { users, matches, predictions, groupMembers } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { getSession } from "@/lib/session";
-import { calcPoints } from "@/lib/scoring";
+import { calcPoints, calcExtendedPoints } from "@/lib/scoring";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
+import { tournaments } from "@/lib/db/schema";
 
 export async function GET(req: NextRequest) {
   const groupSlug = req.nextUrl.searchParams.get("groupSlug");
@@ -51,13 +52,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ leaderboard: [] });
   }
 
-  const [allMatches, allPreds] = await Promise.all([
+  const [allMatches, allPreds, [tournament]] = await Promise.all([
     db.select().from(matches).where(eq(matches.tournamentId, ctx.tournamentId)),
     db
       .select()
       .from(predictions)
       .where(eq(predictions.groupId, ctx.groupId)),
+    db.select({ knockoutScoring: tournaments.knockoutScoring }).from(tournaments).where(eq(tournaments.id, ctx.tournamentId)).limit(1),
   ]);
+  const isExtended = tournament?.knockoutScoring === "extended";
 
   const matchById = new Map(allMatches.map((m) => [m.id, m]));
 
@@ -99,7 +102,16 @@ export async function GET(req: NextRequest) {
       m.homeScore,
       m.awayScore
     );
-    s.total += points;
+    let totalPts = points;
+    // Puntos adicionales por prórroga/penaltis en torneos extended
+    if (isExtended && m.homeFrom != null) {
+      const { aetPoints, penPoints } = calcExtendedPoints(
+        { homeScoreAet: p.homeScoreAet, awayScoreAet: p.awayScoreAet, penaltyWinner: p.penaltyWinner },
+        { homeScoreAet: m.homeScoreAet, awayScoreAet: m.awayScoreAet, penaltyHome: m.penaltyHome, penaltyAway: m.penaltyAway }
+      );
+      totalPts += aetPoints + penPoints;
+    }
+    s.total += totalPts;
     s.played += 1;
     if (result === "exact") s.exact += 1;
     else if (result === "outcome") s.outcome += 1;

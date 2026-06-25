@@ -14,6 +14,7 @@ type MatchRow = {
   matchTime: string | null;
   kickoffAt: string;
   groupName: string | null;
+  homeFrom: string | null;
   homeTeam: string;
   awayTeam: string;
   homeCode: string | null;
@@ -23,9 +24,20 @@ type MatchRow = {
   stadium: string | null;
   homeScore: number | null;
   awayScore: number | null;
+  homeScoreAet: number | null;
+  awayScoreAet: number | null;
+  penaltyHome: number | null;
+  penaltyAway: number | null;
 };
 
-type PredMap = Record<number, { homeScore: number; awayScore: number }>;
+type PredEntry = {
+  homeScore: number;
+  awayScore: number;
+  homeScoreAet: number | null;
+  awayScoreAet: number | null;
+  penaltyWinner: string | null;
+};
+type PredMap = Record<number, PredEntry>;
 
 type Filter = "all" | "pending";
 
@@ -39,6 +51,7 @@ export default function PredictionsClient({
   phaseStarts = {},
   predictionLockMode = "per-match",
   lockMinutesBefore = 0,
+  knockoutScoring = "fulltime",
 }: {
   groupSlug: string;
   matches: MatchRow[];
@@ -49,6 +62,7 @@ export default function PredictionsClient({
   phaseStarts?: Record<string, { iso: string; label: string }>;
   predictionLockMode?: string;
   lockMinutesBefore?: number;
+  knockoutScoring?: string;
 }) {
   const { t } = useI18n();
   const [preds, setPreds] = useState<PredMap>(initialPreds);
@@ -59,7 +73,7 @@ export default function PredictionsClient({
   const debouncers = useRef<Record<number, NodeJS.Timeout>>({});
   // Valores validados pendientes de guardar (para poder flushear en onBlur
   // antes de que el debounce dispare, evitando perderlos al navegar).
-  const pendingValues = useRef<Record<number, { homeScore: number; awayScore: number }>>({});
+  const pendingValues = useRef<Record<number, PredEntry>>({});
 
   const now = Date.now();
   const tournamentStartMs = new Date(tournamentStartIso).getTime();
@@ -138,12 +152,12 @@ export default function PredictionsClient({
   function updateLocal(matchId: number, side: "home" | "away", value: string) {
     const num = value === "" ? null : parseInt(value, 10);
     setPreds((prev) => {
-      const current = prev[matchId] || { homeScore: 0, awayScore: 0 };
-      const next = {
+      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyWinner: null };
+      const next: PredEntry = {
+        ...current,
         homeScore: side === "home" ? num ?? -1 : current.homeScore,
         awayScore: side === "away" ? num ?? -1 : current.awayScore,
       };
-      // Solo guardamos si ambos lados son válidos
       const isValid =
         Number.isInteger(next.homeScore) &&
         next.homeScore >= 0 &&
@@ -152,38 +166,62 @@ export default function PredictionsClient({
 
       const newPreds = { ...prev };
       if (isValid) {
-        newPreds[matchId] = {
-          homeScore: next.homeScore,
-          awayScore: next.awayScore,
-        };
+        newPreds[matchId] = next;
       } else {
-        // Mantenemos parcial en estado pero sin guardar
         newPreds[matchId] = {
+          ...next,
           homeScore: next.homeScore < 0 ? -1 : next.homeScore,
           awayScore: next.awayScore < 0 ? -1 : next.awayScore,
-        } as any;
+        } as PredEntry;
       }
 
-      // Programar guardado debounced
       if (isValid) {
-        pendingValues.current[matchId] = { homeScore: next.homeScore, awayScore: next.awayScore };
-        if (debouncers.current[matchId]) {
-          clearTimeout(debouncers.current[matchId]);
-        }
+        pendingValues.current[matchId] = newPreds[matchId];
+        if (debouncers.current[matchId]) clearTimeout(debouncers.current[matchId]);
         debouncers.current[matchId] = setTimeout(() => {
-          savePrediction(matchId, next.homeScore, next.awayScore);
+          savePrediction(matchId, newPreds[matchId]);
           delete pendingValues.current[matchId];
         }, 600);
       } else {
         delete pendingValues.current[matchId];
       }
-
       return newPreds;
     });
   }
 
-  // Llama al guardar inmediatamente cancelando el debounce pendiente.
-  // Se dispara en onBlur de los inputs para evitar perder el valor al navegar.
+  function updateAet(matchId: number, side: "home" | "away", value: string) {
+    const num = value === "" ? null : parseInt(value, 10);
+    setPreds((prev) => {
+      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyWinner: null };
+      const next: PredEntry = {
+        ...current,
+        homeScoreAet: side === "home" ? num : current.homeScoreAet,
+        awayScoreAet: side === "away" ? num : current.awayScoreAet,
+      };
+      const newPreds = { ...prev, [matchId]: next };
+      // Solo guardamos si el marcador base es válido
+      if (Number.isInteger(current.homeScore) && current.homeScore >= 0 &&
+          Number.isInteger(current.awayScore) && current.awayScore >= 0) {
+        pendingValues.current[matchId] = next;
+        if (debouncers.current[matchId]) clearTimeout(debouncers.current[matchId]);
+        debouncers.current[matchId] = setTimeout(() => {
+          savePrediction(matchId, next);
+          delete pendingValues.current[matchId];
+        }, 600);
+      }
+      return newPreds;
+    });
+  }
+
+  function updatePenaltyWinner(matchId: number, winner: "home" | "away") {
+    setPreds((prev) => {
+      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyWinner: null };
+      const next: PredEntry = { ...current, penaltyWinner: current.penaltyWinner === winner ? null : winner };
+      savePrediction(matchId, next);
+      return { ...prev, [matchId]: next };
+    });
+  }
+
   function flushPrediction(matchId: number) {
     if (debouncers.current[matchId]) {
       clearTimeout(debouncers.current[matchId]);
@@ -191,23 +229,27 @@ export default function PredictionsClient({
     }
     const pending = pendingValues.current[matchId];
     if (pending) {
-      savePrediction(matchId, pending.homeScore, pending.awayScore);
+      savePrediction(matchId, pending);
       delete pendingValues.current[matchId];
     }
   }
 
-  async function savePrediction(
-    matchId: number,
-    homeScore: number,
-    awayScore: number
-  ) {
+  async function savePrediction(matchId: number, entry: PredEntry) {
     setSavingMatchId(matchId);
     setErrorMsg(null);
     try {
       const r = await fetch("/api/predictions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupSlug, matchId, homeScore, awayScore }),
+        body: JSON.stringify({
+          groupSlug,
+          matchId,
+          homeScore: entry.homeScore,
+          awayScore: entry.awayScore,
+          homeScoreAet: entry.homeScoreAet ?? null,
+          awayScoreAet: entry.awayScoreAet ?? null,
+          penaltyWinner: entry.penaltyWinner ?? null,
+        }),
       });
       if (!r.ok) {
         const d = await r.json();
@@ -336,6 +378,8 @@ export default function PredictionsClient({
               groupSlug={groupSlug}
               pred={preds[m.id]}
               onUpdate={updateLocal}
+              onUpdateAet={updateAet}
+              onUpdatePenalty={updatePenaltyWinner}
               onFlush={flushPrediction}
               saving={savingMatchId === m.id}
               saved={savedFlash === m.id}
@@ -343,15 +387,25 @@ export default function PredictionsClient({
               tilt={idx % 2 === 0 ? "even" : "odd"}
               homeLogoUrl={m.homeCode ? teamLogos[m.homeCode] ?? null : null}
               awayLogoUrl={m.awayCode ? teamLogos[m.awayCode] ?? null : null}
+              showExtended={knockoutScoring === "extended" && m.homeFrom != null}
               labelSaving={t.predictions.saving}
               labelSaved={t.predictions.saved}
               labelLocked={t.predictions.locked_badge}
               labelExact={t.predictions.exactBadge}
               labelSign={t.predictions.signBadge}
+              labelAetBadge={t.predictions.aetBadge}
+              labelAetSignBadge={t.predictions.aetSignBadge}
+              labelPenBadge={t.predictions.penBadge}
               labelRealResult={t.predictions.realResult}
               labelMatchDetail={t.predictions.matchDetail}
               labelGoalsHome={t.predictions.goalsLabel.replace("{team}", m.homeTeam)}
               labelGoalsAway={t.predictions.goalsLabel.replace("{team}", m.awayTeam)}
+              labelAetLabel={t.predictions.aetLabel}
+              labelAetHome={t.predictions.aetGoalsHome.replace("{team}", m.homeTeam)}
+              labelAetAway={t.predictions.aetGoalsAway.replace("{team}", m.awayTeam)}
+              labelPenLabel={t.predictions.penLabel}
+              labelPenHome={t.predictions.penHome}
+              labelPenAway={t.predictions.penAway}
               labelGroup={t.predictions.group}
             />
           ))}
@@ -389,6 +443,8 @@ function MatchCard({
   groupSlug,
   pred,
   onUpdate,
+  onUpdateAet,
+  onUpdatePenalty,
   onFlush,
   saving,
   saved,
@@ -396,21 +452,33 @@ function MatchCard({
   tilt,
   homeLogoUrl,
   awayLogoUrl,
+  showExtended,
   labelSaving,
   labelSaved,
   labelLocked,
   labelExact,
   labelSign,
+  labelAetBadge,
+  labelAetSignBadge,
+  labelPenBadge,
   labelRealResult,
   labelMatchDetail,
   labelGoalsHome,
   labelGoalsAway,
+  labelAetLabel,
+  labelAetHome,
+  labelAetAway,
+  labelPenLabel,
+  labelPenHome,
+  labelPenAway,
   labelGroup,
 }: {
   match: MatchRow;
   groupSlug: string;
-  pred: { homeScore: number; awayScore: number } | undefined;
+  pred: PredEntry | undefined;
   onUpdate: (id: number, side: "home" | "away", value: string) => void;
+  onUpdateAet: (id: number, side: "home" | "away", value: string) => void;
+  onUpdatePenalty: (id: number, winner: "home" | "away") => void;
   onFlush: (id: number) => void;
   saving: boolean;
   saved: boolean;
@@ -418,30 +486,39 @@ function MatchCard({
   tilt: "even" | "odd";
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
+  showExtended: boolean;
   labelSaving: string;
   labelSaved: string;
   labelLocked: string;
   labelExact: string;
   labelSign: string;
+  labelAetBadge: string;
+  labelAetSignBadge: string;
+  labelPenBadge: string;
   labelRealResult: string;
   labelMatchDetail: string;
   labelGoalsHome: string;
   labelGoalsAway: string;
+  labelAetLabel: string;
+  labelAetHome: string;
+  labelAetAway: string;
+  labelPenLabel: string;
+  labelPenHome: string;
+  labelPenAway: string;
   labelGroup: string;
 }) {
   const hasResult = match.homeScore != null && match.awayScore != null;
+  const hasAet = match.homeScoreAet != null && match.awayScoreAet != null;
+  const hasPen = match.penaltyHome != null && match.penaltyAway != null;
 
-  // Tinte del cromo según resultado
+  // Tinte del cromo + badges de puntos (90min)
   let cromoBg = "bg-paper-50";
-  let pointsBadge: React.ReactNode = null;
+  const pointsBadges: React.ReactNode[] = [];
   if (hasResult && pred && pred.homeScore >= 0 && pred.awayScore >= 0) {
-    if (
-      pred.homeScore === match.homeScore &&
-      pred.awayScore === match.awayScore
-    ) {
+    if (pred.homeScore === match.homeScore && pred.awayScore === match.awayScore) {
       cromoBg = "bg-grass-300";
-      pointsBadge = (
-        <span className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
+      pointsBadges.push(
+        <span key="exact" className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
           {labelExact}
         </span>
       );
@@ -450,18 +527,50 @@ function MatchCard({
       const rs = Math.sign(match.homeScore! - match.awayScore!);
       if (ps === rs) {
         cromoBg = "bg-flame-300";
-        pointsBadge = (
-          <span className="font-display text-[10px] bg-flame-500 text-pitch-950 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
+        pointsBadges.push(
+          <span key="sign" className="font-display text-[10px] bg-flame-500 text-pitch-950 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
             {labelSign}
           </span>
         );
       } else {
         cromoBg = "bg-paper-200";
-        pointsBadge = (
-          <span className="font-display text-[10px] bg-pitch-950 text-chalk-400 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
+        pointsBadges.push(
+          <span key="miss" className="font-display text-[10px] bg-pitch-950 text-chalk-400 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
             +0
           </span>
         );
+      }
+    }
+    // Badges extra AET/PEN
+    if (showExtended && pred) {
+      if (hasAet && pred.homeScoreAet != null && pred.awayScoreAet != null) {
+        if (pred.homeScoreAet === match.homeScoreAet && pred.awayScoreAet === match.awayScoreAet) {
+          pointsBadges.push(
+            <span key="aet" className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
+              {labelAetBadge}
+            </span>
+          );
+        } else {
+          const ps = Math.sign(pred.homeScoreAet - pred.awayScoreAet);
+          const rs = Math.sign(match.homeScoreAet! - match.awayScoreAet!);
+          if (ps === rs && ps !== 0) {
+            pointsBadges.push(
+              <span key="aet-sign" className="font-display text-[10px] bg-flame-500 text-pitch-950 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
+                {labelAetSignBadge}
+              </span>
+            );
+          }
+        }
+      }
+      if (hasPen && pred.penaltyWinner) {
+        const realWinner = match.penaltyHome! > match.penaltyAway! ? "home" : "away";
+        if (pred.penaltyWinner === realWinner) {
+          pointsBadges.push(
+            <span key="pen" className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
+              {labelPenBadge}
+            </span>
+          );
+        }
       }
     }
   }
@@ -494,7 +603,7 @@ function MatchCard({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           {saving && (
             <span className="font-mono text-[10px] text-pitch-700 animate-pulse uppercase tracking-wider">
               {labelSaving}
@@ -505,7 +614,7 @@ function MatchCard({
               {labelSaved}
             </span>
           )}
-          {pointsBadge}
+          {pointsBadges}
           {locked && !hasResult && (
             <span className="font-display text-[10px] bg-pitch-950 text-flame-400 px-2 py-1 border-2 border-pitch-950 tracking-wider">
               {labelLocked}
@@ -579,6 +688,73 @@ function MatchCard({
         </div>
       </div>
 
+      {/* Inputs extendidos: prórroga + penaltis */}
+      {showExtended && !locked && (
+        <div className="mt-4 pt-3 border-t-2 border-dashed border-pitch-950/30 space-y-3">
+          {/* AET */}
+          <div>
+            <p className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest mb-2">
+              {labelAetLabel}
+            </p>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={20}
+                value={pred?.homeScoreAet != null ? pred.homeScoreAet : ""}
+                onChange={(e) => onUpdateAet(match.id, "home", e.target.value)}
+                onBlur={() => onFlush(match.id)}
+                className="score-input !w-10 !h-9 !text-lg"
+                aria-label={labelAetHome}
+              />
+              <span className="text-pitch-950 font-display text-2xl">·</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={20}
+                value={pred?.awayScoreAet != null ? pred.awayScoreAet : ""}
+                onChange={(e) => onUpdateAet(match.id, "away", e.target.value)}
+                onBlur={() => onFlush(match.id)}
+                className="score-input !w-10 !h-9 !text-lg"
+                aria-label={labelAetAway}
+              />
+            </div>
+          </div>
+          {/* Penalty winner */}
+          <div>
+            <p className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest mb-2">
+              {labelPenLabel}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => onUpdatePenalty(match.id, "home")}
+                className={`flex-1 py-1.5 text-[10px] font-display uppercase tracking-wider border-2 border-pitch-950 transition-all ${
+                  pred?.penaltyWinner === "home"
+                    ? "bg-pitch-950 text-flame-400"
+                    : "bg-paper-100 text-pitch-950 hover:bg-paper-200"
+                }`}
+              >
+                {match.homeTeam.split(" ").slice(-1)[0]}
+              </button>
+              <button
+                type="button"
+                onClick={() => onUpdatePenalty(match.id, "away")}
+                className={`flex-1 py-1.5 text-[10px] font-display uppercase tracking-wider border-2 border-pitch-950 transition-all ${
+                  pred?.penaltyWinner === "away"
+                    ? "bg-pitch-950 text-flame-400"
+                    : "bg-paper-100 text-pitch-950 hover:bg-paper-200"
+                }`}
+              >
+                {match.awayTeam.split(" ").slice(-1)[0]}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Resultado real */}
       {hasResult && (
         <div className="mt-4 pt-3 border-t-2 border-dashed border-pitch-950/30 text-center">
@@ -589,6 +765,16 @@ function MatchCard({
             {match.homeScore} <span className="text-brick-500">·</span>{" "}
             {match.awayScore}
           </div>
+          {showExtended && hasAet && (
+            <div className="mt-1 font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
+              {labelAetLabel}: {match.homeScoreAet} · {match.awayScoreAet}
+              {hasPen && (
+                <span className="ml-2">
+                  · PEN {match.penaltyHome}-{match.penaltyAway}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 

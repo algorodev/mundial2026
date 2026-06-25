@@ -176,12 +176,34 @@ export async function GET(req: NextRequest) {
       const away = isFinal ? fx.score.fulltime.away : fx.goals.away;
       if (home === null || away === null) continue;
 
+      // AET/PEN: score.extratime = marcador acumulado tras prórroga (120').
+      // score.penalty = resultado de la tanda de penaltis.
+      const statusShort = fx.fixture.status.short;
+      const homeAet = isFinal && (statusShort === "AET" || statusShort === "PEN")
+        ? fx.score.extratime.home
+        : null;
+      const awayAet = isFinal && (statusShort === "AET" || statusShort === "PEN")
+        ? fx.score.extratime.away
+        : null;
+      const penHome = isFinal && statusShort === "PEN" ? fx.score.penalty.home : null;
+      const penAway = isFinal && statusShort === "PEN" ? fx.score.penalty.away : null;
+
       const scoreChanged =
-        ours.homeScore !== home || ours.awayScore !== away;
+        ours.homeScore !== home || ours.awayScore !== away ||
+        ours.homeScoreAet !== homeAet || ours.awayScoreAet !== awayAet ||
+        ours.penaltyHome !== penHome || ours.penaltyAway !== penAway;
       if (scoreChanged) {
         await db
           .update(matches)
-          .set({ homeScore: home, awayScore: away, resultSource: "api" })
+          .set({
+            homeScore: home,
+            awayScore: away,
+            homeScoreAet: homeAet,
+            awayScoreAet: awayAet,
+            penaltyHome: penHome,
+            penaltyAway: penAway,
+            resultSource: "api",
+          })
           .where(eq(matches.id, ours.id));
         s.updated++;
       }

@@ -79,6 +79,7 @@ export default async function AdminTournamentPage(
         tournamentSlug={tournament.slug}
         matches={matchesSerialized}
         teamLogos={teamLogos}
+        knockoutScoring={tournament.knockoutScoring}
       />
     </div>
   );

@@ -49,6 +49,8 @@ export const tournaments = pgTable(
     // scripts/map-api-ids.ts y los crons de resultados consumen este torneo.
     apiLeagueId: integer("api_league_id"),
     apiSeason: integer("api_season"),
+    // "fulltime" = solo cuenta el 90' · "extended" = también prórroga y penaltis
+    knockoutScoring: varchar("knockout_scoring", { length: 10 }).default("fulltime").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => ({
@@ -84,6 +86,12 @@ export const matches = pgTable(
     awayFrom: varchar("away_from", { length: 40 }),
     homeScore: integer("home_score"),
     awayScore: integer("away_score"),
+    // Resultado de prórroga (score acumulado a 120') y penaltis.
+    // Solo se rellena en partidos de eliminatoria con knockoutScoring='extended'.
+    homeScoreAet: integer("home_score_aet"),
+    awayScoreAet: integer("away_score_aet"),
+    penaltyHome: integer("penalty_home"),
+    penaltyAway: integer("penalty_away"),
     // 'api' = lo escribió el cron de auto-resultados. 'admin' = lo escribió
     // un admin global a mano. El cron NUNCA pisa rows con resultSource='admin'.
     resultSource: varchar("result_source", { length: 10 }),
@@ -242,6 +250,14 @@ export const predictions = pgTable(
       .notNull(),
     homeScore: integer("home_score").notNull(),
     awayScore: integer("away_score").notNull(),
+    // Predicciones extra para partidos con knockoutScoring='extended'.
+    // homeScoreAet/awayScoreAet = marcador acumulado que el usuario pronostica
+    // tras la prórroga (solo se puntúa si el partido real fue a prórroga).
+    // penaltyWinner = qué equipo gana en tanda de penaltis (solo se puntúa
+    // si el partido real fue a penaltis).
+    homeScoreAet: integer("home_score_aet"),
+    awayScoreAet: integer("away_score_aet"),
+    penaltyWinner: varchar("penalty_winner", { length: 4 }),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (t) => ({

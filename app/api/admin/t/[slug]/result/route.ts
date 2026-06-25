@@ -12,23 +12,18 @@ export async function POST(req: NextRequest, props: { params: Promise<{ slug: st
   }
 
   try {
-    const { matchId, homeScore, awayScore } = await req.json();
+    const { matchId, homeScore, awayScore, homeScoreAet, awayScoreAet, penaltyHome, penaltyAway } = await req.json();
     if (!Number.isInteger(matchId)) {
       return NextResponse.json({ error: "matchId inválido" }, { status: 400 });
     }
 
-    const validHome =
-      homeScore === null ||
-      (Number.isInteger(homeScore) && homeScore >= 0 && homeScore <= 20);
-    const validAway =
-      awayScore === null ||
-      (Number.isInteger(awayScore) && awayScore >= 0 && awayScore <= 20);
+    const validOptInt = (v: unknown) =>
+      v === null || v === undefined || (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 30);
 
-    if (!validHome || !validAway) {
-      return NextResponse.json(
-        { error: "Marcador inválido" },
-        { status: 400 }
-      );
+    if (!validOptInt(homeScore) || !validOptInt(awayScore) ||
+        !validOptInt(homeScoreAet) || !validOptInt(awayScoreAet) ||
+        !validOptInt(penaltyHome) || !validOptInt(penaltyAway)) {
+      return NextResponse.json({ error: "Marcador inválido" }, { status: 400 });
     }
 
     const [tournament] = await db
@@ -46,12 +41,20 @@ export async function POST(req: NextRequest, props: { params: Promise<{ slug: st
 
     // resultSource: 'admin' cuando se fija un marcador, null cuando se borra
     // (para que el cron de auto-resultados pueda volver a poblarlo).
-    const resultSource =
-      homeScore === null && awayScore === null ? null : "admin";
+    const clearing = homeScore === null && awayScore === null;
+    const resultSource = clearing ? null : "admin";
 
     const result = await db
       .update(matches)
-      .set({ homeScore, awayScore, resultSource })
+      .set({
+        homeScore: homeScore ?? null,
+        awayScore: awayScore ?? null,
+        homeScoreAet: clearing ? null : (homeScoreAet ?? null),
+        awayScoreAet: clearing ? null : (awayScoreAet ?? null),
+        penaltyHome: clearing ? null : (penaltyHome ?? null),
+        penaltyAway: clearing ? null : (penaltyAway ?? null),
+        resultSource,
+      })
       .where(and(eq(matches.id, matchId), eq(matches.tournamentId, tournament.id)))
       .returning({ id: matches.id });
 

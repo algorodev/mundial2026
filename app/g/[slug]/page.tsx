@@ -90,9 +90,16 @@ export default async function GroupPredictionsPage(
     kickoffAt: m.kickoffAt.toISOString(),
   }));
 
-  const predsMap: Record<number, { homeScore: number; awayScore: number }> = {};
+  type PredEntry = { homeScore: number; awayScore: number; homeScoreAet: number | null; awayScoreAet: number | null; penaltyWinner: string | null };
+  const predsMap: Record<number, PredEntry> = {};
   for (const p of myPreds) {
-    predsMap[p.matchId] = { homeScore: p.homeScore, awayScore: p.awayScore };
+    predsMap[p.matchId] = {
+      homeScore: p.homeScore,
+      awayScore: p.awayScore,
+      homeScoreAet: p.homeScoreAet,
+      awayScoreAet: p.awayScoreAet,
+      penaltyWinner: p.penaltyWinner,
+    };
   }
 
   return (
@@ -170,6 +177,7 @@ export default async function GroupPredictionsPage(
             phaseStarts={phaseStarts}
             predictionLockMode={ctx.predictionLockMode}
             lockMinutesBefore={ctx.lockMinutesBefore}
+            knockoutScoring={tournament?.knockoutScoring ?? "fulltime"}
           />
           <LiveScoreboard groupSlug={ctx.slug} />
         </>
