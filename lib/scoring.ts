@@ -27,57 +27,41 @@ export function calcPoints(
 }
 
 // Puntos adicionales para partidos con knockoutScoring='extended'.
-// Solo se puntúa si el partido real llegó a prórroga / penaltis.
-//
-// AET (2pts exacto, 1pt acertó quién ganó):
-//   Solo se evalúa cuando realHomeAet != null (match llegó a prórroga).
-//   "na" si el partido terminó en 90'.
-// PEN (1pt ganador correcto):
-//   Solo se evalúa cuando realPenHome != null (match llegó a penaltis).
-//   "na" si el partido no fue a penaltis.
+// AET (120'): mismo sistema 3/1/0 que el 90min, evaluado independientemente.
+// PEN: solo +1 si se acierta el marcador exacto de la tanda. Sin "signo".
+// Cada sección solo se evalúa si el partido real llegó hasta ese punto.
 export function calcExtendedPoints(pred: {
   homeScoreAet: number | null | undefined;
   awayScoreAet: number | null | undefined;
-  penaltyWinner: string | null | undefined;
+  penaltyHome: number | null | undefined;
+  penaltyAway: number | null | undefined;
 }, real: {
   homeScoreAet: number | null | undefined;
   awayScoreAet: number | null | undefined;
   penaltyHome: number | null | undefined;
   penaltyAway: number | null | undefined;
 }): { aetPoints: number; penPoints: number; aetResult: ExtResult; penResult: ExtResult } {
-  let aetPoints = 0;
   let aetResult: ExtResult = "na";
-  let penPoints = 0;
   let penResult: ExtResult = "na";
 
-  if (real.homeScoreAet != null && real.awayScoreAet != null) {
-    if (pred.homeScoreAet == null || pred.awayScoreAet == null) {
-      aetResult = "miss";
-    } else if (pred.homeScoreAet === real.homeScoreAet && pred.awayScoreAet === real.awayScoreAet) {
-      aetPoints = 2;
-      aetResult = "exact";
-    } else {
-      const predSign = Math.sign(pred.homeScoreAet - pred.awayScoreAet);
-      const realSign = Math.sign(real.homeScoreAet - real.awayScoreAet);
-      if (predSign === realSign && predSign !== 0) {
-        aetPoints = 1;
-        aetResult = "right";
-      } else {
-        aetResult = "miss";
-      }
-    }
+  // AET: 3 exacto, 1 signo, 0 fallo (igual que 90min).
+  const { points: aetPoints, result: aetRaw } = real.homeScoreAet != null
+    ? calcPoints(pred.homeScoreAet, pred.awayScoreAet, real.homeScoreAet, real.awayScoreAet)
+    : { points: 0, result: "pending" as const };
+  if (real.homeScoreAet != null) {
+    aetResult = aetRaw === "pending" ? "miss" : aetRaw === "exact" ? "exact" : aetRaw === "outcome" ? "right" : "miss";
   }
 
+  // PEN: +1 solo si se acierta el marcador exacto. No hay signo.
+  let penPoints = 0;
   if (real.penaltyHome != null && real.penaltyAway != null) {
-    const realWinner = real.penaltyHome > real.penaltyAway ? "home" : "away";
-    if (pred.penaltyWinner == null) {
-      penResult = "miss";
-    } else if (pred.penaltyWinner === realWinner) {
-      penPoints = 1;
-      penResult = "right";
-    } else {
-      penResult = "miss";
-    }
+    const exactPen =
+      pred.penaltyHome != null &&
+      pred.penaltyAway != null &&
+      pred.penaltyHome === real.penaltyHome &&
+      pred.penaltyAway === real.penaltyAway;
+    penResult = exactPen ? "exact" : "miss";
+    if (exactPen) penPoints = 1;
   }
 
   return { aetPoints, penPoints, aetResult, penResult };

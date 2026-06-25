@@ -50,24 +50,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { groupSlug, matchId, homeScore, awayScore, homeScoreAet, awayScoreAet, penaltyWinner } = body;
+    const { groupSlug, matchId, homeScore, awayScore, homeScoreAet, awayScoreAet, penaltyHome, penaltyAway } = body;
 
     if (typeof groupSlug !== "string" || !groupSlug) {
       return NextResponse.json({ error: "Falta groupSlug" }, { status: 400 });
     }
     const validScore = (v: unknown) => Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 20;
+    const validOptScore = (v: unknown) => v == null || validScore(v);
     if (!validScore(homeScore) || !validScore(awayScore)) {
       return NextResponse.json({ error: "Datos no válidos" }, { status: 400 });
     }
-    // Campos extendidos opcionales (knockoutScoring='extended')
-    if (homeScoreAet !== null && homeScoreAet !== undefined && !validScore(homeScoreAet)) {
-      return NextResponse.json({ error: "Marcador prórroga inválido" }, { status: 400 });
-    }
-    if (awayScoreAet !== null && awayScoreAet !== undefined && !validScore(awayScoreAet)) {
-      return NextResponse.json({ error: "Marcador prórroga inválido" }, { status: 400 });
-    }
-    if (penaltyWinner !== null && penaltyWinner !== undefined && penaltyWinner !== "home" && penaltyWinner !== "away") {
-      return NextResponse.json({ error: "Ganador en penaltis inválido" }, { status: 400 });
+    if (!validOptScore(homeScoreAet) || !validOptScore(awayScoreAet) ||
+        !validOptScore(penaltyHome) || !validOptScore(penaltyAway)) {
+      return NextResponse.json({ error: "Marcador inválido" }, { status: 400 });
     }
 
     const ctx = await getGroupForMember(groupSlug, session.userId);
@@ -129,7 +124,8 @@ export async function POST(req: NextRequest) {
     const extFields = {
       homeScoreAet: homeScoreAet ?? null,
       awayScoreAet: awayScoreAet ?? null,
-      penaltyWinner: penaltyWinner ?? null,
+      penaltyHome: penaltyHome ?? null,
+      penaltyAway: penaltyAway ?? null,
     };
 
     if (existing) {

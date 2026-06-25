@@ -35,7 +35,8 @@ type PredEntry = {
   awayScore: number;
   homeScoreAet: number | null;
   awayScoreAet: number | null;
-  penaltyWinner: string | null;
+  penaltyHome: number | null;
+  penaltyAway: number | null;
 };
 type PredMap = Record<number, PredEntry>;
 
@@ -65,7 +66,18 @@ export default function PredictionsClient({
   knockoutScoring?: string;
 }) {
   const { t } = useI18n();
-  const [preds, setPreds] = useState<PredMap>(initialPreds);
+  const [preds, setPreds] = useState<PredMap>(
+    Object.fromEntries(
+      Object.entries(initialPreds).map(([k, v]) => [k, {
+        homeScore: v.homeScore,
+        awayScore: v.awayScore,
+        homeScoreAet: v.homeScoreAet,
+        awayScoreAet: v.awayScoreAet,
+        penaltyHome: (v as any).penaltyHome ?? null,
+        penaltyAway: (v as any).penaltyAway ?? null,
+      }])
+    )
+  );
   const [filter, setFilter] = useState<Filter>("all");
   const [savingMatchId, setSavingMatchId] = useState<number | null>(null);
   const [savedFlash, setSavedFlash] = useState<number | null>(null);
@@ -152,7 +164,7 @@ export default function PredictionsClient({
   function updateLocal(matchId: number, side: "home" | "away", value: string) {
     const num = value === "" ? null : parseInt(value, 10);
     setPreds((prev) => {
-      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyWinner: null };
+      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyHome: null, penaltyAway: null };
       const next: PredEntry = {
         ...current,
         homeScore: side === "home" ? num ?? -1 : current.homeScore,
@@ -192,14 +204,13 @@ export default function PredictionsClient({
   function updateAet(matchId: number, side: "home" | "away", value: string) {
     const num = value === "" ? null : parseInt(value, 10);
     setPreds((prev) => {
-      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyWinner: null };
+      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyHome: null, penaltyAway: null };
       const next: PredEntry = {
         ...current,
         homeScoreAet: side === "home" ? num : current.homeScoreAet,
         awayScoreAet: side === "away" ? num : current.awayScoreAet,
       };
       const newPreds = { ...prev, [matchId]: next };
-      // Solo guardamos si el marcador base es válido
       if (Number.isInteger(current.homeScore) && current.homeScore >= 0 &&
           Number.isInteger(current.awayScore) && current.awayScore >= 0) {
         pendingValues.current[matchId] = next;
@@ -213,12 +224,26 @@ export default function PredictionsClient({
     });
   }
 
-  function updatePenaltyWinner(matchId: number, winner: "home" | "away") {
+  function updatePenalty(matchId: number, side: "home" | "away", value: string) {
+    const num = value === "" ? null : parseInt(value, 10);
     setPreds((prev) => {
-      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyWinner: null };
-      const next: PredEntry = { ...current, penaltyWinner: current.penaltyWinner === winner ? null : winner };
-      savePrediction(matchId, next);
-      return { ...prev, [matchId]: next };
+      const current = prev[matchId] || { homeScore: 0, awayScore: 0, homeScoreAet: null, awayScoreAet: null, penaltyHome: null, penaltyAway: null };
+      const next: PredEntry = {
+        ...current,
+        penaltyHome: side === "home" ? num : current.penaltyHome,
+        penaltyAway: side === "away" ? num : current.penaltyAway,
+      };
+      const newPreds = { ...prev, [matchId]: next };
+      if (Number.isInteger(current.homeScore) && current.homeScore >= 0 &&
+          Number.isInteger(current.awayScore) && current.awayScore >= 0) {
+        pendingValues.current[matchId] = next;
+        if (debouncers.current[matchId]) clearTimeout(debouncers.current[matchId]);
+        debouncers.current[matchId] = setTimeout(() => {
+          savePrediction(matchId, next);
+          delete pendingValues.current[matchId];
+        }, 600);
+      }
+      return newPreds;
     });
   }
 
@@ -248,7 +273,8 @@ export default function PredictionsClient({
           awayScore: entry.awayScore,
           homeScoreAet: entry.homeScoreAet ?? null,
           awayScoreAet: entry.awayScoreAet ?? null,
-          penaltyWinner: entry.penaltyWinner ?? null,
+          penaltyHome: entry.penaltyHome ?? null,
+          penaltyAway: entry.penaltyAway ?? null,
         }),
       });
       if (!r.ok) {
@@ -379,7 +405,7 @@ export default function PredictionsClient({
               pred={preds[m.id]}
               onUpdate={updateLocal}
               onUpdateAet={updateAet}
-              onUpdatePenalty={updatePenaltyWinner}
+              onUpdatePenalty={updatePenalty}
               onFlush={flushPrediction}
               saving={savingMatchId === m.id}
               saved={savedFlash === m.id}
@@ -404,8 +430,8 @@ export default function PredictionsClient({
               labelAetHome={t.predictions.aetGoalsHome.replace("{team}", m.homeTeam)}
               labelAetAway={t.predictions.aetGoalsAway.replace("{team}", m.awayTeam)}
               labelPenLabel={t.predictions.penLabel}
-              labelPenHome={t.predictions.penHome}
-              labelPenAway={t.predictions.penAway}
+              labelPenHome={t.predictions.aetGoalsHome.replace("{team}", m.homeTeam)}
+              labelPenAway={t.predictions.aetGoalsAway.replace("{team}", m.awayTeam)}
               labelGroup={t.predictions.group}
             />
           ))}
@@ -478,7 +504,7 @@ function MatchCard({
   pred: PredEntry | undefined;
   onUpdate: (id: number, side: "home" | "away", value: string) => void;
   onUpdateAet: (id: number, side: "home" | "away", value: string) => void;
-  onUpdatePenalty: (id: number, winner: "home" | "away") => void;
+  onUpdatePenalty: (id: number, side: "home" | "away", value: string) => void;
   onFlush: (id: number) => void;
   saving: boolean;
   saved: boolean;
@@ -562,15 +588,13 @@ function MatchCard({
           }
         }
       }
-      if (hasPen && pred.penaltyWinner) {
-        const realWinner = match.penaltyHome! > match.penaltyAway! ? "home" : "away";
-        if (pred.penaltyWinner === realWinner) {
-          pointsBadges.push(
-            <span key="pen" className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
-              {labelPenBadge}
-            </span>
-          );
-        }
+      if (hasPen && pred.penaltyHome != null && pred.penaltyAway != null &&
+          pred.penaltyHome === match.penaltyHome && pred.penaltyAway === match.penaltyAway) {
+        pointsBadges.push(
+          <span key="pen" className="font-display text-[10px] bg-grass-600 text-paper-50 px-2 py-1 border-2 border-pitch-950 shadow-brutal-sm tracking-wider">
+            {labelPenBadge}
+          </span>
+        );
       }
     }
   }
@@ -722,34 +746,35 @@ function MatchCard({
               />
             </div>
           </div>
-          {/* Penalty winner */}
+          {/* Penaltis */}
           <div>
             <p className="font-mono text-[10px] text-pitch-700 uppercase tracking-widest mb-2">
               {labelPenLabel}
             </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => onUpdatePenalty(match.id, "home")}
-                className={`flex-1 py-1.5 text-[10px] font-display uppercase tracking-wider border-2 border-pitch-950 transition-all ${
-                  pred?.penaltyWinner === "home"
-                    ? "bg-pitch-950 text-flame-400"
-                    : "bg-paper-100 text-pitch-950 hover:bg-paper-200"
-                }`}
-              >
-                {match.homeTeam.split(" ").slice(-1)[0]}
-              </button>
-              <button
-                type="button"
-                onClick={() => onUpdatePenalty(match.id, "away")}
-                className={`flex-1 py-1.5 text-[10px] font-display uppercase tracking-wider border-2 border-pitch-950 transition-all ${
-                  pred?.penaltyWinner === "away"
-                    ? "bg-pitch-950 text-flame-400"
-                    : "bg-paper-100 text-pitch-950 hover:bg-paper-200"
-                }`}
-              >
-                {match.awayTeam.split(" ").slice(-1)[0]}
-              </button>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={20}
+                value={pred?.penaltyHome != null ? pred.penaltyHome : ""}
+                onChange={(e) => onUpdatePenalty(match.id, "home", e.target.value)}
+                onBlur={() => onFlush(match.id)}
+                className="score-input !w-10 !h-9 !text-lg"
+                aria-label={labelPenHome}
+              />
+              <span className="text-pitch-950 font-display text-2xl">·</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={20}
+                value={pred?.penaltyAway != null ? pred.penaltyAway : ""}
+                onChange={(e) => onUpdatePenalty(match.id, "away", e.target.value)}
+                onBlur={() => onFlush(match.id)}
+                className="score-input !w-10 !h-9 !text-lg"
+                aria-label={labelPenAway}
+              />
             </div>
           </div>
         </div>

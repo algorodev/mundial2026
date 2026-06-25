@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
     // Puntos adicionales por prórroga/penaltis en torneos extended
     if (isExtended && m.homeFrom != null) {
       const { aetPoints, penPoints } = calcExtendedPoints(
-        { homeScoreAet: p.homeScoreAet, awayScoreAet: p.awayScoreAet, penaltyWinner: p.penaltyWinner },
+        { homeScoreAet: p.homeScoreAet, awayScoreAet: p.awayScoreAet, penaltyHome: p.penaltyHome, penaltyAway: p.penaltyAway },
         { homeScoreAet: m.homeScoreAet, awayScoreAet: m.awayScoreAet, penaltyHome: m.penaltyHome, penaltyAway: m.penaltyAway }
       );
       totalPts += aetPoints + penPoints;

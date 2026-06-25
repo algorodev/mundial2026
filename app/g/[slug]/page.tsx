@@ -90,15 +90,15 @@ export default async function GroupPredictionsPage(
     kickoffAt: m.kickoffAt.toISOString(),
   }));
 
-  type PredEntry = { homeScore: number; awayScore: number; homeScoreAet: number | null; awayScoreAet: number | null; penaltyWinner: string | null };
-  const predsMap: Record<number, PredEntry> = {};
+  const predsMap: Record<number, { homeScore: number; awayScore: number; homeScoreAet: number | null; awayScoreAet: number | null; penaltyHome: number | null; penaltyAway: number | null }> = {};
   for (const p of myPreds) {
     predsMap[p.matchId] = {
       homeScore: p.homeScore,
       awayScore: p.awayScore,
       homeScoreAet: p.homeScoreAet,
       awayScoreAet: p.awayScoreAet,
-      penaltyWinner: p.penaltyWinner,
+      penaltyHome: p.penaltyHome,
+      penaltyAway: p.penaltyAway,
     };
   }
 

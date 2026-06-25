@@ -257,7 +257,8 @@ export const predictions = pgTable(
     // si el partido real fue a penaltis).
     homeScoreAet: integer("home_score_aet"),
     awayScoreAet: integer("away_score_aet"),
-    penaltyWinner: varchar("penalty_winner", { length: 4 }),
+    penaltyHome: integer("penalty_home"),
+    penaltyAway: integer("penalty_away"),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (t) => ({
