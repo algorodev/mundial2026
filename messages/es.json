@@ -460,7 +460,13 @@
     "liveMatchDetailTitle": "Detalle del partido desde el marcador",
     "liveMatchDetailDesc": "Desde el marcador en vivo y el próximo partido ya puedes saltar directo a alineaciones, eventos y H2H.",
     "teamsTitle": "Equipos",
-    "teamsDesc": "Nuevo carousel de equipos en cada porra: toca un escudo para ver su récord y calendario. También enlazado desde la tabla de clasificación."
+    "teamsDesc": "Nuevo carousel de equipos en cada porra: toca un escudo para ver su récord y calendario. También enlazado desde la tabla de clasificación.",
+    "pwaTitle": "App en tu móvil",
+    "pwaDesc": "Añade PorraBros a la pantalla de inicio en iOS y Android con la guía paso a paso del menú.",
+    "knockoutTitle": "Prórroga y penaltis",
+    "knockoutDesc": "En torneos con eliminatorias puedes pronosticar el resultado a los 120' y la tanda de penaltis. El exacto sube a 4 puntos y acertar penaltis da +1.",
+    "squadTitle": "Plantilla de equipos",
+    "squadDesc": "La ficha de cada equipo ahora muestra la plantilla completa con jugadores por posición, número y edad."
   },
   "pwaInstall": {
     "menuLabel": "Instalar app",

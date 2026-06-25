@@ -460,7 +460,13 @@
     "liveMatchDetailTitle": "Match detail from the scoreboard",
     "liveMatchDetailDesc": "From the live scoreboard and the next-match countdown you can now jump straight to lineups, events and head-to-head.",
     "teamsTitle": "Teams",
-    "teamsDesc": "New team carousel in every pool: tap a badge to see its record and schedule. Also linked from the standings table."
+    "teamsDesc": "New team carousel in every pool: tap a badge to see its record and schedule. Also linked from the standings table.",
+    "pwaTitle": "App on your phone",
+    "pwaDesc": "Add PorraBros to your home screen on iOS and Android with the step-by-step guide in the menu.",
+    "knockoutTitle": "Extra time & penalties",
+    "knockoutDesc": "In knockout tournaments you can predict the 120' result and the penalty shootout. Exact results now worth 4 pts and nailing penalties gives +1.",
+    "squadTitle": "Team squad",
+    "squadDesc": "Each team's page now shows the full squad with players by position, number and age."
   },
   "pwaInstall": {
     "menuLabel": "Install app",
