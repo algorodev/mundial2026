@@ -5,13 +5,13 @@ import { db } from "@/lib/db";
 import { matches, teams, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
-import { getTeamById, type ApiTeamSummary } from "@/lib/api-football";
+import { getTeamById } from "@/lib/api-football";
 import TeamBadge from "@/components/TeamBadge";
 import BackLink from "@/components/BackLink";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
-const TEAM_INFO_TTL = 7 * 24 * 60 * 60; // 7 días: ficha de equipo apenas cambia
+const TEAM_META_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 días
 
 export default async function TeamDetailPage(props: {
   params: Promise<{ slug: string; code: string }>;
@@ -95,11 +95,54 @@ export default async function TeamDetailPage(props: {
       return own > opp ? "W" : own < opp ? "L" : "D";
     });
 
-  let apiInfo: ApiTeamSummary | null = null;
-  if (team.apiTeamId && tournament?.apiLeagueId && tournament?.apiSeason) {
+  // Metadatos del equipo: servir desde DB si están frescos (< 30 días).
+  // Solo llamar a la API si el cache de DB está vacío o expirado.
+  type TeamMeta = {
+    country: string | null;
+    founded: number | null;
+    venueName: string | null;
+    venueCity: string | null;
+    venueCapacity: number | null;
+  };
+
+  let teamMeta: TeamMeta | null = null;
+
+  const metaFresh =
+    team.metaFetchedAt &&
+    Date.now() - team.metaFetchedAt.getTime() < TEAM_META_MAX_AGE_MS;
+
+  if (metaFresh && (team.country || team.venueName)) {
+    teamMeta = {
+      country: team.country ?? null,
+      founded: team.founded ?? null,
+      venueName: team.venueName ?? null,
+      venueCity: team.venueCity ?? null,
+      venueCapacity: team.venueCapacity ?? null,
+    };
+  } else if (team.apiTeamId) {
     try {
-      const [info] = await getTeamById(team.apiTeamId, { revalidate: TEAM_INFO_TTL });
-      apiInfo = info ?? null;
+      const [info] = await getTeamById(team.apiTeamId);
+      if (info) {
+        teamMeta = {
+          country: info.team.country ?? null,
+          founded: info.team.founded ?? null,
+          venueName: info.venue.name ?? null,
+          venueCity: info.venue.city ?? null,
+          venueCapacity: info.venue.capacity ?? null,
+        };
+        // Persistir en DB para evitar llamadas futuras.
+        await db
+          .update(teams)
+          .set({
+            country: teamMeta.country,
+            founded: teamMeta.founded,
+            venueName: teamMeta.venueName,
+            venueCity: teamMeta.venueCity,
+            venueCapacity: teamMeta.venueCapacity,
+            metaFetchedAt: new Date(),
+          })
+          .where(eq(teams.id, team.id));
+      }
     } catch {
       // Silenciamos: la página sigue funcionando solo con datos propios.
     }
@@ -129,24 +172,24 @@ export default async function TeamDetailPage(props: {
             {tournament.name}
           </p>
         )}
-        {apiInfo ? (
+        {teamMeta ? (
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] font-mono uppercase tracking-widest text-pitch-700 border-t-2 border-dashed border-pitch-950/20 pt-4">
-            {apiInfo.team.country && (
+            {teamMeta.country && (
               <span>
-                {t.teamDetail.country}: {apiInfo.team.country}
+                {t.teamDetail.country}: {teamMeta.country}
               </span>
             )}
-            {apiInfo.team.founded && (
-              <span>{t.teamDetail.founded.replace("{year}", String(apiInfo.team.founded))}</span>
+            {teamMeta.founded && (
+              <span>{t.teamDetail.founded.replace("{year}", String(teamMeta.founded))}</span>
             )}
-            {apiInfo.venue.name && (
+            {teamMeta.venueName && (
               <span>
-                {t.teamDetail.venue}: {apiInfo.venue.name}
-                {apiInfo.venue.city ? ` (${apiInfo.venue.city})` : ""}
+                {t.teamDetail.venue}: {teamMeta.venueName}
+                {teamMeta.venueCity ? ` (${teamMeta.venueCity})` : ""}
               </span>
             )}
-            {apiInfo.venue.capacity && (
-              <span>{t.teamDetail.capacity.replace("{capacity}", apiInfo.venue.capacity.toLocaleString(locale))}</span>
+            {teamMeta.venueCapacity && (
+              <span>{t.teamDetail.capacity.replace("{capacity}", teamMeta.venueCapacity.toLocaleString(locale))}</span>
             )}
           </div>
         ) : (

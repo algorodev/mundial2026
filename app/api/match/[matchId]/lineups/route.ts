@@ -1,13 +1,10 @@
 // GET /api/match/[matchId]/lineups
-// Devuelve las alineaciones del partido (XI titular + suplentes por equipo),
-// cacheadas con Next según el momento del partido. Requiere sesión.
+// Alineaciones del partido (XI titular + suplentes). Requiere sesión.
 //
-// Status:
-//   401 → sin sesión
-//   404 → matchId no existe
-//   422 → match sin apiFixtureId (no mapeado a API-Football)
-//   200 → { ok: true, lineups: ApiLineup[] }
-//   502 → fallo al llamar API-Football
+// Estrategia de cache:
+//   - Partido con resultado final en DB → lineups son inmutables: se guardan
+//     en matches.lineupsJson y se sirven desde DB sin llamar a la API.
+//   - Partido en curso o sin jugar → Next.js cache con TTL adaptativo.
 
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
@@ -33,38 +30,38 @@ export async function GET(
     return NextResponse.json({ error: "matchId inválido" }, { status: 400 });
   }
 
-  const [m] = await db
-    .select()
-    .from(matches)
-    .where(eq(matches.id, matchId))
-    .limit(1);
+  const [m] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);
   if (!m) {
     return NextResponse.json({ error: "partido no encontrado" }, { status: 404 });
   }
   if (!m.apiFixtureId) {
-    return NextResponse.json(
-      { error: "partido no mapeado a API-Football" },
-      { status: 422 }
-    );
+    return NextResponse.json({ error: "partido no mapeado a API-Football" }, { status: 422 });
   }
 
-  // Lineups no cambian una vez publicadas (45-60 min antes del kickoff). En
-  // directo damos liveTtl alto (5 min) — sólo cambian si hay cambio.
-  const ttl = matchCacheTtl(
-    m.kickoffAt,
-    m.homeScore !== null && m.awayScore !== null,
-    { liveTtl: 300 }
-  );
+  const hasFinalScore = m.homeScore !== null && m.awayScore !== null;
+
+  // Cache permanente en DB: lineups post-partido nunca cambian.
+  if (hasFinalScore && m.lineupsJson) {
+    return NextResponse.json({ ok: true, lineups: JSON.parse(m.lineupsJson) });
+  }
+
+  const ttl = matchCacheTtl(m.kickoffAt, hasFinalScore, { liveTtl: 300 });
 
   try {
     const lineups = await getFixtureLineups(m.apiFixtureId, { revalidate: ttl });
+
+    // Persistir en DB una vez el partido tiene resultado final.
+    if (hasFinalScore && lineups.length > 0) {
+      await db
+        .update(matches)
+        .set({ lineupsJson: JSON.stringify(lineups), lineupsUpdatedAt: new Date() })
+        .where(eq(matches.id, matchId));
+    }
+
     return NextResponse.json({ ok: true, lineups }, {
       headers: { "Cache-Control": `private, max-age=${ttl}` },
     });
   } catch (e) {
-    return NextResponse.json(
-      { error: (e as Error).message },
-      { status: 502 }
-    );
+    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
   }
 }

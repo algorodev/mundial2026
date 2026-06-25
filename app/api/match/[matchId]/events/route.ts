@@ -1,5 +1,10 @@
 // GET /api/match/[matchId]/events
 // Eventos del partido (goles, tarjetas, cambios, VAR). Requiere sesión.
+//
+// Estrategia de cache:
+//   - Partido con resultado final en DB → eventos son inmutables: se guardan
+//     en matches.eventsJson y se sirven desde DB sin llamar a la API.
+//   - Partido en curso o sin jugar → Next.js cache con TTL adaptativo (30s live).
 
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
@@ -25,36 +30,38 @@ export async function GET(
     return NextResponse.json({ error: "matchId inválido" }, { status: 400 });
   }
 
-  const [m] = await db
-    .select()
-    .from(matches)
-    .where(eq(matches.id, matchId))
-    .limit(1);
+  const [m] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);
   if (!m) {
     return NextResponse.json({ error: "partido no encontrado" }, { status: 404 });
   }
   if (!m.apiFixtureId) {
-    return NextResponse.json(
-      { error: "partido no mapeado a API-Football" },
-      { status: 422 }
-    );
+    return NextResponse.json({ error: "partido no mapeado a API-Football" }, { status: 422 });
   }
 
-  // Eventos cambian rápido en directo (gol cada X minutos): liveTtl 30s.
-  const ttl = matchCacheTtl(
-    m.kickoffAt,
-    m.homeScore !== null && m.awayScore !== null
-  );
+  const hasFinalScore = m.homeScore !== null && m.awayScore !== null;
+
+  // Cache permanente en DB: eventos post-partido nunca cambian.
+  if (hasFinalScore && m.eventsJson) {
+    return NextResponse.json({ ok: true, events: JSON.parse(m.eventsJson) });
+  }
+
+  const ttl = matchCacheTtl(m.kickoffAt, hasFinalScore);
 
   try {
     const events = await getFixtureEvents(m.apiFixtureId, { revalidate: ttl });
+
+    // Persistir en DB una vez el partido tiene resultado final.
+    if (hasFinalScore) {
+      await db
+        .update(matches)
+        .set({ eventsJson: JSON.stringify(events), eventsUpdatedAt: new Date() })
+        .where(eq(matches.id, matchId));
+    }
+
     return NextResponse.json({ ok: true, events }, {
       headers: { "Cache-Control": `private, max-age=${ttl}` },
     });
   } catch (e) {
-    return NextResponse.json(
-      { error: (e as Error).message },
-      { status: 502 }
-    );
+    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
   }
 }

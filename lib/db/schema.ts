@@ -90,6 +90,13 @@ export const matches = pgTable(
     // Id del fixture en API-Football. Nullable porque los partidos pre-existen
     // al mapeo. Únicó global (postgres ignora nulls en unique indexes).
     apiFixtureId: integer("api_fixture_id"),
+    // Cache de datos de API-Football post-partido. Una vez el partido tiene
+    // resultado final, lineups y eventos son inmutables y se guardan aquí
+    // para no volver a llamar a la API. null = no cacheado todavía.
+    lineupsJson: text("lineups_json"),
+    eventsJson: text("events_json"),
+    lineupsUpdatedAt: timestamp("lineups_updated_at"),
+    eventsUpdatedAt: timestamp("events_updated_at"),
   },
   (t) => ({
     tournamentNumberIdx: uniqueIndex("matches_tournament_number_idx").on(
@@ -117,6 +124,13 @@ export const teams = pgTable(
     flagEmoji: varchar("flag_emoji", { length: 10 }),
     apiTeamId: integer("api_team_id"),
     logoUrl: text("logo_url"),
+    // Metadatos de API-Football cacheados en DB (se refrescan cada 30 días).
+    country: varchar("country", { length: 80 }),
+    founded: integer("founded"),
+    venueName: varchar("venue_name", { length: 120 }),
+    venueCity: varchar("venue_city", { length: 80 }),
+    venueCapacity: integer("venue_capacity"),
+    metaFetchedAt: timestamp("meta_fetched_at"),
   },
   (t) => ({
     tournamentCodeIdx: uniqueIndex("teams_tournament_code_idx").on(
@@ -332,6 +346,24 @@ export const notifiedEvents = pgTable(
   })
 );
 
+// Cache de H2H entre dos equipos (por apiTeamId). teamAId < teamBId siempre
+// para que ESP vs FRA y FRA vs ESP usen la misma fila. TTL gestionado en la
+// capa de aplicación (24h); la API solo se llama cuando el cache está vacío
+// o ha expirado.
+export const h2hCache = pgTable(
+  "h2h_cache",
+  {
+    id: serial("id").primaryKey(),
+    teamAId: integer("team_a_id").notNull(),
+    teamBId: integer("team_b_id").notNull(),
+    fixturesJson: text("fixtures_json").notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    teamsIdx: uniqueIndex("h2h_cache_teams_idx").on(t.teamAId, t.teamBId),
+  })
+);
+
 export type User = typeof users.$inferSelect;
 export type Tournament = typeof tournaments.$inferSelect;
 export type Match = typeof matches.$inferSelect;
@@ -343,3 +375,4 @@ export type GroupMember = typeof groupMembers.$inferSelect;
 export type GroupJoinRequest = typeof groupJoinRequests.$inferSelect;
 export type Prediction = typeof predictions.$inferSelect;
 export type MagicLink = typeof magicLinks.$inferSelect;
+export type H2hCache = typeof h2hCache.$inferSelect;
