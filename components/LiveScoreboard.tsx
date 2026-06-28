@@ -56,7 +56,7 @@ type NextMatch = {
 };
 
 const STORAGE_KEY = "porra-live-open";
-const POLL_MS = 12_000;
+const POLL_MS = 30_000;
 
 export default function LiveScoreboard({
   groupSlug,
@@ -267,7 +267,7 @@ function LiveRow({
       }
     }
     load();
-    const id = setInterval(load, 20_000);
+    const id = setInterval(load, 30_000);
     return () => {
       cancelled = true;
       clearInterval(id);

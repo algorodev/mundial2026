@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { asc, eq } from "drizzle-orm";
+import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
 import { matches, teams } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
@@ -8,12 +9,53 @@ import { getFixturesByIds, isLive } from "@/lib/api-football";
 
 export const dynamic = "force-dynamic";
 
-// Mismos cálculos de antes — la única diferencia es que filtramos por
-// el torneo asociado al grupo del que el user es miembro.
 const REAL_SPAN_MS = 17 * 24 * 3600_000;
 const REAL_MATCH_MS = 90 * 60_000;
 const REAL_LIVE_WINDOW_MS = 2.5 * 3600_000;
 const SIM_THRESHOLD_MS = 2 * 24 * 3600_000;
+
+// Datos de partidos y equipos del torneo: idénticos para todos los usuarios.
+// Cacheamos 15s para evitar que cada poll de cada usuario genere una query.
+const getTournamentLiveData = unstable_cache(
+  async (tournamentId: number) => {
+    const [matchRows, teamsRows] = await Promise.all([
+      db
+        .select({
+          id: matches.id,
+          matchNumber: matches.matchNumber,
+          groupName: matches.groupName,
+          homeTeam: matches.homeTeam,
+          awayTeam: matches.awayTeam,
+          homeCode: matches.homeCode,
+          awayCode: matches.awayCode,
+          homeFlag: matches.homeFlag,
+          awayFlag: matches.awayFlag,
+          kickoffAt: matches.kickoffAt,
+          homeScore: matches.homeScore,
+          awayScore: matches.awayScore,
+          apiFixtureId: matches.apiFixtureId,
+        })
+        .from(matches)
+        .where(eq(matches.tournamentId, tournamentId))
+        .orderBy(asc(matches.kickoffAt)),
+      db
+        .select({ code: teams.code, logoUrl: teams.logoUrl })
+        .from(teams)
+        .where(eq(teams.tournamentId, tournamentId)),
+    ]);
+    // kickoffAt es Date en Drizzle; unstable_cache serializa a JSON (string).
+    // Lo guardamos como ISO para restaurarlo correctamente al leer la caché.
+    return {
+      matchRows: matchRows.map((m) => ({
+        ...m,
+        kickoffAt: m.kickoffAt.toISOString(),
+      })),
+      teamsRows,
+    };
+  },
+  ["live-tournament"],
+  { revalidate: 15 }
+);
 
 export async function GET(req: NextRequest) {
   const groupSlug = req.nextUrl.searchParams.get("groupSlug");
@@ -38,11 +80,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const all = await db
-    .select()
-    .from(matches)
-    .where(eq(matches.tournamentId, ctx.tournamentId))
-    .orderBy(asc(matches.kickoffAt));
+  const { matchRows, teamsRows } = await getTournamentLiveData(ctx.tournamentId);
+  // Restaurar Date desde ISO string (unstable_cache serializa a JSON)
+  const all = matchRows.map((m) => ({ ...m, kickoffAt: new Date(m.kickoffAt) }));
 
   const now = Date.now();
 
@@ -50,13 +90,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ live: [], next: null, serverNow: now });
   }
 
-  // Logos oficiales por código (poblados por pnpm db:map-api). Si un equipo
-  // no tiene apiTeamId aún, su entrada queda en null y el cliente cae al
-  // fallback (asset local o emoji).
-  const teamsRows = await db
-    .select({ code: teams.code, logoUrl: teams.logoUrl })
-    .from(teams)
-    .where(eq(teams.tournamentId, ctx.tournamentId));
   const logoByCode = new Map<string, string | null>(
     teamsRows.map((t) => [t.code, t.logoUrl])
   );
@@ -99,17 +132,11 @@ export async function GET(req: NextRequest) {
         awayScore: m.awayScore ?? 0,
         kickoffAt: m.kickoffAt.toISOString(),
         minute,
-        // Si la API responde, sobrescribimos minute con el valor real y
-        // pasamos también un statusShort ("1H", "HT", "2H", "ET", "P"...)
-        // para que la UI pueda mostrar etiquetas más exactas.
         statusShort: null as string | null,
         apiFixtureId: m.apiFixtureId,
       };
     });
 
-  // Enrichment con minuto real desde API-Football. Sólo si hay matches live
-  // mapeados a un fixtureId y la llamada va bien. Si falla, mantenemos el
-  // minuto heurístico — no rompemos al usuario.
   const mappedIds = live
     .map((m) => m.apiFixtureId)
     .filter((x): x is number => x !== null);

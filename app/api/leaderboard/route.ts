@@ -1,11 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
 import { users, matches, predictions, groupMembers } from "@/lib/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { calcPoints, calcExtendedPoints } from "@/lib/scoring";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
 import { tournaments } from "@/lib/db/schema";
+
+// Datos pesados del leaderboard: idénticos para todos los miembros del grupo.
+// Cacheamos 30s; con partidos en directo el leaderboard no cambia hasta que
+// el cron escribe el resultado final, así que 30s de lag es completamente aceptable.
+const getLeaderboardData = unstable_cache(
+  async (groupId: number, tournamentId: number) => {
+    const memberRows = await db
+      .select({ userId: groupMembers.userId, name: users.name })
+      .from(groupMembers)
+      .innerJoin(users, eq(groupMembers.userId, users.id))
+      .where(eq(groupMembers.groupId, groupId));
+
+    if (memberRows.length === 0) {
+      return { memberRows: [], allMatches: [], allPreds: [], knockoutScoring: null as string | null };
+    }
+
+    const [allMatches, allPreds, [tournament]] = await Promise.all([
+      db
+        .select({
+          id: matches.id,
+          homeScore: matches.homeScore,
+          awayScore: matches.awayScore,
+          homeFrom: matches.homeFrom,
+          homeScoreAet: matches.homeScoreAet,
+          awayScoreAet: matches.awayScoreAet,
+          penaltyHome: matches.penaltyHome,
+          penaltyAway: matches.penaltyAway,
+        })
+        .from(matches)
+        .where(eq(matches.tournamentId, tournamentId)),
+      db
+        .select({
+          userId: predictions.userId,
+          matchId: predictions.matchId,
+          homeScore: predictions.homeScore,
+          awayScore: predictions.awayScore,
+          homeScoreAet: predictions.homeScoreAet,
+          awayScoreAet: predictions.awayScoreAet,
+          penaltyHome: predictions.penaltyHome,
+          penaltyAway: predictions.penaltyAway,
+        })
+        .from(predictions)
+        .where(eq(predictions.groupId, groupId)),
+      db
+        .select({ knockoutScoring: tournaments.knockoutScoring })
+        .from(tournaments)
+        .where(eq(tournaments.id, tournamentId))
+        .limit(1),
+    ]);
+
+    return {
+      memberRows,
+      allMatches,
+      allPreds,
+      knockoutScoring: tournament?.knockoutScoring ?? null,
+    };
+  },
+  ["leaderboard-data"],
+  { revalidate: 30 }
+);
 
 export async function GET(req: NextRequest) {
   const groupSlug = req.nextUrl.searchParams.get("groupSlug");
@@ -15,8 +76,6 @@ export async function GET(req: NextRequest) {
 
   const session = await getSession();
 
-  // Resolución de contexto: primero miembro (con sesión), si falla y el grupo
-  // es público, lo dejamos pasar como visitante (read-only).
   let ctx: { groupId: number; tournamentId: number } | null = null;
   if (session) {
     const memberCtx = await getGroupForMember(groupSlug, session.userId);
@@ -37,31 +96,14 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Miembros del grupo + partidos del torneo + predicciones del grupo
-  const memberRows = await db
-    .select({
-      userId: groupMembers.userId,
-      name: users.name,
-    })
-    .from(groupMembers)
-    .innerJoin(users, eq(groupMembers.userId, users.id))
-    .where(eq(groupMembers.groupId, ctx.groupId));
+  const { memberRows, allMatches, allPreds, knockoutScoring } =
+    await getLeaderboardData(ctx.groupId, ctx.tournamentId);
 
-  const memberIds = memberRows.map((m) => m.userId);
-  if (memberIds.length === 0) {
+  if (memberRows.length === 0) {
     return NextResponse.json({ leaderboard: [] });
   }
 
-  const [allMatches, allPreds, [tournament]] = await Promise.all([
-    db.select().from(matches).where(eq(matches.tournamentId, ctx.tournamentId)),
-    db
-      .select()
-      .from(predictions)
-      .where(eq(predictions.groupId, ctx.groupId)),
-    db.select({ knockoutScoring: tournaments.knockoutScoring }).from(tournaments).where(eq(tournaments.id, ctx.tournamentId)).limit(1),
-  ]);
-  const isExtended = tournament?.knockoutScoring === "extended";
-
+  const isExtended = knockoutScoring === "extended";
   const matchById = new Map(allMatches.map((m) => [m.id, m]));
 
   const stats = new Map<
@@ -103,7 +145,6 @@ export async function GET(req: NextRequest) {
       m.awayScore
     );
     let totalPts = points;
-    // Puntos adicionales por prórroga/penaltis en torneos extended
     if (isExtended && m.homeFrom != null) {
       const { aetPoints, penPoints } = calcExtendedPoints(
         { homeScoreAet: p.homeScoreAet, awayScoreAet: p.awayScoreAet, penaltyHome: p.penaltyHome, penaltyAway: p.penaltyAway },
