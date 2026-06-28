@@ -550,7 +550,12 @@
     "visibilityHidden": "Ocultos hasta el cierre",
     "visibilityHiddenHelp": "Solo se ven cuando el torneo arranca (por defecto).",
     "visibilityOpen": "Siempre visibles",
-    "visibilityOpenHelp": "Cualquier miembro puede ver los pronósticos del resto en cualquier momento."
+    "visibilityOpenHelp": "Cualquier miembro puede ver los pronósticos del resto en cualquier momento.",
+    "knockoutScoringLabel": "¿Qué resultado cuenta en eliminatorias?",
+    "knockoutFulltime": "Solo resultado a 90'",
+    "knockoutFulltimeHelp": "Se puntúa el ganador al final del tiempo reglamentario. Prórroga y penaltis no cuentan.",
+    "knockoutExtended": "Resultado final (inc. prórroga y penaltis)",
+    "knockoutExtendedHelp": "El pronóstico debe acertar el ganador definitivo del encuentro."
   },
   "homeShowcase": {
     "sectionTitle": "📸 ASÍ SE VE",

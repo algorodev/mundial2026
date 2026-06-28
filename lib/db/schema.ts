@@ -200,6 +200,9 @@ export const groups = pgTable(
     predictionsVisibility: varchar("predictions_visibility", { length: 24 })
       .default("hidden-until-lock")
       .notNull(),
+    knockoutScoring: varchar("knockout_scoring", { length: 10 })
+      .default("fulltime")
+      .notNull(),
     // "private" (default) = sólo miembros ven nada. "public" = leaderboard
     // accesible sin sesión. Usado por la "porra oficial" por torneo.
     visibility: varchar("visibility", { length: 16 })

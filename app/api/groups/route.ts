@@ -147,6 +147,7 @@ export async function POST(req: NextRequest) {
         joinDeadline: settings.joinDeadline,
         allowLateJoin: settings.allowLateJoin ? 1 : 0,
         predictionsVisibility: settings.predictionsVisibility,
+        knockoutScoring: settings.knockoutScoring,
       })
       .returning();
 

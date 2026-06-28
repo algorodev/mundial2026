@@ -16,6 +16,7 @@ export type GroupContext = {
   joinDeadline: Date | null;
   allowLateJoin: boolean;
   predictionsVisibility: string;
+  knockoutScoring: string;
   visibility: "private" | "public";
 };
 
@@ -50,6 +51,7 @@ export async function getGroupForMember(
       joinDeadline: groups.joinDeadline,
       allowLateJoin: groups.allowLateJoin,
       predictionsVisibility: groups.predictionsVisibility,
+      knockoutScoring: groups.knockoutScoring,
       visibility: groups.visibility,
     })
     .from(groups)
@@ -78,6 +80,7 @@ export async function getGroupForMember(
     joinDeadline: row.joinDeadline,
     allowLateJoin: row.allowLateJoin === 1,
     predictionsVisibility: row.predictionsVisibility,
+    knockoutScoring: row.knockoutScoring,
     visibility: row.visibility === "public" ? "public" : "private",
   };
 }

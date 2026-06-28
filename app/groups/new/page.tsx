@@ -33,6 +33,7 @@ export default async function NewGroupPage({
       name: tournaments.name,
       sport: tournaments.sport,
       status: tournaments.status,
+      knockoutScoring: tournaments.knockoutScoring,
     })
     .from(tournaments)
     .where(inArray(tournaments.status, ["upcoming", "live"]))

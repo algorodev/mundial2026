@@ -16,6 +16,7 @@ type Tournament = {
   name: string;
   sport: string;
   status: string;
+  knockoutScoring: string;
 };
 
 export default function NewGroupClient({
@@ -31,7 +32,11 @@ export default function NewGroupClient({
   const [tournamentSlug, setTournamentSlug] = useState(
     preselectSlug ?? tournaments[0].slug
   );
-  const [settings, setSettings] = useState<GroupSettingsValue>(DEFAULT_SETTINGS);
+  const initialTournament = tournaments.find((t) => t.slug === (preselectSlug ?? tournaments[0].slug));
+  const [settings, setSettings] = useState<GroupSettingsValue>({
+    ...DEFAULT_SETTINGS,
+    knockoutScoring: initialTournament?.knockoutScoring === "extended" ? "extended" : "fulltime",
+  });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -98,7 +103,13 @@ export default function NewGroupClient({
               <button
                 key={tournament.slug}
                 type="button"
-                onClick={() => setTournamentSlug(tournament.slug)}
+                onClick={() => {
+                  setTournamentSlug(tournament.slug);
+                  setSettings((prev) => ({
+                    ...prev,
+                    knockoutScoring: tournament.knockoutScoring === "extended" ? "extended" : "fulltime",
+                  }));
+                }}
                 className={`cromo flex items-center gap-4 p-4 text-left transition-all ${
                   active
                     ? "bg-flame-500 text-pitch-950 -translate-x-0.5 -translate-y-0.5"

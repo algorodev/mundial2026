@@ -550,7 +550,12 @@
     "visibilityHidden": "Hidden until close",
     "visibilityHiddenHelp": "Only visible when the tournament starts (default).",
     "visibilityOpen": "Always visible",
-    "visibilityOpenHelp": "Any member can see others' picks at any time."
+    "visibilityOpenHelp": "Any member can see others' picks at any time.",
+    "knockoutScoringLabel": "What result counts in knockouts?",
+    "knockoutFulltime": "90' result only",
+    "knockoutFulltimeHelp": "Score the winner at the end of regulation time. Extra time and penalties don't count.",
+    "knockoutExtended": "Final result (inc. extra time & penalties)",
+    "knockoutExtendedHelp": "The pick must match the ultimate winner of the match."
   },
   "homeShowcase": {
     "sectionTitle": "📸 HOW IT LOOKS",

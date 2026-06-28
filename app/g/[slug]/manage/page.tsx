@@ -50,6 +50,7 @@ export default async function ManageGroupPage(
         joinDeadline: groups.joinDeadline,
         allowLateJoin: groups.allowLateJoin,
         predictionsVisibility: groups.predictionsVisibility,
+        knockoutScoring: groups.knockoutScoring,
       })
       .from(groups)
       .innerJoin(tournaments, eq(groups.tournamentId, tournaments.id))
@@ -129,6 +130,8 @@ export default async function ManageGroupPage(
             details.predictionsVisibility === "open"
               ? "open"
               : "hidden-until-lock",
+          knockoutScoring:
+            details.knockoutScoring === "extended" ? "extended" : "fulltime",
         }}
         members={memberRows.map((m) => ({
           ...m,

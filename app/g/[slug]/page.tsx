@@ -177,7 +177,7 @@ export default async function GroupPredictionsPage(
             phaseStarts={phaseStarts}
             predictionLockMode={ctx.predictionLockMode}
             lockMinutesBefore={ctx.lockMinutesBefore}
-            knockoutScoring={tournament?.knockoutScoring ?? "fulltime"}
+            knockoutScoring={(ctx.knockoutScoring ?? tournament?.knockoutScoring ?? "fulltime") as "fulltime" | "extended"}
           />
           <LiveScoreboard groupSlug={ctx.slug} />
         </>

@@ -125,6 +125,9 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ slug: s
       predictionsVisibility: row.predictionsVisibility as
         | "hidden-until-lock"
         | "open",
+      knockoutScoring: (row.knockoutScoring ?? "fulltime") as
+        | "fulltime"
+        | "extended",
     });
     if ("error" in parsed) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -142,6 +145,7 @@ export async function PATCH(req: NextRequest, props: { params: Promise<{ slug: s
         joinDeadline: s.joinDeadline,
         allowLateJoin: s.allowLateJoin ? 1 : 0,
         predictionsVisibility: s.predictionsVisibility,
+        knockoutScoring: s.knockoutScoring,
       })
       .where(eq(groups.id, row.id));
 

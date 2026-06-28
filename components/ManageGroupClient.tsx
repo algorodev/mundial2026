@@ -31,6 +31,7 @@ type InitialSettings = {
   joinDeadlineIso: string | null;
   allowLateJoin: boolean;
   predictionsVisibility: "hidden-until-lock" | "open";
+  knockoutScoring: "fulltime" | "extended";
 };
 
 function isoToDatetimeLocal(iso: string | null): string {
@@ -76,6 +77,7 @@ export default function ManageGroupClient({
     joinDeadline: isoToDatetimeLocal(initialSettings.joinDeadlineIso),
     allowLateJoin: initialSettings.allowLateJoin,
     predictionsVisibility: initialSettings.predictionsVisibility,
+    knockoutScoring: initialSettings.knockoutScoring,
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [savedSettings, setSavedSettings] = useState(false);

@@ -11,6 +11,7 @@ export type GroupSettingsValue = {
   joinDeadline: string; // datetime-local string, vacío si no hay
   allowLateJoin: boolean;
   predictionsVisibility: "hidden-until-lock" | "open";
+  knockoutScoring: "fulltime" | "extended";
 };
 
 export const DEFAULT_SETTINGS: GroupSettingsValue = {
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: GroupSettingsValue = {
   joinDeadline: "",
   allowLateJoin: false,
   predictionsVisibility: "hidden-until-lock",
+  knockoutScoring: "fulltime",
 };
 
 /**
@@ -37,6 +39,7 @@ export function settingsToPayload(v: GroupSettingsValue) {
     joinDeadline: v.joinDeadline ? new Date(v.joinDeadline).toISOString() : null,
     allowLateJoin: v.allowLateJoin,
     predictionsVisibility: v.predictionsVisibility,
+    knockoutScoring: v.knockoutScoring,
   };
 }
 
@@ -200,6 +203,31 @@ export default function GroupSettingsFields({
             </div>
           </div>
         </label>
+      </fieldset>
+
+      {/* Resultado eliminatorias */}
+      <fieldset>
+        <legend className="text-xs font-display uppercase tracking-widest text-pitch-700 dark:text-flame-400 mb-3">
+          {t.groupSettings.knockoutScoringLabel}
+        </legend>
+        <div className="space-y-2">
+          <Radio
+            name={`${id}-ko`}
+            checked={value.knockoutScoring === "fulltime"}
+            onChange={() => update("knockoutScoring", "fulltime")}
+            disabled={disabled}
+            label={t.groupSettings.knockoutFulltime}
+            help={t.groupSettings.knockoutFulltimeHelp}
+          />
+          <Radio
+            name={`${id}-ko`}
+            checked={value.knockoutScoring === "extended"}
+            onChange={() => update("knockoutScoring", "extended")}
+            disabled={disabled}
+            label={t.groupSettings.knockoutExtended}
+            help={t.groupSettings.knockoutExtendedHelp}
+          />
+        </div>
       </fieldset>
 
       {/* Visibilidad */}

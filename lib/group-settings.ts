@@ -10,6 +10,7 @@ export type GroupSettingsInput = {
   joinDeadline?: unknown;
   allowLateJoin?: unknown;
   predictionsVisibility?: unknown;
+  knockoutScoring?: unknown;
 };
 
 export type GroupSettings = {
@@ -20,6 +21,7 @@ export type GroupSettings = {
   joinDeadline: Date | null;
   allowLateJoin: boolean;
   predictionsVisibility: "hidden-until-lock" | "open";
+  knockoutScoring: "fulltime" | "extended";
 };
 
 const DEFAULTS: GroupSettings = {
@@ -30,6 +32,7 @@ const DEFAULTS: GroupSettings = {
   joinDeadline: null,
   allowLateJoin: false,
   predictionsVisibility: "hidden-until-lock",
+  knockoutScoring: "fulltime",
 };
 
 export function defaultSettings(): GroupSettings {
@@ -113,6 +116,14 @@ export function parseSettings(
       return { error: "Visibilidad de pronósticos inválida" };
     }
     out.predictionsVisibility = s as GroupSettings["predictionsVisibility"];
+  }
+
+  if (input.knockoutScoring !== undefined) {
+    const s = asString(input.knockoutScoring);
+    if (s !== "fulltime" && s !== "extended") {
+      return { error: "Formato de eliminatorias inválido" };
+    }
+    out.knockoutScoring = s;
   }
 
   return { settings: out };
