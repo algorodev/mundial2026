@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import TeamBadge from "@/components/TeamBadge";
 import { useI18n } from "@/providers/I18nProvider";
-import { phaseKeyFor } from "@/lib/knockout-phases";
+import { phaseKeyFor, MAIN_PHASE } from "@/lib/knockout-phases";
 
 type MatchRow = {
   id: number;
@@ -424,6 +424,11 @@ export default function PredictionsClient({
               labelPenBadge={t.predictions.penBadge}
               labelRealResult={t.predictions.realResult}
               labelMatchDetail={t.predictions.matchDetail}
+              labelResultType={
+                phaseKeyFor(m.groupName) !== MAIN_PHASE
+                  ? t.predictions.resultFinal
+                  : t.predictions.result90
+              }
               labelGoalsHome={t.predictions.goalsLabel.replace("{team}", m.homeTeam)}
               labelGoalsAway={t.predictions.goalsLabel.replace("{team}", m.awayTeam)}
               labelAetLabel={t.predictions.aetLabel}
@@ -489,6 +494,7 @@ function MatchCard({
   labelPenBadge,
   labelRealResult,
   labelMatchDetail,
+  labelResultType,
   labelGoalsHome,
   labelGoalsAway,
   labelAetLabel,
@@ -523,6 +529,7 @@ function MatchCard({
   labelPenBadge: string;
   labelRealResult: string;
   labelMatchDetail: string;
+  labelResultType: string;
   labelGoalsHome: string;
   labelGoalsAway: string;
   labelAetLabel: string;
@@ -803,7 +810,10 @@ function MatchCard({
         </div>
       )}
 
-      <div className="mt-3 text-right">
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="font-mono text-[10px] text-pitch-500 dark:text-chalk-500 uppercase tracking-widest">
+          {labelResultType}
+        </span>
         <Link
           href={`/g/${groupSlug}/m/${match.matchNumber}`}
           className="inline-block font-mono text-[10px] uppercase tracking-widest text-pitch-700 hover:text-flame-600 whitespace-nowrap"

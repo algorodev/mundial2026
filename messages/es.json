@@ -215,7 +215,9 @@
     "group": "GRUPO {name}",
     "prevDay": "Día anterior",
     "nextDay": "Día siguiente",
-    "dayCounter": "Jornada {current} / {total}"
+    "dayCounter": "Jornada {current} / {total}",
+    "result90": "Resultado a 90'",
+    "resultFinal": "Resultado final (inc. prórroga)"
   },
   "teamDetail": {
     "prevTeam": "Equipo anterior",
