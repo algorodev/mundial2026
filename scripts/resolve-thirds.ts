@@ -50,7 +50,7 @@ async function main() {
     { matchNum: 78, home: "FRA", away: "SWE" }, // 1I Francia  vs 3F Suecia
     { matchNum: 79, home: "MEX", away: "ECU" }, // 1A México   vs 3E Ecuador
     { matchNum: 80, home: "ENG", away: "COD" }, // 1L Inglaterra vs 3K RD Congo
-    { matchNum: 81, home: "BEL", away: "SEN" }, // 1G Bélgica  vs 3I Senegal
+    { matchNum: 81, home: "EGY", away: "AUS" }, // 1G Egipto vs 3º Australia
     { matchNum: 82, home: "USA", away: "BIH" }, // 1D EE. UU.  vs 3B Bosnia
     { matchNum: 85, home: "SUI", away: "ALG" }, // 1B Suiza    vs 3J Argelia
     { matchNum: 88, home: "COL", away: "GHA" }, // 1K Colombia vs 3L Ghana
