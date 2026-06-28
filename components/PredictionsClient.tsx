@@ -425,7 +425,8 @@ export default function PredictionsClient({
               labelRealResult={t.predictions.realResult}
               labelMatchDetail={t.predictions.matchDetail}
               labelResultType={
-                phaseKeyFor(m.groupName) !== MAIN_PHASE
+                phaseKeyFor(m.groupName) !== MAIN_PHASE &&
+                knockoutScoring === "extended"
                   ? t.predictions.resultFinal
                   : t.predictions.result90
               }
