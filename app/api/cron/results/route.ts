@@ -19,9 +19,9 @@
 // Schedule: GitHub Actions cada 10 min (.github/workflows/cron-results.yml).
 
 import { NextRequest, NextResponse } from "next/server";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches, tournaments } from "@/lib/db/schema";
+import { matches, tournaments, teams } from "@/lib/db/schema";
 import type { Match } from "@/lib/db/schema";
 import {
   getFixtureEvents,
@@ -46,6 +46,7 @@ export const maxDuration = 60;
 type TournamentSummary = {
   slug: string;
   fetched: number;
+  autoMapped: number;
   updated: number;
   skippedAdmin: number;
   skippedNotFinal: number;
@@ -99,6 +100,7 @@ export async function GET(req: NextRequest) {
     const s: TournamentSummary = {
       slug: t.slug,
       fetched: 0,
+      autoMapped: 0,
       updated: 0,
       skippedAdmin: 0,
       skippedNotFinal: 0,
@@ -130,6 +132,73 @@ export async function GET(req: NextRequest) {
     const byApiId = new Map<number, Match>();
     for (const m of tMatches) {
       if (m.apiFixtureId) byApiId.set(m.apiFixtureId, m);
+    }
+
+    // ─── Auto-mapeo de apiFixtureId para partidos de eliminatoria ────────
+    // Los partidos KO se insertan como placeholders sin apiFixtureId.
+    // Una vez que sus equipos se resuelven (homeCode/awayCode != null), el
+    // cron intenta emparejarlos con los fixtures de API-Football usando el
+    // par (homeApiTeamId, awayApiTeamId). Así no hace falta ejecutar
+    // db:map-api manualmente cada vez que avanza una ronda.
+    try {
+      const unmapped = await db
+        .select()
+        .from(matches)
+        .where(
+          and(
+            eq(matches.tournamentId, t.id),
+            isNull(matches.apiFixtureId),
+            isNotNull(matches.homeCode),
+            isNotNull(matches.awayCode)
+          )
+        );
+
+      if (unmapped.length > 0) {
+        const allCodes = new Set<string>();
+        for (const m of unmapped) {
+          if (m.homeCode) allCodes.add(m.homeCode);
+          if (m.awayCode) allCodes.add(m.awayCode);
+        }
+        const teamRows = await db
+          .select({ code: teams.code, apiTeamId: teams.apiTeamId })
+          .from(teams)
+          .where(and(eq(teams.tournamentId, t.id), isNotNull(teams.apiTeamId)));
+        const teamIdByCode = new Map<string, number>();
+        for (const tr of teamRows) {
+          if (tr.apiTeamId) teamIdByCode.set(tr.code, tr.apiTeamId);
+        }
+
+        // Mapa (homeApiTeamId, awayApiTeamId) → match para emparejar
+        const byTeamPair = new Map<string, Match>();
+        for (const m of unmapped) {
+          if (!m.homeCode || !m.awayCode) continue;
+          const homeId = teamIdByCode.get(m.homeCode);
+          const awayId = teamIdByCode.get(m.awayCode);
+          if (!homeId || !awayId) continue;
+          byTeamPair.set(`${homeId}-${awayId}`, m);
+        }
+
+        for (const fx of fixtures) {
+          if (byApiId.has(fx.fixture.id)) continue;
+          const key = `${fx.teams.home.id}-${fx.teams.away.id}`;
+          const m = byTeamPair.get(key);
+          if (!m) continue;
+          await db
+            .update(matches)
+            .set({ apiFixtureId: fx.fixture.id })
+            .where(eq(matches.id, m.id));
+          const mapped: Match = { ...m, apiFixtureId: fx.fixture.id };
+          byApiId.set(fx.fixture.id, mapped);
+          tMatches.push(mapped);
+          byTeamPair.delete(key);
+          s.autoMapped++;
+          console.log(
+            `[cron] Auto-mapeado fixture ${fx.fixture.id} → partido ${m.matchNumber} (${m.homeCode} vs ${m.awayCode})`
+          );
+        }
+      }
+    } catch (e) {
+      console.warn(`[cron] auto-mapeo falló para ${t.slug}: ${(e as Error).message}`);
     }
 
     // Audiencia compartida por todos los eventos de este torneo: usuarios

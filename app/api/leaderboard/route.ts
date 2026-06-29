@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { db } from "@/lib/db";
-import { users, matches, predictions, groupMembers } from "@/lib/db/schema";
+import { users, matches, predictions, groupMembers, groups } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/session";
 import { calcPoints, calcExtendedPoints } from "@/lib/scoring";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
-import { tournaments } from "@/lib/db/schema";
 
 // Datos pesados del leaderboard: idénticos para todos los miembros del grupo.
 // Cacheamos 30s; con partidos en directo el leaderboard no cambia hasta que
@@ -23,7 +22,7 @@ const getLeaderboardData = unstable_cache(
       return { memberRows: [], allMatches: [], allPreds: [], knockoutScoring: null as string | null };
     }
 
-    const [allMatches, allPreds, [tournament]] = await Promise.all([
+    const [allMatches, allPreds, [groupRow]] = await Promise.all([
       db
         .select({
           id: matches.id,
@@ -51,9 +50,9 @@ const getLeaderboardData = unstable_cache(
         .from(predictions)
         .where(eq(predictions.groupId, groupId)),
       db
-        .select({ knockoutScoring: tournaments.knockoutScoring })
-        .from(tournaments)
-        .where(eq(tournaments.id, tournamentId))
+        .select({ knockoutScoring: groups.knockoutScoring })
+        .from(groups)
+        .where(eq(groups.id, groupId))
         .limit(1),
     ]);
 
@@ -61,7 +60,7 @@ const getLeaderboardData = unstable_cache(
       memberRows,
       allMatches,
       allPreds,
-      knockoutScoring: tournament?.knockoutScoring ?? null,
+      knockoutScoring: groupRow?.knockoutScoring ?? null,
     };
   },
   ["leaderboard-data"],

@@ -12,7 +12,7 @@ import {
 import { getSession } from "@/lib/session";
 import { getTournamentStart } from "@/lib/tournament";
 import { getGroupForMember } from "@/lib/group-access";
-import { calcPoints, type ScoreResult } from "@/lib/scoring";
+import { calcPoints, calcExtendedPoints, type ScoreResult } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
 import BackLink from "@/components/BackLink";
 import { getLocale } from "@/lib/locale";
@@ -98,11 +98,21 @@ export default async function MemberPredictionsPage(
     if (tm.logoUrl) logoByCode[tm.code] = tm.logoUrl;
   }
 
-  const predMap = new Map<number, { homeScore: number; awayScore: number }>();
+  const isExtended = ctx.knockoutScoring === "extended";
+
+  const predMap = new Map<number, {
+    homeScore: number; awayScore: number;
+    homeScoreAet: number | null; awayScoreAet: number | null;
+    penaltyHome: number | null; penaltyAway: number | null;
+  }>();
   for (const p of userPreds) {
     predMap.set(p.matchId, {
       homeScore: p.homeScore,
       awayScore: p.awayScore,
+      homeScoreAet: p.homeScoreAet,
+      awayScoreAet: p.awayScoreAet,
+      penaltyHome: p.penaltyHome,
+      penaltyAway: p.penaltyAway,
     });
   }
 
@@ -121,7 +131,15 @@ export default async function MemberPredictionsPage(
       m.homeScore,
       m.awayScore
     );
-    total += points;
+    let totalPts = points;
+    if (isExtended && m.homeFrom != null) {
+      const { aetPoints, penPoints } = calcExtendedPoints(
+        { homeScoreAet: p.homeScoreAet, awayScoreAet: p.awayScoreAet, penaltyHome: p.penaltyHome, penaltyAway: p.penaltyAway },
+        { homeScoreAet: m.homeScoreAet, awayScoreAet: m.awayScoreAet, penaltyHome: m.penaltyHome, penaltyAway: m.penaltyAway }
+      );
+      totalPts += aetPoints + penPoints;
+    }
+    total += totalPts;
     played += 1;
     if (result === "exact") exact += 1;
     else if (result === "outcome") outcome += 1;
