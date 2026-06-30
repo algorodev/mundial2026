@@ -217,6 +217,7 @@ export default async function MemberPredictionsPage(
                   match={m}
                   pred={predMap.get(m.id)}
                   predHidden={hiddenUntilKickoff && !predMap.has(m.id) && rawPredByMatch.has(m.id)}
+                  showExtended={isExtended && m.homeFrom != null}
                   tilt={idx % 2 === 0 ? "even" : "odd"}
                   homeLogoUrl={m.homeCode ? logoByCode[m.homeCode] ?? null : null}
                   awayLogoUrl={m.awayCode ? logoByCode[m.awayCode] ?? null : null}
@@ -261,6 +262,7 @@ function ReadOnlyMatchCard({
   match,
   pred,
   predHidden = false,
+  showExtended = false,
   tilt,
   homeLogoUrl,
   awayLogoUrl,
@@ -272,8 +274,13 @@ function ReadOnlyMatchCard({
   labelGroup,
 }: {
   match: MatchRow;
-  pred: { homeScore: number; awayScore: number } | undefined;
+  pred: {
+    homeScore: number; awayScore: number;
+    homeScoreAet: number | null; awayScoreAet: number | null;
+    penaltyHome: number | null; penaltyAway: number | null;
+  } | undefined;
   predHidden?: boolean;
+  showExtended?: boolean;
   tilt: "even" | "odd";
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
@@ -404,6 +411,20 @@ function ReadOnlyMatchCard({
           </div>
         </div>
       </div>
+
+      {/* Pronóstico extendido (prórroga + penaltis) */}
+      {showExtended && hasPred && !predHidden && (
+        <div className="mt-3 pt-3 border-t-2 border-dashed border-pitch-950/20 font-mono text-[10px] text-pitch-700 uppercase tracking-widest text-center space-y-0.5">
+          {(pred!.homeScoreAet != null || pred!.awayScoreAet != null) && (
+            <div>
+              {labelAetLabel}: {pred!.homeScoreAet ?? "—"} · {pred!.awayScoreAet ?? "—"}
+            </div>
+          )}
+          {(pred!.penaltyHome != null || pred!.penaltyAway != null) && (
+            <div>PEN {pred!.penaltyHome ?? "—"}-{pred!.penaltyAway ?? "—"}</div>
+          )}
+        </div>
+      )}
 
       {hasResult && (
         <div className="mt-4 pt-3 border-t-2 border-dashed border-pitch-950/30 text-center">
