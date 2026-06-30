@@ -111,8 +111,14 @@ export async function resolveKnockoutPlaceholders(
     .from(matches)
     .where(eq(matches.tournamentId, tournamentId));
 
+  // Re-evalúa todos los partidos con regla machine-readable (match:/group:).
+  // Los "thirds:*" los completa un admin a mano — parseSourceRule los ignora.
+  // Re-evaluar siempre garantiza que si un resultado fuente cambia (corrección
+  // de marcador), el equipo en el cruce downstream también se actualiza.
   const pending = all.filter(
-    (m) => (m.homeFrom && !m.homeCode) || (m.awayFrom && !m.awayCode)
+    (m) =>
+      (m.homeFrom && !m.homeFrom.startsWith("thirds:")) ||
+      (m.awayFrom && !m.awayFrom.startsWith("thirds:"))
   );
   if (pending.length === 0) return [];
 
@@ -150,12 +156,26 @@ export async function resolveKnockoutPlaceholders(
     if (!source || source.homeScore == null || source.awayScore == null) {
       return null;
     }
-    // Empate a falta de prórroga/penaltis (que no registramos): no sabemos
-    // quién avanzó realmente, así que no resolvemos.
-    if (source.homeScore === source.awayScore) return null;
     if (!source.homeCode || !source.awayCode) return null;
 
-    const homeWon = source.homeScore > source.awayScore;
+    let homeWon: boolean;
+    if (source.homeScore !== source.awayScore) {
+      homeWon = source.homeScore > source.awayScore;
+    } else if (
+      source.homeScoreAet != null &&
+      source.awayScoreAet != null &&
+      source.homeScoreAet !== source.awayScoreAet
+    ) {
+      // Decidido en prórroga
+      homeWon = source.homeScoreAet > source.awayScoreAet;
+    } else if (source.penaltyHome != null && source.penaltyAway != null) {
+      // Decidido en penaltis
+      homeWon = source.penaltyHome > source.penaltyAway;
+    } else {
+      // Empate sin datos de prórroga/penaltis aún → no resolver todavía
+      return null;
+    }
+
     const wantHome = parsed.outcome === "W" ? homeWon : !homeWon;
     return wantHome
       ? { code: source.homeCode, name: source.homeTeam, flag: source.homeFlag }
@@ -166,17 +186,18 @@ export async function resolveKnockoutPlaceholders(
   for (const m of pending) {
     const update: Partial<typeof matches.$inferInsert> = {};
 
-    if (m.homeFrom && !m.homeCode) {
+    if (m.homeFrom && !m.homeFrom.startsWith("thirds:")) {
       const team = resolveTeam(m.homeFrom);
-      if (team) {
+      // Solo escribe si resolvimos Y el código cambió (evita writes innecesarios)
+      if (team && team.code !== m.homeCode) {
         update.homeCode = team.code;
         update.homeTeam = team.name;
         update.homeFlag = team.flag;
       }
     }
-    if (m.awayFrom && !m.awayCode) {
+    if (m.awayFrom && !m.awayFrom.startsWith("thirds:")) {
       const team = resolveTeam(m.awayFrom);
-      if (team) {
+      if (team && team.code !== m.awayCode) {
         update.awayCode = team.code;
         update.awayTeam = team.name;
         update.awayFlag = team.flag;

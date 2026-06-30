@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
+import { resolveKnockoutPlaceholders } from "@/lib/knockout";
 
 export async function POST(req: NextRequest, props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
@@ -64,6 +65,9 @@ export async function POST(req: NextRequest, props: { params: Promise<{ slug: st
         { status: 404 }
       );
     }
+
+    // Propaga el resultado a los cruces de eliminatoria downstream de inmediato.
+    await resolveKnockoutPlaceholders(tournament.id);
 
     return NextResponse.json({ ok: true });
   } catch (e) {
