@@ -211,6 +211,7 @@ export default async function MemberPredictionsPage(
                   labelSign={t.match.signBadge}
                   labelNoPred={t.match.noPrediction}
                   labelRealResult={t.predictions.realResult}
+                  labelAetLabel={t.predictions.aetLabel}
                   labelGroup={t.predictions.group}
                 />
               ))}
@@ -253,6 +254,7 @@ function ReadOnlyMatchCard({
   labelSign,
   labelNoPred,
   labelRealResult,
+  labelAetLabel,
   labelGroup,
 }: {
   match: MatchRow;
@@ -264,9 +266,12 @@ function ReadOnlyMatchCard({
   labelSign: string;
   labelNoPred: string;
   labelRealResult: string;
+  labelAetLabel: string;
   labelGroup: string;
 }) {
   const hasResult = match.homeScore != null && match.awayScore != null;
+  const hasAet = match.homeScoreAet != null && match.awayScoreAet != null;
+  const hasPen = match.penaltyHome != null && match.penaltyAway != null;
   const hasPred = pred !== undefined;
 
   let cromoBg = "bg-paper-50";
@@ -389,6 +394,16 @@ function ReadOnlyMatchCard({
             {match.homeScore} <span className="text-brick-500">·</span>{" "}
             {match.awayScore}
           </div>
+          {hasAet && (
+            <div className="mt-1 font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
+              {labelAetLabel}: {match.homeScoreAet} · {match.awayScoreAet}
+              {hasPen && (
+                <span className="ml-2">
+                  · PEN {match.penaltyHome}-{match.penaltyAway}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
     </article>

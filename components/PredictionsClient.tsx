@@ -798,7 +798,7 @@ function MatchCard({
             {match.homeScore} <span className="text-brick-500">·</span>{" "}
             {match.awayScore}
           </div>
-          {showExtended && hasAet && (
+          {hasAet && (
             <div className="mt-1 font-mono text-[10px] text-pitch-700 uppercase tracking-widest">
               {labelAetLabel}: {match.homeScoreAet} · {match.awayScoreAet}
               {hasPen && (
