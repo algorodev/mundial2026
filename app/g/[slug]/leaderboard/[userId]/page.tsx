@@ -10,8 +10,10 @@ import {
   groupMembers,
 } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { getTournamentStart } from "@/lib/tournament";
+import { getTournamentStart, getPhaseStarts } from "@/lib/tournament";
 import { getGroupForMember } from "@/lib/group-access";
+import { isMatchLocked } from "@/lib/lock";
+import { phaseKeyFor } from "@/lib/knockout-phases";
 import { calcPoints, calcExtendedPoints, type ScoreResult } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
 import BackLink from "@/components/BackLink";
@@ -44,9 +46,7 @@ export default async function MemberPredictionsPage(
 
   const start = await getTournamentStart(ctx.tournamentId);
   const startMs = start ? new Date(start.iso).getTime() : null;
-  // El grupo puede configurarse en visibility='open': los pronósticos del
-  // resto siempre son visibles. Si está en 'hidden-until-lock' (default),
-  // sólo se ven cuando arranca el torneo.
+  // Acceso a la página: solo cuando el torneo ha arrancado (o visible=open).
   const peerVisible =
     ctx.predictionsVisibility === "open" ||
     (startMs != null && Date.now() >= startMs);
@@ -72,7 +72,7 @@ export default async function MemberPredictionsPage(
 
   if (!member) notFound();
 
-  const [allMatches, userPreds, tournamentTeams] = await Promise.all([
+  const [allMatches, userPreds, tournamentTeams, phaseStarts] = await Promise.all([
     db
       .select()
       .from(matches)
@@ -91,6 +91,10 @@ export default async function MemberPredictionsPage(
       .select({ code: teams.code, logoUrl: teams.logoUrl })
       .from(teams)
       .where(eq(teams.tournamentId, ctx.tournamentId)),
+    // Necesario para el gate de visibilidad en modo tournament-start
+    ctx.predictionsVisibility === "hidden-until-lock"
+      ? getPhaseStarts(ctx.tournamentId)
+      : Promise.resolve(null),
   ]);
 
   const logoByCode: Record<string, string> = {};
@@ -98,14 +102,44 @@ export default async function MemberPredictionsPage(
     if (tm.logoUrl) logoByCode[tm.code] = tm.logoUrl;
   }
 
+  const { predictionsVisibility, predictionLockMode, lockMinutesBefore } = ctx!;
+
+  // En hidden-until-lock la predicción de un partido solo es visible cuando
+  // ese partido ya está bloqueado (criterio depende del lock mode del grupo).
+  function isPredLocked(match: MatchRow): boolean {
+    if (predictionsVisibility === "open") return true;
+    return isMatchLocked(
+      match,
+      { predictionLockMode, lockMinutesBefore },
+      phaseStarts
+        ? (groupName: string | null) => {
+            const entry = phaseStarts[phaseKeyFor(groupName)];
+            return entry ? new Date(entry.iso).getTime() : null;
+          }
+        : null
+    );
+  }
+
   const isExtended = ctx.knockoutScoring === "extended";
 
+  // Índice rápido por matchId para saber qué ha pronosticado el usuario
+  const rawPredByMatch = new Map<number, typeof userPreds[number]>();
+  for (const p of userPreds) rawPredByMatch.set(p.matchId, p);
+
+  // Índice rápido por matchId para lookup en el render
+  const matchById = new Map<number, MatchRow>();
+  for (const m of allMatches) matchById.set(m.id, m);
+
+  // Solo incluimos la predicción en el map si el partido ya está bloqueado
+  // (hidden-until-lock respeta el lockMode del grupo partido a partido).
   const predMap = new Map<number, {
     homeScore: number; awayScore: number;
     homeScoreAet: number | null; awayScoreAet: number | null;
     penaltyHome: number | null; penaltyAway: number | null;
   }>();
   for (const p of userPreds) {
+    const m = matchById.get(p.matchId);
+    if (!m || !isPredLocked(m)) continue;
     predMap.set(p.matchId, {
       homeScore: p.homeScore,
       awayScore: p.awayScore,
@@ -204,12 +238,14 @@ export default async function MemberPredictionsPage(
                   key={m.id}
                   match={m}
                   pred={predMap.get(m.id)}
+                  predHidden={!isPredLocked(m) && rawPredByMatch.has(m.id)}
                   tilt={idx % 2 === 0 ? "even" : "odd"}
                   homeLogoUrl={m.homeCode ? logoByCode[m.homeCode] ?? null : null}
                   awayLogoUrl={m.awayCode ? logoByCode[m.awayCode] ?? null : null}
                   labelExact={t.match.exactBadge}
                   labelSign={t.match.signBadge}
                   labelNoPred={t.match.noPrediction}
+                  labelPredHidden={t.match.predictionHidden}
                   labelRealResult={t.predictions.realResult}
                   labelAetLabel={t.predictions.aetLabel}
                   labelGroup={t.predictions.group}
@@ -247,24 +283,28 @@ function Stat({
 function ReadOnlyMatchCard({
   match,
   pred,
+  predHidden,
   tilt,
   homeLogoUrl,
   awayLogoUrl,
   labelExact,
   labelSign,
   labelNoPred,
+  labelPredHidden,
   labelRealResult,
   labelAetLabel,
   labelGroup,
 }: {
   match: MatchRow;
   pred: { homeScore: number; awayScore: number } | undefined;
+  predHidden: boolean;
   tilt: "even" | "odd";
   homeLogoUrl: string | null;
   awayLogoUrl: string | null;
   labelExact: string;
   labelSign: string;
   labelNoPred: string;
+  labelPredHidden: string;
   labelRealResult: string;
   labelAetLabel: string;
   labelGroup: string;
@@ -307,7 +347,7 @@ function ReadOnlyMatchCard({
         </span>
       );
     }
-  } else if (!hasPred) {
+  } else if (!hasPred && !predHidden) {
     cromoBg = "bg-paper-200";
   }
 
@@ -339,7 +379,12 @@ function ReadOnlyMatchCard({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {pointsBadge}
-          {!hasPred && (
+          {predHidden && (
+            <span className="font-display text-[10px] bg-pitch-800 text-chalk-400 px-2 py-1 border-2 border-pitch-950 tracking-wider">
+              {labelPredHidden}
+            </span>
+          )}
+          {!hasPred && !predHidden && (
             <span className="font-display text-[10px] bg-pitch-950 text-brick-400 px-2 py-1 border-2 border-pitch-950 tracking-wider">
               {labelNoPred}
             </span>
@@ -364,9 +409,9 @@ function ReadOnlyMatchCard({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <ScoreBox value={hasPred ? pred!.homeScore : null} />
+          <ScoreBox value={hasPred ? pred!.homeScore : null} locked={predHidden} />
           <span className="text-pitch-950 font-display text-3xl">·</span>
-          <ScoreBox value={hasPred ? pred!.awayScore : null} />
+          <ScoreBox value={hasPred ? pred!.awayScore : null} locked={predHidden} />
         </div>
 
         <div className="text-left min-w-0">
@@ -410,10 +455,12 @@ function ReadOnlyMatchCard({
   );
 }
 
-function ScoreBox({ value }: { value: number | null }) {
+function ScoreBox({ value, locked }: { value: number | null; locked?: boolean }) {
   return (
     <div className="w-14 h-14 flex items-center justify-center text-2xl font-display bg-paper-50 border-2 border-pitch-950 text-pitch-950 rounded-lg shadow-brutal-sm">
-      {value == null ? (
+      {locked ? (
+        <span className="text-pitch-700/40 text-base">🔒</span>
+      ) : value == null ? (
         <span className="text-pitch-700/40">—</span>
       ) : (
         value
