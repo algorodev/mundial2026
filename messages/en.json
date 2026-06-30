@@ -201,7 +201,6 @@
     "exactBadge": "+4 EXACT",
     "signBadge": "+1 OUTCOME",
     "noPrediction": "NO PICK",
-    "predictionHidden": "🔒 HIDDEN",
     "errorSaving": "Error saving",
     "goalsLabel": "Goals {team}",
     "aetLabel": "Extra time (120')",
@@ -370,7 +369,6 @@
     "exactBadge": "+4 EXACT",
     "signBadge": "+1 OUTCOME",
     "noPrediction": "NO PICK",
-    "predictionHidden": "🔒 HIDDEN",
     "noStandings": "This tournament has no synced standings.",
     "group": "GROUP {name}"
   },

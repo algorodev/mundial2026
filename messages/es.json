@@ -201,7 +201,6 @@
     "exactBadge": "+4 EXACTO",
     "signBadge": "+1 SIGNO",
     "noPrediction": "SIN PRONÓSTICO",
-    "predictionHidden": "🔒 OCULTO",
     "errorSaving": "Error al guardar",
     "goalsLabel": "Goles {team}",
     "aetLabel": "Prórroga (120')",
@@ -370,7 +369,6 @@
     "exactBadge": "+4 EXACTO",
     "signBadge": "+1 SIGNO",
     "noPrediction": "SIN PRONÓSTICO",
-    "predictionHidden": "🔒 OCULTO",
     "noStandings": "Este torneo no tiene clasificación sincronizada.",
     "group": "GRUPO {name}"
   },
