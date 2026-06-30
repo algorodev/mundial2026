@@ -86,14 +86,14 @@ export const KNOCKOUT_2026_MATCHES: KnockoutMatchData[] = [
   m(88,  "R32", [2026, 7,  4,  1, 30], "1º Grupo K",  "group:K:1",        "3º (D/E/I/J/L)",      "thirds:D,E,I,J,L", "Kansas City"),
 
   // ─── Octavos (R16) ────────────────────────────────────────────────────
-  m(89,  "R16", [2026, 7,  4, 17,  0], "Ganador Partido 73", "match:73:W", "Ganador Partido 75",  "match:75:W",       "Houston"),
+  m(89,  "R16", [2026, 7,  4, 17,  0], "Ganador Partido 73", "match:73:W", "Ganador Partido 76",  "match:76:W",       "Houston"),
   m(90,  "R16", [2026, 7,  4, 21,  0], "Ganador Partido 74", "match:74:W", "Ganador Partido 77",  "match:77:W",       "Filadelfia"),
-  m(91,  "R16", [2026, 7,  5, 20,  0], "Ganador Partido 76", "match:76:W", "Ganador Partido 78",  "match:78:W",       "Nueva York/Nueva Jersey"),
+  m(91,  "R16", [2026, 7,  5, 20,  0], "Ganador Partido 75", "match:75:W", "Ganador Partido 78",  "match:78:W",       "Nueva York/Nueva Jersey"),
   m(92,  "R16", [2026, 7,  6,  0,  0], "Ganador Partido 79", "match:79:W", "Ganador Partido 80",  "match:80:W",       "Ciudad de México"),
   m(93,  "R16", [2026, 7,  6, 19,  0], "Ganador Partido 83", "match:83:W", "Ganador Partido 84",  "match:84:W",       "Dallas"),
   m(94,  "R16", [2026, 7,  7,  0,  0], "Ganador Partido 81", "match:81:W", "Ganador Partido 82",  "match:82:W",       "Seattle"),
-  m(95,  "R16", [2026, 7,  7, 16,  0], "Ganador Partido 86", "match:86:W", "Ganador Partido 88",  "match:88:W",       "Atlanta"),
-  m(96,  "R16", [2026, 7,  7, 20,  0], "Ganador Partido 85", "match:85:W", "Ganador Partido 87",  "match:87:W",       "Vancouver"),
+  m(95,  "R16", [2026, 7,  7, 16,  0], "Ganador Partido 86", "match:86:W", "Ganador Partido 87",  "match:87:W",       "Atlanta"),
+  m(96,  "R16", [2026, 7,  7, 20,  0], "Ganador Partido 85", "match:85:W", "Ganador Partido 88",  "match:88:W",       "Vancouver"),
 
   // ─── Cuartos ──────────────────────────────────────────────────────────
   m(97,  "Cuartos",   [2026, 7,  9, 20,  0], "Ganador Partido 89", "match:89:W", "Ganador Partido 90",  "match:90:W",  "Boston"),
