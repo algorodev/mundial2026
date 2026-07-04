@@ -87,8 +87,8 @@ export const KNOCKOUT_2026_MATCHES: KnockoutMatchData[] = [
 
   // ─── Octavos (R16) ────────────────────────────────────────────────────
   m(89,  "R16", [2026, 7,  4, 17,  0], "Ganador Partido 73", "match:73:W", "Ganador Partido 76",  "match:76:W",       "Houston"),
-  m(90,  "R16", [2026, 7,  4, 21,  0], "Ganador Partido 74", "match:74:W", "Ganador Partido 77",  "match:77:W",       "Filadelfia"),
-  m(91,  "R16", [2026, 7,  5, 20,  0], "Ganador Partido 75", "match:75:W", "Ganador Partido 78",  "match:78:W",       "Nueva York/Nueva Jersey"),
+  m(90,  "R16", [2026, 7,  4, 21,  0], "Ganador Partido 75", "match:75:W", "Ganador Partido 78",  "match:78:W",       "Filadelfia"),
+  m(91,  "R16", [2026, 7,  5, 20,  0], "Ganador Partido 74", "match:74:W", "Ganador Partido 77",  "match:77:W",       "Nueva York/Nueva Jersey"),
   m(92,  "R16", [2026, 7,  6,  0,  0], "Ganador Partido 79", "match:79:W", "Ganador Partido 80",  "match:80:W",       "Ciudad de México"),
   m(93,  "R16", [2026, 7,  6, 19,  0], "Ganador Partido 83", "match:83:W", "Ganador Partido 84",  "match:84:W",       "Dallas"),
   m(94,  "R16", [2026, 7,  7,  0,  0], "Ganador Partido 81", "match:81:W", "Ganador Partido 82",  "match:82:W",       "Seattle"),
