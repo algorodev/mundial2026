@@ -9,7 +9,6 @@ import { calcPoints } from "@/lib/scoring";
 import TeamBadge from "@/components/TeamBadge";
 import MatchDetailClient from "@/components/MatchDetailClient";
 import BackLink from "@/components/BackLink";
-import { getTournamentStart } from "@/lib/tournament";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
@@ -93,11 +92,12 @@ export default async function MatchDetailPage(props: {
   const homeApiTeamId = homeTeamRow?.apiTeamId ?? null;
   const awayApiTeamId = awayTeamRow?.apiTeamId ?? null;
 
-  // Predicciones visibles cuando las predicciones están bloqueadas (el torneo ya arrancó).
-  const tournamentStart = await getTournamentStart(ctx.tournamentId);
-  const predictionsLocked = tournamentStart
-    ? new Date() >= new Date(tournamentStart.iso)
-    : false;
+  // Predicciones ajenas visibles según predictionsVisibility del grupo:
+  // "open" siempre, "hidden-until-lock" solo cuando ESTE partido ya arrancó
+  // (no cuando arrancó el torneo, que es un umbral distinto y mucho antes).
+  const predictionsLocked =
+    ctx.predictionsVisibility === "open" ||
+    Date.now() >= match.kickoffAt.getTime();
   const rawGroupPreds = predictionsLocked
     ? await db
         .select({
