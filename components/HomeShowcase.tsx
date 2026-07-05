@@ -178,7 +178,7 @@ function MockLive() {
         <span className="font-mono text-xs text-grass-400">2 - 1 · FT</span>
       </div>
       <div className="font-mono text-[9px] text-flame-400 uppercase tracking-widest mt-auto pt-1">
-        +3 puntos en este partido
+        +4 puntos en este partido
       </div>
     </>
   );
