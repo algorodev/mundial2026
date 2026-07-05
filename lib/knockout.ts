@@ -185,6 +185,7 @@ export async function resolveKnockoutPlaceholders(
   const resolvedNumbers: number[] = [];
   for (const m of pending) {
     const update: Partial<typeof matches.$inferInsert> = {};
+    let teamChanged = false;
 
     if (m.homeFrom && !m.homeFrom.startsWith("thirds:")) {
       const team = resolveTeam(m.homeFrom);
@@ -193,6 +194,7 @@ export async function resolveKnockoutPlaceholders(
         update.homeCode = team.code;
         update.homeTeam = team.name;
         update.homeFlag = team.flag;
+        teamChanged = true;
       }
     }
     if (m.awayFrom && !m.awayFrom.startsWith("thirds:")) {
@@ -201,7 +203,31 @@ export async function resolveKnockoutPlaceholders(
         update.awayCode = team.code;
         update.awayTeam = team.name;
         update.awayFlag = team.flag;
+        teamChanged = true;
       }
+    }
+
+    // Si el equipo de un lado cambia (p.ej. se corrige a mano un cruce mal
+    // resuelto por un bug previo), cualquier apiFixtureId/score que colgara
+    // de esta fila pertenecía al emparejamiento ANTERIOR y queda inválido:
+    // el cron lo re-descubrirá solo en su siguiente pasada. Sin este reset,
+    // un fixture/resultado mal enganchado sobrevive silenciosamente al cambio
+    // de equipo (así se coló el bug de M90/M91 con Paraguay-Francia).
+    if (
+      teamChanged &&
+      (m.apiFixtureId != null ||
+        m.homeScore != null ||
+        m.awayScore != null ||
+        m.resultSource != null)
+    ) {
+      update.apiFixtureId = null;
+      update.homeScore = null;
+      update.awayScore = null;
+      update.homeScoreAet = null;
+      update.awayScoreAet = null;
+      update.penaltyHome = null;
+      update.penaltyAway = null;
+      update.resultSource = null;
     }
 
     if (Object.keys(update).length > 0) {
