@@ -134,12 +134,27 @@ export async function GET(req: NextRequest) {
       if (m.apiFixtureId) byApiId.set(m.apiFixtureId, m);
     }
 
+    // Mapa code → apiTeamId de todo el torneo. Se usa tanto para el
+    // auto-mapeo de eliminatoria como para detectar si API-Football listó
+    // un fixture con home/away invertido respecto a nuestro bracket (pasa
+    // sobre todo en rondas de sede neutral: la API no respeta "quién es
+    // local" según el cruce, ver M93 ESP-POR y M94 BEL-USA del Mundial).
+    const teamRows = await db
+      .select({ code: teams.code, apiTeamId: teams.apiTeamId })
+      .from(teams)
+      .where(and(eq(teams.tournamentId, t.id), isNotNull(teams.apiTeamId)));
+    const teamIdByCode = new Map<string, number>();
+    for (const tr of teamRows) {
+      if (tr.apiTeamId) teamIdByCode.set(tr.code, tr.apiTeamId);
+    }
+
     // ─── Auto-mapeo de apiFixtureId para partidos de eliminatoria ────────
     // Los partidos KO se insertan como placeholders sin apiFixtureId.
     // Una vez que sus equipos se resuelven (homeCode/awayCode != null), el
     // cron intenta emparejarlos con los fixtures de API-Football usando el
-    // par (homeApiTeamId, awayApiTeamId). Así no hace falta ejecutar
-    // db:map-api manualmente cada vez que avanza una ronda.
+    // par (homeApiTeamId, awayApiTeamId), en cualquier orden (ver nota de
+    // swap arriba). Así no hace falta ejecutar db:map-api manualmente cada
+    // vez que avanza una ronda.
     try {
       const unmapped = await db
         .select()
@@ -154,21 +169,8 @@ export async function GET(req: NextRequest) {
         );
 
       if (unmapped.length > 0) {
-        const allCodes = new Set<string>();
-        for (const m of unmapped) {
-          if (m.homeCode) allCodes.add(m.homeCode);
-          if (m.awayCode) allCodes.add(m.awayCode);
-        }
-        const teamRows = await db
-          .select({ code: teams.code, apiTeamId: teams.apiTeamId })
-          .from(teams)
-          .where(and(eq(teams.tournamentId, t.id), isNotNull(teams.apiTeamId)));
-        const teamIdByCode = new Map<string, number>();
-        for (const tr of teamRows) {
-          if (tr.apiTeamId) teamIdByCode.set(tr.code, tr.apiTeamId);
-        }
-
-        // Mapa (homeApiTeamId, awayApiTeamId) → match para emparejar
+        // Mapa (apiTeamId-apiTeamId) → match, en ambos órdenes, para tolerar
+        // el swap de home/away de la API.
         const byTeamPair = new Map<string, Match>();
         for (const m of unmapped) {
           if (!m.homeCode || !m.awayCode) continue;
@@ -176,6 +178,7 @@ export async function GET(req: NextRequest) {
           const awayId = teamIdByCode.get(m.awayCode);
           if (!homeId || !awayId) continue;
           byTeamPair.set(`${homeId}-${awayId}`, m);
+          byTeamPair.set(`${awayId}-${homeId}`, m);
         }
 
         for (const fx of fixtures) {
@@ -190,7 +193,10 @@ export async function GET(req: NextRequest) {
           const mapped: Match = { ...m, apiFixtureId: fx.fixture.id };
           byApiId.set(fx.fixture.id, mapped);
           tMatches.push(mapped);
-          byTeamPair.delete(key);
+          const homeId = teamIdByCode.get(m.homeCode!);
+          const awayId = teamIdByCode.get(m.awayCode!);
+          byTeamPair.delete(`${homeId}-${awayId}`);
+          byTeamPair.delete(`${awayId}-${homeId}`);
           s.autoMapped++;
           console.log(
             `[cron] Auto-mapeado fixture ${fx.fixture.id} → partido ${m.matchNumber} (${m.homeCode} vs ${m.awayCode})`
@@ -241,21 +247,35 @@ export async function GET(req: NextRequest) {
         s.skippedNotFinal++;
         continue;
       }
-      const home = isFinal ? fx.score.fulltime.home : fx.goals.home;
-      const away = isFinal ? fx.score.fulltime.away : fx.goals.away;
-      if (home === null || away === null) continue;
+
+      // API-Football no siempre respeta nuestro home/away (rondas de sede
+      // neutral, ver M93/M94 del Mundial): si el "home" del fixture es en
+      // realidad nuestro equipo away, invertimos al leer el marcador.
+      const ourHomeApiId = ours.homeCode ? teamIdByCode.get(ours.homeCode) : undefined;
+      const swapped =
+        ourHomeApiId !== undefined && fx.teams.away.id === ourHomeApiId;
+
+      const homeRaw = isFinal ? fx.score.fulltime.home : fx.goals.home;
+      const awayRaw = isFinal ? fx.score.fulltime.away : fx.goals.away;
+      if (homeRaw === null || awayRaw === null) continue;
+      const home = swapped ? awayRaw : homeRaw;
+      const away = swapped ? homeRaw : awayRaw;
 
       // AET/PEN: score.extratime = marcador acumulado tras prórroga (120').
       // score.penalty = resultado de la tanda de penaltis.
       const statusShort = fx.fixture.status.short;
-      const homeAet = isFinal && (statusShort === "AET" || statusShort === "PEN")
+      const homeAetRaw = isFinal && (statusShort === "AET" || statusShort === "PEN")
         ? fx.score.extratime.home
         : null;
-      const awayAet = isFinal && (statusShort === "AET" || statusShort === "PEN")
+      const awayAetRaw = isFinal && (statusShort === "AET" || statusShort === "PEN")
         ? fx.score.extratime.away
         : null;
-      const penHome = isFinal && statusShort === "PEN" ? fx.score.penalty.home : null;
-      const penAway = isFinal && statusShort === "PEN" ? fx.score.penalty.away : null;
+      const penHomeRaw = isFinal && statusShort === "PEN" ? fx.score.penalty.home : null;
+      const penAwayRaw = isFinal && statusShort === "PEN" ? fx.score.penalty.away : null;
+      const homeAet = swapped ? awayAetRaw : homeAetRaw;
+      const awayAet = swapped ? homeAetRaw : awayAetRaw;
+      const penHome = swapped ? penAwayRaw : penHomeRaw;
+      const penAway = swapped ? penHomeRaw : penAwayRaw;
 
       const scoreChanged =
         ours.homeScore !== home || ours.awayScore !== away ||
@@ -311,6 +331,9 @@ export async function GET(req: NextRequest) {
       // Recorremos en orden cronológico. Mantenemos un cómputo local del
       // marcador parcial para incluirlo en la notificación del gol —
       // entre gol y gol cambia y queremos mostrar el correcto.
+      // ourHomeApiId: mismo motivo que en el score update — API-Football
+      // no siempre respeta nuestro home/away en sede neutral.
+      const ourHomeApiId = ours.homeCode ? teamIdByCode.get(ours.homeCode) : undefined;
       let runningHome = 0;
       let runningAway = 0;
       const sorted = [...events].sort(
@@ -325,7 +348,10 @@ export async function GET(req: NextRequest) {
         const extra = ev.time.extra;
         const playerName = ev.player.name ?? "—";
         const teamName = ev.team.name;
-        const isHomeTeam = ev.team.id === fx.teams.home.id;
+        const isHomeTeam =
+          ourHomeApiId !== undefined
+            ? ev.team.id === ourHomeApiId
+            : ev.team.id === fx.teams.home.id;
 
         if (ev.type === "Goal" && ev.detail !== "Missed Penalty") {
           // El "Own Goal" en la API se atribuye al equipo CONTRA el que va el
