@@ -46,6 +46,12 @@ export default function HomeCompare() {
       excel: { v: "parcial", note: t.homeCompare.excelFreeNote },
       biwenger: { v: "parcial", note: t.homeCompare.biwengerFreeNote },
     },
+    {
+      featureKey: "featureTournamentContext",
+      porra: { v: true, note: t.homeCompare.porraContextNote },
+      excel: { v: false, note: t.homeCompare.excelContextNote },
+      biwenger: { v: "parcial", note: t.homeCompare.biwengerContextNote },
+    },
   ];
 
   return (
