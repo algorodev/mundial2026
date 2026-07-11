@@ -66,6 +66,19 @@ type GroupPred = {
   isMe: boolean;
 };
 
+type VenueMeta = {
+  stadiumName: string;
+  city: string;
+  country: string;
+  capacity: number;
+} | null;
+
+type TeamMeta = {
+  fifaRanking: number | null;
+  nickname: string | null;
+  confederation: string;
+} | null;
+
 // ─── Componente principal ───────────────────────────────────────────────
 
 export default function MatchDetailClient({
@@ -83,6 +96,10 @@ export default function MatchDetailClient({
   groupPredictions,
   hasApiFixture,
   kickoffAtIso,
+  venue,
+  homeMeta,
+  awayMeta,
+  channel,
 }: {
   matchId: number;
   homeTeam: string;
@@ -98,6 +115,10 @@ export default function MatchDetailClient({
   groupPredictions: GroupPred[];
   hasApiFixture: boolean;
   kickoffAtIso: string;
+  venue?: VenueMeta;
+  homeMeta?: TeamMeta;
+  awayMeta?: TeamMeta;
+  channel?: string | null;
 }) {
   const [lineups, setLineups] = useState<LoadState<Lineup[]>>({
     status: "idle",
@@ -173,9 +194,29 @@ export default function MatchDetailClient({
     };
   }, [matchId]);
 
+  const contextSection = (
+    <ContextSection
+      venue={venue}
+      channel={channel}
+      homeTeam={homeTeam}
+      awayTeam={awayTeam}
+      homeCode={homeCode}
+      awayCode={awayCode}
+      homeFlag={homeFlag}
+      awayFlag={awayFlag}
+      homeLogoUrl={homeLogoUrl}
+      awayLogoUrl={awayLogoUrl}
+      homeMeta={homeMeta}
+      awayMeta={awayMeta}
+      matchId={matchId}
+      kickoffAtIso={kickoffAtIso}
+    />
+  );
+
   if (!hasApiFixture) {
     return (
       <div className="space-y-6">
+        {contextSection}
         {groupPredictions.length > 0 && (
           <GroupPredictionsSection preds={groupPredictions} />
         )}
@@ -186,6 +227,7 @@ export default function MatchDetailClient({
 
   return (
     <div className="space-y-6">
+      {contextSection}
       {groupPredictions.length > 0 && (
         <GroupPredictionsSection preds={groupPredictions} />
       )}
@@ -276,6 +318,118 @@ function GroupPredictionsSection({ preds }: { preds: GroupPred[] }) {
         })}
       </ul>
     </section>
+  );
+}
+
+// Ficha de contexto del Mundial: sede + aforo, dónde ver en España y
+// mini-fichas de selección (ranking FIFA / apodo / confederación). Dato
+// estático (lib/venues-2026.ts, lib/team-meta-2026.ts, lib/broadcast-2026.ts),
+// siempre visible aunque el partido no tenga apiFixtureId todavía.
+function ContextSection({
+  venue,
+  channel,
+  homeTeam,
+  awayTeam,
+  homeCode,
+  awayCode,
+  homeFlag,
+  awayFlag,
+  homeLogoUrl,
+  awayLogoUrl,
+  homeMeta,
+  awayMeta,
+}: {
+  venue?: VenueMeta;
+  channel?: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  homeCode: string | null;
+  awayCode: string | null;
+  homeFlag: string | null;
+  awayFlag: string | null;
+  homeLogoUrl: string | null;
+  awayLogoUrl: string | null;
+  homeMeta?: TeamMeta;
+  awayMeta?: TeamMeta;
+  matchId: number;
+  kickoffAtIso: string;
+}) {
+  const { t } = useI18n();
+
+  if (!venue && !channel && !homeMeta && !awayMeta) return null;
+
+  return (
+    <section className="cromo bg-paper-50 text-pitch-950 p-5 sm:p-6">
+      <h2 className="font-display text-2xl sm:text-3xl mb-4 uppercase tracking-tight">
+        {t.match.context.title}
+      </h2>
+
+      {(venue || channel) && (
+        <div className="flex flex-wrap gap-2 mb-5">
+          {venue && (
+            <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest bg-pitch-100 text-pitch-700 px-2.5 py-1.5 rounded-sm">
+              🏟 {venue.stadiumName} · {venue.city} ·{" "}
+              {t.match.context.capacity.replace("{n}", venue.capacity.toLocaleString())}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest bg-pitch-100 text-pitch-700 px-2.5 py-1.5 rounded-sm">
+            📺 {t.match.context.watch}: {channel ?? t.match.context.watchTbd}
+          </span>
+        </div>
+      )}
+
+      {(homeMeta || awayMeta) && (
+        <div className="grid sm:grid-cols-2 gap-3">
+          <TeamMetaCard
+            name={homeTeam}
+            code={homeCode}
+            flag={homeFlag}
+            logoUrl={homeLogoUrl}
+            meta={homeMeta}
+          />
+          <TeamMetaCard
+            name={awayTeam}
+            code={awayCode}
+            flag={awayFlag}
+            logoUrl={awayLogoUrl}
+            meta={awayMeta}
+          />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TeamMetaCard({
+  name,
+  code,
+  flag,
+  logoUrl,
+  meta,
+}: {
+  name: string;
+  code: string | null;
+  flag: string | null;
+  logoUrl: string | null;
+  meta?: TeamMeta;
+}) {
+  const { t } = useI18n();
+  if (!meta) return null;
+  return (
+    <div className="flex items-center gap-3 bg-pitch-50 p-3 cromo-sm">
+      <TeamBadge code={code} flag={flag} logoUrl={logoUrl} alt={name} size="sm" />
+      <div className="min-w-0">
+        <div className="font-display uppercase text-sm truncate">
+          {meta.nickname ?? name}
+        </div>
+        <div className="font-mono text-[10px] uppercase tracking-widest text-pitch-500 truncate">
+          {meta.fifaRanking != null &&
+            t.match.context.ranking.replace("{rank}", String(meta.fifaRanking))}
+          {meta.fifaRanking != null && " · "}
+          {meta.confederation}
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -370,7 +370,17 @@
     "signBadge": "+1 SIGNO",
     "noPrediction": "SIN PRONÓSTICO",
     "noStandings": "Este torneo no tiene clasificación sincronizada.",
-    "group": "GRUPO {name}"
+    "group": "GRUPO {name}",
+    "context": {
+      "title": "Contexto",
+      "stadium": "Estadio",
+      "capacity": "aforo {n}",
+      "watch": "Dónde ver (España)",
+      "watchTbd": "Por confirmar",
+      "ranking": "Ranking FIFA #{rank}",
+      "weather": "Clima previsto",
+      "weatherLoading": "Consultando clima…"
+    }
   },
   "standings": {
     "loading": "Cargando clasificación…",

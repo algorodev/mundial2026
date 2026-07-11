@@ -370,7 +370,17 @@
     "signBadge": "+1 OUTCOME",
     "noPrediction": "NO PICK",
     "noStandings": "This tournament has no synced standings.",
-    "group": "GROUP {name}"
+    "group": "GROUP {name}",
+    "context": {
+      "title": "Context",
+      "stadium": "Stadium",
+      "capacity": "capacity {n}",
+      "watch": "Where to watch (Spain)",
+      "watchTbd": "TBD",
+      "ranking": "FIFA rank #{rank}",
+      "weather": "Forecast weather",
+      "weatherLoading": "Checking weather…"
+    }
   },
   "standings": {
     "loading": "Loading standings…",

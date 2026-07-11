@@ -11,6 +11,9 @@ import MatchDetailClient from "@/components/MatchDetailClient";
 import BackLink from "@/components/BackLink";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
+import { venueForStadium } from "@/lib/venues-2026";
+import { teamMetaForCode } from "@/lib/team-meta-2026";
+import { channelForMatch } from "@/lib/broadcast-2026";
 
 function TeamLink({
   slug,
@@ -144,6 +147,17 @@ export default async function MatchDetailPage(props: {
 
   const dateLabel = formatKickoff(match.kickoffAt);
 
+  // Contexto estático del Mundial 2026: sede, ficha de selección y dónde ver
+  // en España. Dato local (lib/*-2026.ts), no depende de API-Football.
+  const venue = venueForStadium(match.stadium);
+  const homeMeta = teamMetaForCode(match.homeCode);
+  const awayMeta = teamMetaForCode(match.awayCode);
+  const channel = channelForMatch({
+    homeCode: match.homeCode,
+    awayCode: match.awayCode,
+    groupName: match.groupName,
+  });
+
   return (
     <div className="pt-8">
       <BackLink href={`/g/${slug}`} className="mb-3">
@@ -223,6 +237,10 @@ export default async function MatchDetailPage(props: {
         groupPredictions={groupPredictions}
         hasApiFixture={match.apiFixtureId !== null}
         kickoffAtIso={match.kickoffAt.toISOString()}
+        venue={venue}
+        homeMeta={homeMeta}
+        awayMeta={awayMeta}
+        channel={channel}
       />
     </div>
   );
