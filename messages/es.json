@@ -510,7 +510,15 @@
     "knockoutTitle": "Prórroga y penaltis",
     "knockoutDesc": "En torneos con eliminatorias puedes pronosticar el resultado a los 120' y la tanda de penaltis. El exacto sube a 4 puntos y acertar penaltis da +1.",
     "squadTitle": "Plantilla de equipos",
-    "squadDesc": "La ficha de cada equipo ahora muestra la plantilla completa con jugadores por posición, número y edad."
+    "squadDesc": "La ficha de cada equipo ahora muestra la plantilla completa con jugadores por posición, número y edad.",
+    "contextTitle": "Contexto de cada partido",
+    "contextDesc": "En la ficha de partido ahora ves el clima previsto, el estadio con aforo, dónde verlo en España y el ranking FIFA/apodo de cada selección.",
+    "bracketTabTitle": "Cuadro de eliminatoria en su propia pestaña",
+    "bracketTabDesc": "El bracket del Mundial ya no vive dentro de Tabla: tiene su propia pestaña «Cuadro» para seguir quién pasa de ronda.",
+    "statsTitle": "Estadísticas de la porra",
+    "statsDesc": "Nueva pestaña «Estadísticas»: máximo acertante, racha de exactos, mejor jornada y mayor goleada acertada del grupo.",
+    "forecastTitle": "Forecast y quinielómetro",
+    "forecastDesc": "Probabilidad de campeón por selección y un medidor que te dice cuántos pronósticos abiertos te quedan por rellenar."
   },
   "pwaInstall": {
     "menuLabel": "Instalar app",

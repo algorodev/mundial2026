@@ -510,7 +510,15 @@
     "knockoutTitle": "Extra time & penalties",
     "knockoutDesc": "In knockout tournaments you can predict the 120' result and the penalty shootout. Exact results now worth 4 pts and nailing penalties gives +1.",
     "squadTitle": "Team squad",
-    "squadDesc": "Each team's page now shows the full squad with players by position, number and age."
+    "squadDesc": "Each team's page now shows the full squad with players by position, number and age.",
+    "contextTitle": "Context for every match",
+    "contextDesc": "Match detail now shows forecast weather, the stadium with capacity, where to watch it in Spain, and each team's FIFA rank/nickname.",
+    "bracketTabTitle": "Knockout bracket in its own tab",
+    "bracketTabDesc": "The World Cup bracket no longer lives inside Table: it has its own \"Bracket\" tab to follow who advances.",
+    "statsTitle": "Pool stats",
+    "statsDesc": "New \"Stats\" tab: top predictor, exact-hit streak, best round, and the group's biggest called blowout.",
+    "forecastTitle": "Forecast and prediction meter",
+    "forecastDesc": "Title odds per team plus a meter showing how many open picks you still have left to fill in."
   },
   "pwaInstall": {
     "menuLabel": "Install app",

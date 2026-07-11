@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useI18n } from "@/providers/I18nProvider";
 
-const VERSION = "0.5.0";
+const VERSION = "0.6.0";
 const STORAGE_KEY = "porrabros_whats_new_seen";
 
 export default function WhatsNewModal() {
@@ -24,19 +24,24 @@ export default function WhatsNewModal() {
 
   const changes = [
     {
-      icon: "📱",
-      title: t.whatsNew.pwaTitle,
-      desc: t.whatsNew.pwaDesc,
+      icon: "🌦",
+      title: t.whatsNew.contextTitle,
+      desc: t.whatsNew.contextDesc,
     },
     {
-      icon: "⚽",
-      title: t.whatsNew.knockoutTitle,
-      desc: t.whatsNew.knockoutDesc,
+      icon: "🏆",
+      title: t.whatsNew.bracketTabTitle,
+      desc: t.whatsNew.bracketTabDesc,
     },
     {
-      icon: "🛡",
-      title: t.whatsNew.squadTitle,
-      desc: t.whatsNew.squadDesc,
+      icon: "📊",
+      title: t.whatsNew.statsTitle,
+      desc: t.whatsNew.statsDesc,
+    },
+    {
+      icon: "🔮",
+      title: t.whatsNew.forecastTitle,
+      desc: t.whatsNew.forecastDesc,
     },
   ];
 
