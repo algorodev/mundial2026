@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useI18n } from "@/providers/I18nProvider";
 
-type Tab = "predictions" | "leaderboard" | "standings" | "bracket" | "manage";
+type Tab = "predictions" | "leaderboard" | "stats" | "standings" | "bracket" | "manage";
 
 export default function GroupTabs({
   slug,
@@ -19,6 +19,7 @@ export default function GroupTabs({
   const labels: Record<Tab, string> = {
     predictions: t.groupTabs.predictions,
     leaderboard: t.groupTabs.leaderboard,
+    stats: t.groupTabs.stats,
     standings: t.groupTabs.standings,
     bracket: t.groupTabs.bracket,
     manage: t.groupTabs.manage,
@@ -27,6 +28,7 @@ export default function GroupTabs({
   const tabs: { key: Tab; href: string }[] = [
     { key: "predictions", href: `/g/${slug}` },
     { key: "leaderboard", href: `/g/${slug}/leaderboard` },
+    { key: "stats", href: `/g/${slug}/stats` },
     { key: "standings", href: `/g/${slug}/standings` },
     { key: "bracket", href: `/g/${slug}/bracket` },
   ];

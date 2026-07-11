@@ -409,6 +409,30 @@
     "Final": "Final",
     "tbd": "Por decidir"
   },
+  "stats": {
+    "title": "Estadísticas de la porra",
+    "loading": "Cargando estadísticas…",
+    "errorLoading": "Error cargando estadísticas",
+    "empty": "Todavía no hay resultados para calcular estadísticas.",
+    "totalExact": "Exactos del grupo",
+    "totalPredictions": "Pronósticos resueltos",
+    "topAcertante": {
+      "title": "Máximo acertante",
+      "desc": "{name} lleva {exact} exactos ({total} pts)"
+    },
+    "longestStreak": {
+      "title": "Racha de exactos",
+      "desc": "{name} encadenó {streak} exactos seguidos"
+    },
+    "bestRound": {
+      "title": "Mejor jornada",
+      "desc": "{label} · {count} exactos entre todos"
+    },
+    "biggestBlowout": {
+      "title": "Mayor goleada acertada",
+      "desc": "{name} clavó el {home}-{away} en {homeTeam} - {awayTeam}"
+    }
+  },
   "profile": {
     "title": "MI PERFIL",
     "backToMyPools": "Mis porras",
@@ -531,6 +555,7 @@
   "groupTabs": {
     "predictions": "Pronósticos",
     "leaderboard": "Clasificación",
+    "stats": "Estadísticas",
     "standings": "Tabla",
     "bracket": "Cuadro",
     "manage": "Gestionar"

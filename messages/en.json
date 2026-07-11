@@ -409,6 +409,30 @@
     "Final": "Final",
     "tbd": "To be decided"
   },
+  "stats": {
+    "title": "Pool stats",
+    "loading": "Loading stats…",
+    "errorLoading": "Error loading stats",
+    "empty": "No results yet to compute stats.",
+    "totalExact": "Group exact hits",
+    "totalPredictions": "Resolved picks",
+    "topAcertante": {
+      "title": "Top predictor",
+      "desc": "{name} has {exact} exact hits ({total} pts)"
+    },
+    "longestStreak": {
+      "title": "Exact streak",
+      "desc": "{name} chained {streak} exact hits in a row"
+    },
+    "bestRound": {
+      "title": "Best round",
+      "desc": "{label} · {count} exact hits combined"
+    },
+    "biggestBlowout": {
+      "title": "Biggest called blowout",
+      "desc": "{name} nailed the {home}-{away} in {homeTeam} - {awayTeam}"
+    }
+  },
   "profile": {
     "title": "MY PROFILE",
     "backToMyPools": "My pools",
@@ -531,6 +555,7 @@
   "groupTabs": {
     "predictions": "Picks",
     "leaderboard": "Standings",
+    "stats": "Stats",
     "standings": "Table",
     "bracket": "Bracket",
     "manage": "Manage"
