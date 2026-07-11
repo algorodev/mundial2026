@@ -79,6 +79,13 @@ type TeamMeta = {
   confederation: string;
 } | null;
 
+type VenueWeather = {
+  tempC: number;
+  code: number;
+  label: string;
+  emoji: string;
+} | null;
+
 // ─── Componente principal ───────────────────────────────────────────────
 
 export default function MatchDetailClient({
@@ -127,6 +134,34 @@ export default function MatchDetailClient({
     status: "idle",
   });
   const [h2h, setH2H] = useState<LoadState<H2HFixture[]>>({ status: "idle" });
+  const [weather, setWeather] = useState<LoadState<VenueWeather | null>>({
+    status: "idle",
+  });
+
+  // Clima: solo tiene sentido pedirlo si hay sede mapeada (venue). El
+  // endpoint ya filtra por ventana de forecast de Open-Meteo, así que puede
+  // devolver weather: null sin ser un error (partido lejano o ya jugado).
+  useEffect(() => {
+    if (!venue) return;
+    let cancelled = false;
+    setWeather({ status: "loading" });
+    fetch(`/api/match/${matchId}/weather`, { cache: "no-store" })
+      .then(async (r) => {
+        const d = await r.json();
+        if (cancelled) return;
+        if (!r.ok) {
+          setWeather({ status: "error", error: d.error ?? "Error" });
+          return;
+        }
+        setWeather({ status: "ok", data: d.weather ?? null });
+      })
+      .catch((e) => {
+        if (!cancelled) setWeather({ status: "error", error: String(e) });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [matchId, venue]);
 
   // Lineups y eventos sólo tienen sentido si tenemos apiFixtureId mapeado.
   useEffect(() => {
@@ -198,6 +233,7 @@ export default function MatchDetailClient({
     <ContextSection
       venue={venue}
       channel={channel}
+      weather={weather}
       homeTeam={homeTeam}
       awayTeam={awayTeam}
       homeCode={homeCode}
@@ -328,6 +364,7 @@ function GroupPredictionsSection({ preds }: { preds: GroupPred[] }) {
 function ContextSection({
   venue,
   channel,
+  weather,
   homeTeam,
   awayTeam,
   homeCode,
@@ -341,6 +378,7 @@ function ContextSection({
 }: {
   venue?: VenueMeta;
   channel?: string | null;
+  weather?: LoadState<VenueWeather>;
   homeTeam: string;
   awayTeam: string;
   homeCode: string | null;
@@ -375,6 +413,17 @@ function ContextSection({
           <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest bg-pitch-100 text-pitch-700 px-2.5 py-1.5 rounded-sm">
             📺 {t.match.context.watch}: {channel ?? t.match.context.watchTbd}
           </span>
+          {weather?.status === "loading" && (
+            <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest bg-pitch-100 text-pitch-500 px-2.5 py-1.5 rounded-sm">
+              {t.match.context.weatherLoading}
+            </span>
+          )}
+          {weather?.status === "ok" && weather.data && (
+            <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-widest bg-pitch-100 text-pitch-700 px-2.5 py-1.5 rounded-sm">
+              {weather.data.emoji} {t.match.context.weather}: {weather.data.tempC}°C ·{" "}
+              {weather.data.label}
+            </span>
+          )}
         </div>
       )}
 
