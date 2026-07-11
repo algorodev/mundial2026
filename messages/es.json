@@ -185,6 +185,10 @@
     "errorCreating": "Error creando el grupo"
   },
   "predictions": {
+    "meter": {
+      "title": "Quinielómetro",
+      "desc": "Has rellenado {done} de {total} pronósticos abiertos"
+    },
     "locked": "🔒 El torneo ha empezado · Las predicciones están cerradas",
     "closesWithTournament": "⏱ Cierre con el primer partido · {label}",
     "closesPerMatch": "⏱ Cada partido se cierra en su pitido inicial",
@@ -431,6 +435,10 @@
     "biggestBlowout": {
       "title": "Mayor goleada acertada",
       "desc": "{name} clavó el {home}-{away} en {homeTeam} - {awayTeam}"
+    },
+    "forecast": {
+      "title": "Forecast: probabilidad de campeón",
+      "subtitle": "Referencia orientativa, snapshot as-of {date}. No afecta a la puntuación."
     }
   },
   "profile": {

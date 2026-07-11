@@ -22,9 +22,25 @@ type GroupStats = {
   } | null;
 };
 
+type ForecastEntry = {
+  code: string;
+  pct: number;
+  name: string;
+  flag: string | null;
+  logoUrl: string | null;
+};
+
 const ROUND_KEYS = new Set<string>(ROUND_PHASE_LABELS);
 
-export default function StatsClient({ groupSlug }: { groupSlug: string }) {
+export default function StatsClient({
+  groupSlug,
+  forecast,
+  forecastSnapshotDate,
+}: {
+  groupSlug: string;
+  forecast?: ForecastEntry[];
+  forecastSnapshotDate?: string;
+}) {
   const { t } = useI18n();
   const [stats, setStats] = useState<GroupStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,16 +84,7 @@ export default function StatsClient({ groupSlug }: { groupSlug: string }) {
 
   const hasAny =
     stats.topAcertante || stats.longestStreak || stats.bestRound || stats.biggestBlowout;
-
-  if (!hasAny) {
-    return (
-      <div className="cromo bg-paper-50 text-pitch-950 p-6 text-center">
-        <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500">
-          {t.stats.empty}
-        </p>
-      </div>
-    );
-  }
+  const hasForecast = forecast && forecast.length > 0;
 
   const bestRoundLabel = stats.bestRound
     ? ROUND_KEYS.has(stats.bestRound.key)
@@ -87,54 +94,110 @@ export default function StatsClient({ groupSlug }: { groupSlug: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 cromo bg-paper-50 text-pitch-950 p-5 sm:p-6">
-        <MiniStat value={stats.totalExact} label={t.stats.totalExact} />
-        <MiniStat value={stats.totalPredictions} label={t.stats.totalPredictions} />
-      </div>
+      {!hasAny && !hasForecast && (
+        <div className="cromo bg-paper-50 text-pitch-950 p-6 text-center">
+          <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500">
+            {t.stats.empty}
+          </p>
+        </div>
+      )}
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {stats.topAcertante && (
-          <StatCard
-            icon="🎯"
-            title={t.stats.topAcertante.title}
-            desc={t.stats.topAcertante.desc
-              .replace("{name}", stats.topAcertante.name ?? "—")
-              .replace("{exact}", String(stats.topAcertante.exact))
-              .replace("{total}", String(stats.topAcertante.total))}
-          />
-        )}
-        {stats.longestStreak && (
-          <StatCard
-            icon="🔥"
-            title={t.stats.longestStreak.title}
-            desc={t.stats.longestStreak.desc
-              .replace("{name}", stats.longestStreak.name ?? "—")
-              .replace("{streak}", String(stats.longestStreak.streak))}
-          />
-        )}
-        {stats.bestRound && (
-          <StatCard
-            icon="📅"
-            title={t.stats.bestRound.title}
-            desc={t.stats.bestRound.desc
-              .replace("{label}", bestRoundLabel)
-              .replace("{count}", String(stats.bestRound.exactCount))}
-          />
-        )}
-        {stats.biggestBlowout && (
-          <StatCard
-            icon="💥"
-            title={t.stats.biggestBlowout.title}
-            desc={t.stats.biggestBlowout.desc
-              .replace("{name}", stats.biggestBlowout.name ?? "—")
-              .replace("{home}", String(stats.biggestBlowout.homeScore))
-              .replace("{away}", String(stats.biggestBlowout.awayScore))
-              .replace("{homeTeam}", stats.biggestBlowout.homeTeam)
-              .replace("{awayTeam}", stats.biggestBlowout.awayTeam)}
-          />
-        )}
-      </div>
+      {hasAny && (
+        <>
+          <div className="grid grid-cols-2 gap-4 cromo bg-paper-50 text-pitch-950 p-5 sm:p-6">
+            <MiniStat value={stats.totalExact} label={t.stats.totalExact} />
+            <MiniStat value={stats.totalPredictions} label={t.stats.totalPredictions} />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {stats.topAcertante && (
+              <StatCard
+                icon="🎯"
+                title={t.stats.topAcertante.title}
+                desc={t.stats.topAcertante.desc
+                  .replace("{name}", stats.topAcertante.name ?? "—")
+                  .replace("{exact}", String(stats.topAcertante.exact))
+                  .replace("{total}", String(stats.topAcertante.total))}
+              />
+            )}
+            {stats.longestStreak && (
+              <StatCard
+                icon="🔥"
+                title={t.stats.longestStreak.title}
+                desc={t.stats.longestStreak.desc
+                  .replace("{name}", stats.longestStreak.name ?? "—")
+                  .replace("{streak}", String(stats.longestStreak.streak))}
+              />
+            )}
+            {stats.bestRound && (
+              <StatCard
+                icon="📅"
+                title={t.stats.bestRound.title}
+                desc={t.stats.bestRound.desc
+                  .replace("{label}", bestRoundLabel)
+                  .replace("{count}", String(stats.bestRound.exactCount))}
+              />
+            )}
+            {stats.biggestBlowout && (
+              <StatCard
+                icon="💥"
+                title={t.stats.biggestBlowout.title}
+                desc={t.stats.biggestBlowout.desc
+                  .replace("{name}", stats.biggestBlowout.name ?? "—")
+                  .replace("{home}", String(stats.biggestBlowout.homeScore))
+                  .replace("{away}", String(stats.biggestBlowout.awayScore))
+                  .replace("{homeTeam}", stats.biggestBlowout.homeTeam)
+                  .replace("{awayTeam}", stats.biggestBlowout.awayTeam)}
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      {hasForecast && (
+        <ForecastSection entries={forecast!} snapshotDate={forecastSnapshotDate} />
+      )}
     </div>
+  );
+}
+
+function ForecastSection({
+  entries,
+  snapshotDate,
+}: {
+  entries: ForecastEntry[];
+  snapshotDate?: string;
+}) {
+  const { t } = useI18n();
+  const max = entries[0]?.pct ?? 1;
+  return (
+    <section className="cromo bg-paper-50 text-pitch-950 p-5 sm:p-6">
+      <h2 className="font-display text-2xl sm:text-3xl uppercase tracking-tight">
+        {t.stats.forecast.title}
+      </h2>
+      <p className="mt-1 mb-5 font-mono text-[10px] uppercase tracking-widest text-pitch-500">
+        {t.stats.forecast.subtitle.replace("{date}", snapshotDate ?? "")}
+      </p>
+      <ul className="space-y-2">
+        {entries.map((e) => (
+          <li key={e.code} className="flex items-center gap-3">
+            <span className="w-6 text-center shrink-0">{e.flag}</span>
+            <span className="w-28 sm:w-36 shrink-0 font-display uppercase text-xs sm:text-sm truncate">
+              {e.name}
+            </span>
+            <div className="flex-1 h-4 bg-pitch-100 rounded-sm overflow-hidden">
+              <div
+                className="h-full bg-flame-500"
+                style={{ width: `${Math.max(2, (e.pct / max) * 100)}%` }}
+              />
+            </div>
+            <span className="w-12 shrink-0 text-right font-mono text-xs tabular-nums">
+              {e.pct}%
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

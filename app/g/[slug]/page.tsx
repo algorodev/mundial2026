@@ -4,8 +4,9 @@ import { eq, and, asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, predictions, teams, tournaments, groups } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
-import { getPhaseStarts } from "@/lib/tournament";
+import { getPhaseStarts, phaseStartMs } from "@/lib/tournament";
 import { MAIN_PHASE } from "@/lib/knockout-phases";
+import { isMatchLocked } from "@/lib/lock";
 import { getGroupForMember, getPublicGroup } from "@/lib/group-access";
 import BackLink from "@/components/BackLink";
 import PredictionsClient from "@/components/PredictionsClient";
@@ -15,7 +16,7 @@ import TeamCarousel from "@/components/TeamCarousel";
 import TournamentBadge from "@/components/TournamentBadge";
 import PushOptIn from "@/components/PushOptIn";
 import { getLocale } from "@/lib/locale";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, type Dictionary } from "@/lib/i18n";
 
 export default async function GroupPredictionsPage(
   props: {
@@ -102,6 +103,17 @@ export default async function GroupPredictionsPage(
     };
   }
 
+  // Quinielómetro: cuántos pronósticos abiertos (todavía sin bloquear)
+  // tienes rellenados. Anima a completar antes del cierre. Snapshot del
+  // momento de carga de la página — no hace falta que sea live.
+  const lockLookup =
+    ctx.predictionLockMode === "tournament-start"
+      ? (groupName: string | null) => phaseStartMs(phaseStarts, groupName)
+      : null;
+  const openMatches = allMatches.filter((m) => !isMatchLocked(m, ctx, lockLookup));
+  const meterDone = openMatches.filter((m) => predsMap[m.id] !== undefined).length;
+  const meterTotal = openMatches.length;
+
   return (
     <div className="pt-8">
       <BackLink href="/groups" className="mb-3">
@@ -167,6 +179,9 @@ export default async function GroupPredictionsPage(
         </div>
       ) : (
         <>
+          {meterTotal > 0 && (
+            <PredictionsMeter done={meterDone} total={meterTotal} t={t} />
+          )}
           <PredictionsClient
             groupSlug={ctx.slug}
             matches={matchesSerialized}
@@ -182,6 +197,44 @@ export default async function GroupPredictionsPage(
           <LiveScoreboard groupSlug={ctx.slug} />
         </>
       )}
+    </div>
+  );
+}
+
+// Quinielómetro: medidor simple de cuántos pronósticos abiertos llevas
+// rellenados, para animar a completar antes de que cierren. Server component
+// puro (snapshot del momento de carga), no hace falta que sea interactivo.
+function PredictionsMeter({
+  done,
+  total,
+  t,
+}: {
+  done: number;
+  total: number;
+  t: Dictionary;
+}) {
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  return (
+    <div className="cromo bg-paper-50 text-pitch-950 p-4 sm:p-5 mb-6">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <span className="font-display uppercase text-sm tracking-tight">
+          {t.predictions.meter.title}
+        </span>
+        <span className="font-mono text-xs tabular-nums text-pitch-700">
+          {done}/{total}
+        </span>
+      </div>
+      <div className="h-3 bg-pitch-100 rounded-sm overflow-hidden">
+        <div
+          className="h-full bg-grass-500 transition-all"
+          style={{ width: `${Math.max(pct > 0 ? 3 : 0, pct)}%` }}
+        />
+      </div>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-pitch-500">
+        {t.predictions.meter.desc
+          .replace("{done}", String(done))
+          .replace("{total}", String(total))}
+      </p>
     </div>
   );
 }

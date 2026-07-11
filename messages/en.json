@@ -185,6 +185,10 @@
     "errorCreating": "Error creating the group"
   },
   "predictions": {
+    "meter": {
+      "title": "Prediction meter",
+      "desc": "You've filled {done} of {total} open picks"
+    },
     "locked": "🔒 Tournament has started · Picks are closed",
     "closesWithTournament": "⏱ Closes with first match · {label}",
     "closesPerMatch": "⏱ Each match closes at kickoff",
@@ -431,6 +435,10 @@
     "biggestBlowout": {
       "title": "Biggest called blowout",
       "desc": "{name} nailed the {home}-{away} in {homeTeam} - {awayTeam}"
+    },
+    "forecast": {
+      "title": "Forecast: title odds",
+      "subtitle": "Informational reference, snapshot as-of {date}. Doesn't affect scoring."
     }
   },
   "profile": {
