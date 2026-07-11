@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useI18n } from "@/providers/I18nProvider";
 
-type Tab = "predictions" | "leaderboard" | "standings" | "manage";
+type Tab = "predictions" | "leaderboard" | "standings" | "bracket" | "manage";
 
 export default function GroupTabs({
   slug,
@@ -20,6 +20,7 @@ export default function GroupTabs({
     predictions: t.groupTabs.predictions,
     leaderboard: t.groupTabs.leaderboard,
     standings: t.groupTabs.standings,
+    bracket: t.groupTabs.bracket,
     manage: t.groupTabs.manage,
   };
 
@@ -27,6 +28,7 @@ export default function GroupTabs({
     { key: "predictions", href: `/g/${slug}` },
     { key: "leaderboard", href: `/g/${slug}/leaderboard` },
     { key: "standings", href: `/g/${slug}/standings` },
+    { key: "bracket", href: `/g/${slug}/bracket` },
   ];
   if (isOwner) {
     tabs.push({ key: "manage", href: `/g/${slug}/manage` });

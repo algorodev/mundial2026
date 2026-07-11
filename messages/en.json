@@ -532,6 +532,7 @@
     "predictions": "Picks",
     "leaderboard": "Standings",
     "standings": "Table",
+    "bracket": "Bracket",
     "manage": "Manage"
   },
   "groupSettings": {

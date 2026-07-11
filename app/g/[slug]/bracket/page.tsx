@@ -1,23 +1,24 @@
 import { redirect, notFound } from "next/navigation";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { teams, tournaments } from "@/lib/db/schema";
+import { tournaments } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getGroupForMember } from "@/lib/group-access";
 import GroupTabs from "@/components/GroupTabs";
 import BackLink from "@/components/BackLink";
 import TournamentBadge from "@/components/TournamentBadge";
-import TournamentStandings from "@/components/TournamentStandings";
+import KnockoutBracket from "@/components/KnockoutBracket";
+import { getBracketRounds } from "@/lib/bracket-data";
 import { getLocale } from "@/lib/locale";
 import { getDictionary } from "@/lib/i18n";
 
-export default async function GroupStandingsPage(props: {
+export default async function GroupBracketPage(props: {
   params: Promise<{ slug: string }>;
 }) {
   const params = await props.params;
   const session = await getSession();
   if (!session) {
-    redirect(`/login?next=${encodeURIComponent(`/g/${params.slug}/standings`)}`);
+    redirect(`/login?next=${encodeURIComponent(`/g/${params.slug}/bracket`)}`);
   }
 
   const locale = await getLocale();
@@ -33,19 +34,7 @@ export default async function GroupStandingsPage(props: {
     .limit(1);
   if (!tournament) notFound();
 
-  const mappedTeams =
-    tournament.apiLeagueId && tournament.apiSeason
-      ? await db
-          .select({ code: teams.code, apiTeamId: teams.apiTeamId })
-          .from(teams)
-          .where(
-            and(eq(teams.tournamentId, ctx.tournamentId), isNotNull(teams.apiTeamId))
-          )
-      : [];
-  const teamCodeByApiId: Record<number, string> = {};
-  for (const tm of mappedTeams) {
-    if (tm.apiTeamId) teamCodeByApiId[tm.apiTeamId] = tm.code;
-  }
+  const bracketRounds = await getBracketRounds(ctx.tournamentId, t);
 
   return (
     <div className="pt-8">
@@ -71,21 +60,21 @@ export default async function GroupStandingsPage(props: {
       </div>
       <GroupTabs
         slug={ctx.slug}
-        active="standings"
+        active="bracket"
         isOwner={ctx.myRole === "owner"}
       />
 
-      {!tournament.apiLeagueId || !tournament.apiSeason ? (
+      {bracketRounds.length === 0 ? (
         <div className="cromo bg-paper-50 text-pitch-950 p-6 text-center">
           <p className="font-mono text-[11px] uppercase tracking-widest text-pitch-500">
-            {t.standings.noSync}
+            {t.bracket.tbd}
           </p>
         </div>
       ) : (
-        <TournamentStandings
-          tournamentSlug={tournament.slug}
+        <KnockoutBracket
           groupSlug={ctx.slug}
-          teamCodeByApiId={teamCodeByApiId}
+          rounds={bracketRounds}
+          title={t.bracket.title}
         />
       )}
     </div>
