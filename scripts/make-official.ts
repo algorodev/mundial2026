@@ -6,6 +6,7 @@ import {
   groups,
   groupMembers,
   users,
+  matches,
 } from "../lib/db/schema";
 import { randomInviteCode } from "../lib/slug";
 
@@ -95,6 +96,18 @@ async function main() {
   const groupSlug = `oficial-${tournamentSlug}`;
   const inviteCode = randomInviteCode(6);
 
+  // Ligas (partidos con groupName "J1".."J38") se bloquean por jornada: cada
+  // semana cierra en bloque en su primer kickoff (ver lib/knockout-phases.ts
+  // ::phaseKeyFor). El resto (Mundial, Champions, cualquier cosa sin
+  // jornadas) usa per-match: bloqueo individual por partido, sin fases.
+  const [sampleMatch] = await db
+    .select({ groupName: matches.groupName })
+    .from(matches)
+    .where(eq(matches.tournamentId, tournament.id))
+    .limit(1);
+  const isLeague = !!sampleMatch?.groupName && /^J\d+$/.test(sampleMatch.groupName);
+  const predictionLockMode = isLeague ? "tournament-start" : "per-match";
+
   const [newGroup] = await db
     .insert(groups)
     .values({
@@ -104,10 +117,9 @@ async function main() {
       ownerId: admin.id,
       inviteCode,
       visibility: "public",
-      // La porra oficial es masiva: bloqueo por partido (no por inicio del
-      // torneo) y entradas tardías permitidas para captar usuarios durante
-      // toda la competición.
-      predictionLockMode: "per-match",
+      // La porra oficial es masiva: entradas tardías permitidas para captar
+      // usuarios durante toda la competición.
+      predictionLockMode,
       lockMinutesBefore: 0,
       joinPolicy: "open",
       allowLateJoin: 1,
