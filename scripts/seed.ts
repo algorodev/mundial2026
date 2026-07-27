@@ -81,7 +81,7 @@ const TOURNAMENTS: SeedTournament[] = [
     slug: LALIGA_2026_27_SLUG,
     name: LALIGA_2026_27_NAME,
     sport: "futbol",
-    status: "draft",
+    status: "upcoming",
     matchData: LALIGA_2026_27_MATCHES,
     resolveCode: (m, side) =>
       LALIGA_2026_27_CODES[side === "home" ? m.home : m.away] ?? null,
@@ -92,7 +92,7 @@ const TOURNAMENTS: SeedTournament[] = [
     slug: PREMIER_2026_27_SLUG,
     name: PREMIER_2026_27_NAME,
     sport: "futbol",
-    status: "draft",
+    status: "upcoming",
     matchData: PREMIER_2026_27_MATCHES,
     resolveCode: (m, side) =>
       PREMIER_2026_27_CODES[side === "home" ? m.home : m.away] ?? null,
